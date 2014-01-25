@@ -192,15 +192,15 @@ namespace RustEssentials.Util
                     case "tppos":
                         broadcastTo(sender, "/tppos: Teleports a user to the said vector. Syntax: /tppos [x] [y] [z]");
                         break;
-                    case "tpaccept":
-                        broadcastTo(sender, "/tpa: Accepts a user's teleport request. Syntax: /tpaccept [name]");
-                        break;
-                    case "tpdeny":
-                        broadcastTo(sender, "/tpdeny: Denies a user's teleport request (or all requests). Syntax: /tpdeny [name/all]");
-                        break;
-                    case "tpa":
-                        broadcastTo(sender, "/tpa: Sends a teleport request to the target user. Syntax: /tpa [name]");
-                        break;
+                    //case "tpaccept":
+                    //    broadcastTo(sender, "/tpa: Accepts a user's teleport request. Syntax: /tpaccept [name]");
+                    //    break;
+                    //case "tpdeny":
+                    //    broadcastTo(sender, "/tpdeny: Denies a user's teleport request (or all requests). Syntax: /tpdeny [name/all]");
+                    //    break;
+                    //case "tpa":
+                    //    broadcastTo(sender, "/tpa: Sends a teleport request to the target user. Syntax: /tpa [name]");
+                    //    break;
                     case "tp":
                         broadcastTo(sender, "/tp: Teleports the sender, or someone else, to a target user. Syntax: /tp [name] or /tp [name1] [name2]");
                         break;
@@ -261,12 +261,12 @@ namespace RustEssentials.Util
                     case "airdrop":
                         broadcastTo(sender, "/airdrop: Spawns an airdrop at a random or specified players position. Syntax: /airdrop [\"player\"]");
                         break;
-                    case "share":
-                        broadcastTo(sender, "/share: Shares doors and gates with other players. Syntax: /share [player name] (CASE SENSITIVE)");
-                        break;
-                    case "unshare":
-                        broadcastTo(sender, "/unshare: Unshares doors and gates with other players. Syntax: /unshare [player name/all] (CASE SENSITIVE)");
-                        break;
+                    //case "share":
+                    //    broadcastTo(sender, "/share: Shares doors and gates with other players. Syntax: /share [player name] (CASE SENSITIVE)");
+                    //    break;
+                    //case "unshare":
+                    //    broadcastTo(sender, "/unshare: Unshares doors and gates with other players. Syntax: /unshare [player name/all] (CASE SENSITIVE)");
+                    //    break;
                     case "pm":
                         broadcastTo(sender, "/pm: Sends a private message. Syntax: /pm \"name\" (CASE SENSITIVE)");
                         break;

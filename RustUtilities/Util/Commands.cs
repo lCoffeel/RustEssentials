@@ -64,7 +64,7 @@ namespace RustEssentials.Util
                                 Vars.giveAccess(playerClient, commandArgs);
                                 break;
                             case "/version":
-                                Broadcast.broadcastTo(player, "The server is running Rust Essentials v" + Vars.currentVersion + ".");
+                                Broadcast.broadcastTo(player, "The server is running Rust Essentials v" + Vars.currentVersion + " for Rust v" + Vars.rustCurrentVer + ".");
                                 break;
                             case "/save":
                                 Vars.save(playerClient);
@@ -75,15 +75,15 @@ namespace RustEssentials.Util
                             case "/tppos":
                                 Vars.teleportPos(playerClient, commandArgs);
                                 break;
-                            case "/tpaccept":
-                                Vars.teleportAccept(playerClient, commandArgs);
-                                break;
-                            case "/tpdeny":
-                                Vars.teleportDeny(playerClient, commandArgs);
-                                break;
-                            case "/tpa":
-                                Vars.teleportRequest(playerClient, commandArgs);
-                                break;
+                            //case "/tpaccept":
+                            //    Vars.teleportAccept(playerClient, commandArgs);
+                            //    break;
+                            //case "/tpdeny":
+                            //    Vars.teleportDeny(playerClient, commandArgs);
+                            //    break;
+                            //case "/tpa":
+                            //    Vars.teleportRequest(playerClient, commandArgs);
+                            //    break;
                             case "/tp":
                                 Vars.teleport(playerClient, commandArgs);
                                 break;
@@ -150,12 +150,12 @@ namespace RustEssentials.Util
                             case "/airdrop":
                                 Vars.airdrop(player, commandArgs);
                                 break;
-                            case "/share":
-                                Share.shareWith(playerClient, commandArgs); // Needs work
-                                break;
-                            case "/unshare":
-                                Share.unshareWith(playerClient, commandArgs); // Needs work
-                                break;
+                            //case "/share":
+                            //    Share.shareWith(playerClient, commandArgs); // Needs work
+                            //    break;
+                            //case "/unshare":
+                            //    Share.unshareWith(playerClient, commandArgs); // Needs work
+                            //    break;
                             case "/pm":
                                 Broadcast.sendPM(playerName, commandArgs);
                                 break;
