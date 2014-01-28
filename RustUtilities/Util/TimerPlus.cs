@@ -10,10 +10,6 @@ namespace RustEssentials.Util
     public class TimerPlus : Timer
     {
         private Stopwatch stopWatch = new Stopwatch();
-        public TimerPlus()
-            : base()
-        {
-        }
 
         protected new void Dispose()
         {

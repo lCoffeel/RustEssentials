@@ -78,6 +78,7 @@ namespace RustEssentials
             Vars.loadItems();
             Vars.cycleMOTD();
             Vars.readDoorData();
+            Vars.readFactionData();
 
             Vars.conLog.Info("====");
         }

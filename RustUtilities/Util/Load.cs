@@ -198,6 +198,7 @@ namespace RustEssentials.Util
             {
                 if (File.Exists(Vars.kitsFile))
                 {
+                    Vars.kitCooldowns.Clear();
                     Vars.kits.Clear();
                     Vars.kitsForRanks.Clear();
                     foreach (KeyValuePair<string, string> kv in Vars.rankPrefixes)
@@ -433,7 +434,7 @@ namespace RustEssentials.Util
                 {
                     Vars.conLog.Error("useSteamGroup could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
                 }
-                Vars.steamGroup = Config.steamGroup;
+                Vars.steamGroup = Config.steamGroup.Replace("\r\n", "").Replace("\n", "");
                 try { Vars.autoRefresh = Convert.ToBoolean(Config.autoRefresh); }
                 catch (Exception ex)
                 {
@@ -458,6 +459,17 @@ namespace RustEssentials.Util
                 catch (Exception ex)
                 {
                     Vars.conLog.Error("announceDrops could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                }
+
+                try { Vars.fallDamage = Convert.ToBoolean(Config.fallDamage); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("fallDamage could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                }
+                try { voice.distance = (float)Convert.ToInt16(Config.voiceDistance); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("voiceDistance could not be parsed as a number!");
                 }
 
                 try { Vars.directChat = Convert.ToBoolean(Config.directChat); }
@@ -490,7 +502,7 @@ namespace RustEssentials.Util
                     }
                 }
 
-                Vars.botName = Vars.replaceQuotes(Config.botName).Replace("\r\n", "");
+                Vars.botName = Vars.replaceQuotes(Config.botName);
                 if (Config.joinMessage.Contains("$USER$"))
                     Vars.joinMessage = Vars.replaceQuotes(Config.joinMessage).Replace("\n", "");
                 else

@@ -47,13 +47,14 @@ namespace RustEssentials.Util
         public void deleteChatLogs()
         {
             string[] fileArr = Directory.GetFiles(Vars.logsDir, "*.log");
-            int totalFiles = fileArr.Count();
+            int totalFiles = Array.FindAll(fileArr.ToArray(), (string s) => s.Contains("essentialsChat_")).Count();
             DateTime[] creationTimes = new DateTime[fileArr.Length];
             for (int i2 = 0; i2 < fileArr.Length; i2++)
             {
                 creationTimes[i2] = new FileInfo(fileArr[i2]).CreationTime;
             }
             Array.Sort(creationTimes, fileArr);
+            int curIndex = 0;
             for (int i3 = 0; i3 < fileArr.Length; i3++)
             {
                 FileInfo fi = new FileInfo(fileArr[i3]);
@@ -63,6 +64,7 @@ namespace RustEssentials.Util
                     {
                         fi.Delete();
                     }
+                    curIndex++;
                 }
             }
         }
@@ -70,22 +72,24 @@ namespace RustEssentials.Util
         public void deleteLogs()
         {
             string[] fileArr = Directory.GetFiles(Vars.logsDir, "*.log");
-            int totalFiles = fileArr.Count();
+            int totalFiles = Array.FindAll(fileArr.ToArray(), (string s) => s.Contains("essentials_")).Count();
             DateTime[] creationTimes = new DateTime[fileArr.Length];
             for (int i2 = 0; i2 < fileArr.Length; i2++)
             {
                 creationTimes[i2] = new FileInfo(fileArr[i2]).CreationTime;
             }
             Array.Sort(creationTimes, fileArr);
+            int curIndex = 0;
             for (int i3 = 0; i3 < fileArr.Length; i3++)
             {
                 FileInfo fi = new FileInfo(fileArr[i3]);
                 if (fi.Name.Contains("essentials_"))
                 {
-                    if (totalFiles - i3 > Vars.logCap)
+                    if (totalFiles - curIndex > Vars.logCap)
                     {
                         fi.Delete();
                     }
+                    curIndex++;
                 }
             }
         }
@@ -143,6 +147,7 @@ namespace RustEssentials.Util
         /// Message to log
         public void logToFile(string s, string type)
         {
+            s = s.Replace("\r\n", "").Replace("\n", "");
             switch (type)
             {
                 case "none":

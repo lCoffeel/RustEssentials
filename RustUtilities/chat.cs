@@ -47,7 +47,15 @@ public class chat : ConsoleSystem
             else
             {
                 playerName = Vars.filterNames(playerName, UID);
-                message = message.Replace("\"", "\\\"").Replace("[PM]", "").Replace("[PM to]", "").Replace("[PM from]", "").Replace("[PM From]", "").Replace("[PM To]", "");
+                message = message.Replace("\"", "\\\"").Replace("[PM]", "").Replace("[PM to]", "").Replace("[PM from]", "").Replace("[PM From]", "").Replace("[PM To]", "").Replace("[F]", "");
+                if (!Vars.inDirect.Contains(UID) && !Vars.inGlobal.Contains(UID))
+                {
+                    Vars.inGlobal.Add(UID);
+                }
+                if (!Vars.inDirectV.Contains(UID) && !Vars.inGlobalV.Contains(UID))
+                {
+                    Vars.inDirectV.Add(UID);
+                }
                 if (Vars.inDirect.Contains(UID))
                 {
                     if (Vars.directChat)

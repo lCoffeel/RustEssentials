@@ -34,13 +34,14 @@ namespace RustEssentials.Util
         public static string whiteListFile = Path.Combine(saveDir, "whitelist.txt");
         public static string ranksFile = Path.Combine(saveDir, "ranks.ini");
         public static string commandsFile = Path.Combine(saveDir, "commands.ini");
-        public static string allCommandsFile = Path.Combine(saveDir, "allCommands.ini");
+        public static string allCommandsFile = Path.Combine(saveDir, "allCommands.txt");
         public static string itemsFile = Path.Combine(saveDir, "itemIDs.txt");
         public static string kitsFile = Path.Combine(saveDir, "kits.ini");
         public static string motdFile = Path.Combine(saveDir, "motd.ini");
         public static string bansFile = Path.Combine(saveDir, "bans.txt");
         public static string prefixFile = Path.Combine(saveDir, "prefix.txt");
         public static string doorsFile = Path.Combine(saveDir, "door_data.dat");
+        public static string factionsFile = Path.Combine(saveDir, "factions.dat");
         public static string defaultRank = "Default";
         public static string currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString().Substring(0, 5);
         public static string rustCurrentVer = "4.3.1.93830";
@@ -72,6 +73,7 @@ namespace RustEssentials.Util
         public static bool suicideMessages = false;
         public static bool murderMessages = true;
         public static bool accidentMessages = true;
+        public static bool fallDamage = true;
 
         public static string whitelistKickCMD = "Whitelist was enabled and you are not whitelisted.";
         public static string whitelistKickJoin = "You are not whitelisted!";
@@ -108,6 +110,7 @@ namespace RustEssentials.Util
             { kitsFile },
             { motdFile },
             { doorsFile },
+            { factionsFile },
             { bansFile },
             { prefixFile }
         };
@@ -121,6 +124,9 @@ namespace RustEssentials.Util
         public static List<string> totalCommands = new List<string>();
         public static List<string> inGlobal = new List<string>();
         public static List<string> inDirect = new List<string>();
+        public static List<string> inGlobalV = new List<string>();
+        public static List<string> inDirectV = new List<string>();
+        public static List<string> inFactionV = new List<string>();
         public static List<string> mutedUsers = new List<string>();
         public static List<string> historyGlobal = new List<string>();
         public static List<string> historyDirect = new List<string>();
@@ -128,7 +134,12 @@ namespace RustEssentials.Util
         public static List<string> groupMembers = new List<string>();
         public static List<string> completeDoorAccess = new List<string>();
         public static List<string> godList = new List<string>();
+        public static List<string> destroyerList = new List<string>();
+        public static List<GameObject> beingDestroyed = new List<GameObject>();
         public static List<PlayerClient> killList = new List<PlayerClient>();
+        public static List<PlayerClient> isTeleporting = new List<PlayerClient>();
+        public static List<PlayerClient> isAccepting = new List<PlayerClient>();
+        public static List<PlayerClient> wasHit = new List<PlayerClient>();
 
         public static Dictionary<string, string> sharingData = new Dictionary<string, string>();
         public static Dictionary<string, string> playerPrefixes = new Dictionary<string, string>();
@@ -139,14 +150,18 @@ namespace RustEssentials.Util
         public static Dictionary<string, List<string>> motdList = new Dictionary<string, List<string>>();
         public static Dictionary<string, List<string>> enabledCommands = new Dictionary<string, List<string>>();
         public static Dictionary<string, List<string>> kitsForRanks = new Dictionary<string, List<string>>();
+        public static Dictionary<string, List<string>> factionInvites = new Dictionary<string, List<string>>();
         public static Dictionary<string, TimerPlus> muteTimes = new Dictionary<string, TimerPlus>();
+        public static Dictionary<PlayerClient, PlayerClient> latestPM = new Dictionary<PlayerClient, PlayerClient>();
         public static Dictionary<PlayerClient, PlayerClient> latestRequests = new Dictionary<PlayerClient, PlayerClient>();
+        public static Dictionary<PlayerClient, PlayerClient> latestFactionRequests = new Dictionary<PlayerClient, PlayerClient>();
         public static Dictionary<PlayerClient, Dictionary<PlayerClient, TimerPlus>> teleportRequests = new Dictionary<PlayerClient, Dictionary<PlayerClient, TimerPlus>>();
+        public static Dictionary<string, Dictionary<string, string>> factions = new Dictionary<string, Dictionary<string, string>>();
         public static List<string> unassignedKits = new List<string>();
         public static Dictionary<int, string> itemIDs = new Dictionary<int, string>();
         public static Dictionary<string, Dictionary<string, int>> kits = new Dictionary<string, Dictionary<string, int>>();
         public static Dictionary<string, int> kitCooldowns = new Dictionary<string, int>();
-        public static Dictionary<PlayerClient, Dictionary<TimerPlus, string>> playerCooldowns = new Dictionary<PlayerClient, Dictionary<TimerPlus, string>>();
+        public static Dictionary<string, Dictionary<TimerPlus, string>> playerCooldowns = new Dictionary<string, Dictionary<TimerPlus, string>>();
         public static Dictionary<string, StringBuilder> textForFiles = new Dictionary<string, StringBuilder>()
         {
             { cfgFile, cfgText() },
@@ -305,25 +320,721 @@ namespace RustEssentials.Util
         {
             try
             {
-                float num = (fallspeed - min_vel) / (max_vel - min_vel);
-                bool flag = num > 0.25f;
-                bool flag2 = ((num > 0.35f) || (UnityEngine.Random.Range(0, 3) == 0)) || (healthFraction < 0.5f);
-                if (!godList.Contains(idMain.playerClient.userID.ToString()))
+                if (fallDamage)
                 {
-                    if (flag)
+                    float num = (fallspeed - min_vel) / (max_vel - min_vel);
+                    bool flag = num > 0.25f;
+                    bool flag2 = ((num > 0.35f) || (UnityEngine.Random.Range(0, 3) == 0)) || (healthFraction < 0.5f);
+                    if (!godList.Contains(idMain.playerClient.userID.ToString()))
                     {
-                        idMain.controllable.GetComponent<HumanBodyTakeDamage>().AddBleedingLevel(3f + ((num - 0.25f) * 10f));
+                        if (flag)
+                        {
+                            idMain.controllable.GetComponent<HumanBodyTakeDamage>().AddBleedingLevel(3f + ((num - 0.25f) * 10f));
+                        }
+                        if (flag2)
+                        {
+                            fallDamage.AddLegInjury(1f);
+                        }
+                        TakeDamage.HurtSelf(idMain, (float)(10f + (num * maxHealth)));
                     }
-                    if (flag2)
-                    {
-                        fallDamage.AddLegInjury(1f);
-                    }
-                    TakeDamage.HurtSelf(idMain, (float)(10f + (num * maxHealth)));
                 }
             }
             catch (Exception ex)
             {
                 Vars.conLog.Error(ex.ToString());
+            }
+        }
+
+        public static void handleFactions(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                string arg = args[1];
+                KeyValuePair<string, Dictionary<string, string>>[] possibleFactions = Array.FindAll(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(senderClient.userID.ToString()));
+
+                switch (arg)
+                {
+                    case "create":
+                        if (args.Count() > 2)
+                        {
+                            List<string> messageList = new List<string>();
+                            int curIndex = 0;
+                            foreach (string s in args)
+                            {
+                                if (curIndex > 1)
+                                    messageList.Add(s);
+                                curIndex++;
+                            }
+
+                            string factionName = string.Join(" ", messageList.ToArray());
+
+                            if (!factions.ContainsKey(factionName))
+                            {
+                                if (possibleFactions.Count() == 0)
+                                {
+                                    if (factionName.Length < 15)
+                                    {
+                                        factions.Add(factionName, new Dictionary<string, string>());
+                                        factions[factionName].Add(senderClient.userID.ToString(), "owner");
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Faction \"" + factionName + "\" created.");
+                                        addFactionData(factionName, senderClient.userName, senderClient.userID.ToString(), "owner");
+                                    }
+                                    else
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Faction names must be less than 15 characters!");
+                                }
+                                else
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "You are already in the faction \"" + factionName + "\".");
+                            }
+                            else
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Faction \"" + factionName + "\" already exists.");
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Improper syntax! Syntax: /f create *name*");
+                        break;
+                    case "disband":
+                        if (possibleFactions.Count() > 0)
+                        {
+                            string rank = possibleFactions[0].Value[senderClient.userID.ToString()];
+
+                            if (rank == "owner" || completeDoorAccess.Contains(senderClient.userID.ToString()))
+                            {
+                                PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                foreach (PlayerClient pc in targetClients)
+                                {
+                                    Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Your faction was disbanded.");
+                                }
+                                factions.Remove(possibleFactions[0].Key);
+                                remFactionData(possibleFactions[0].Key, "disband", "");
+                            }
+                            else
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You do not have permission to disband your current faction.");
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.");
+                        break;
+                    case "kick":
+                        if (possibleFactions.Count() > 0)
+                        {
+                            string rank = possibleFactions[0].Value[senderClient.userID.ToString()];
+
+                            if (rank == "owner" || rank == "admin")
+                            {
+                                List<string> messageList = new List<string>();
+                                int curIndex = 0;
+                                foreach (string s in args)
+                                {
+                                    if (curIndex > 1)
+                                        messageList.Add(s);
+                                    curIndex++;
+                                }
+
+                                string targetName = string.Join(" ", messageList.ToArray());
+                                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
+
+                                if (possibleTargets.Count() == 0)
+                                {
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "No member equal or contain \"" + targetName + "\".");
+                                }
+                                else if (possibleTargets.Count() > 1)
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many member names contain \"" + targetName + "\".");
+                                else
+                                {
+                                    PlayerClient targetClient = possibleTargets[0];
+
+                                    if (possibleFactions[0].Value.ContainsKey(targetClient.userID.ToString()))
+                                    {
+                                        PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                        foreach (PlayerClient pc in targetClients)
+                                        {
+                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " was kicked from the faction.");
+                                        }
+                                        remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                        possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                    }
+                                    else
+                                        Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is not in your faction.");
+                                }
+                            }
+                            else
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You do not have permission to kick members of your faction.");
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.");
+                        break;
+                    case "invite":
+                        if (possibleFactions.Count() > 0)
+                        {
+                            string rank = possibleFactions[0].Value[senderClient.userID.ToString()];
+
+                            if (rank == "owner" || rank == "admin")
+                            {
+                                List<string> messageList = new List<string>();
+                                int curIndex = 0;
+                                foreach (string s in args)
+                                {
+                                    if (curIndex > 1)
+                                        messageList.Add(s);
+                                    curIndex++;
+                                }
+
+                                string targetName = string.Join(" ", messageList.ToArray());
+                                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
+
+                                if (possibleTargets.Count() == 0)
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "No players equal or contain \"" + targetName + "\".");
+                                else if (possibleTargets.Count() > 1)
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + targetName + "\".");
+                                else
+                                {
+                                    PlayerClient targetClient = possibleTargets[0];
+
+                                    if (possibleFactions[0].Value.Count < 15)
+                                    {
+                                        if (!factionInvites.ContainsKey(targetClient.userID.ToString()))
+                                        {
+                                            factionInvites.Add(targetClient.userID.ToString(), new List<string>() { { possibleFactions[0].Key } });
+
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "You invited \"" + targetClient.userName + "\" to the faction .");
+                                            Broadcast.broadcastTo(targetClient.netPlayer, "You were invited to the faction \"" + possibleFactions[0].Key + "\".");
+                                            if (!latestFactionRequests.ContainsKey(targetClient))
+                                                latestFactionRequests.Add(targetClient, senderClient);
+                                            else
+                                                latestFactionRequests[targetClient] = senderClient;
+                                        }
+                                        else
+                                        {
+                                            if (!factionInvites[targetClient.userID.ToString()].Contains(possibleFactions[0].Key))
+                                            {
+                                                factionInvites[targetClient.userID.ToString()].Add(possibleFactions[0].Key);
+
+                                                Broadcast.broadcastTo(senderClient.netPlayer, "You invited \"" + targetClient.userName + "\" to the faction .");
+                                                Broadcast.broadcastTo(targetClient.netPlayer, "You were invited to the faction \"" + possibleFactions[0].Key + "\".");
+                                                if (!latestFactionRequests.ContainsKey(targetClient))
+                                                    latestFactionRequests.Add(targetClient, senderClient);
+                                                else
+                                                    latestFactionRequests[targetClient] = senderClient;
+                                            }
+                                            else
+                                                Broadcast.broadcastCustomTo(targetClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " has already been invited.");
+                                        }
+                                    }
+                                    else
+                                        Broadcast.broadcastCustomTo(targetClient.netPlayer, "[F] " + possibleFactions[0].Key, "You have reached your member capacity.");
+                                }
+                            }
+                            else
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You do not have permission to invite members to your faction.");
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.");
+                        break;
+                    case "join":
+                        if (possibleFactions.Count() == 0)
+                        {
+                            if (factionInvites.ContainsKey(senderClient.userID.ToString()))
+                            {
+                                if (args.Count() > 2)
+                                {
+                                    List<string> messageList = new List<string>();
+                                    int curIndex = 0;
+                                    foreach (string s in args)
+                                    {
+                                        if (curIndex > 1)
+                                            messageList.Add(s);
+                                        curIndex++;
+                                    }
+
+                                    string targetFaction = string.Join(" ", messageList.ToArray());
+                                    List<string> inviterFactions = new List<string>();
+                                    foreach(string s in factionInvites[senderClient.userID.ToString()])
+                                    {
+                                        if (s.Contains(targetFaction))
+                                        {
+                                            inviterFactions.Add(s);
+                                        }
+                                    }
+                                    
+                                    if (inviterFactions.Count() == 0)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "No factions equal or contain \"" + targetFaction + "\".");
+                                    else if (inviterFactions.Count() > 1)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many faction names contain \"" + targetFaction + "\".");
+                                    else
+                                    {
+                                        factions[inviterFactions[0]].Add(senderClient.userID.ToString(), "normal");
+                                        PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => factions[inviterFactions[0]].ContainsKey(pc.userID.ToString()));
+                                        foreach (PlayerClient pc in targetClients)
+                                        {
+                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + inviterFactions[0], senderClient.userName + " has joined the faction.");
+                                        }
+                                        addFactionData(inviterFactions[0], senderClient.userName, senderClient.userID.ToString(), "normal");
+                                    }
+                                }
+                                else
+                                {
+                                    KeyValuePair<string, Dictionary<string, string>> inviterFaction = Array.Find(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(latestFactionRequests[senderClient].userID.ToString()));
+                                    inviterFaction.Value.Add(senderClient.userID.ToString(), "normal");
+                                    PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => inviterFaction.Value.ContainsKey(pc.userID.ToString()));
+                                    foreach (PlayerClient pc in targetClients)
+                                    {
+                                        Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + inviterFaction.Key, senderClient.userName + " has joined the faction.");
+                                    }
+                                    addFactionData(inviterFaction.Key, senderClient.userName, senderClient.userID.ToString(), "normal");
+                                }
+                            }
+                            else
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You do not have any faction invites.");
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You must leave your current faction first.");
+                        break;
+                    case "leave":
+                        if (possibleFactions.Count() > 0)
+                        {
+                            string rank = possibleFactions[0].Value[senderClient.userID.ToString()];
+
+                            if (rank != "owner")
+                            {
+                                PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                foreach (PlayerClient pc in targetClients)
+                                {
+                                    Broadcast.broadcastCustomTo(pc.netPlayer, possibleFactions[0].Key, senderClient.userName + " has left the faction.");
+                                }
+                                try
+                                {
+                                    remFactionData(possibleFactions[0].Key, senderClient.userName, possibleFactions[0].Value[senderClient.userID.ToString()]);
+                                    possibleFactions[0].Value.Remove(senderClient.userID.ToString());
+                                }
+                                catch (Exception ex)
+                                {
+                                    Vars.conLog.Error(ex.ToString());
+                                }
+                            }
+                            else
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You cannot leave your faction without disbanding or passing ownership.");
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.");
+                        break;
+                    case "admin":
+                        if (possibleFactions.Count() > 0)
+                        {
+                            string rank = possibleFactions[0].Value[senderClient.userID.ToString()];
+
+                            if (rank == "owner" || rank == "admin")
+                            {
+                                List<string> messageList = new List<string>();
+                                int curIndex = 0;
+                                foreach (string s in args)
+                                {
+                                    if (curIndex > 1)
+                                        messageList.Add(s);
+                                    curIndex++;
+                                }
+
+                                string targetName = string.Join(" ", messageList.ToArray());
+                                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
+
+                                if (possibleTargets.Count() == 0)
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "No players equal or contain \"" + targetName + "\".");
+                                else if (possibleTargets.Count() > 1)
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + targetName + "\".");
+                                else
+                                {
+                                    PlayerClient targetClient = possibleTargets[0];
+
+                                    remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                    possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                    possibleFactions[0].Value.Add(targetClient.userID.ToString(), "admin");
+                                    addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "admin");
+                                    PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                    foreach (PlayerClient pc in targetClients)
+                                    {
+                                        Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player \"" + targetClient.userName + "\" is now a faction admin.");
+                                    }
+                                }
+                            }
+                            else
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You do not have permission to assign admin to players.");
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.");
+                        break;
+                    case "deadmin":
+                        if (possibleFactions.Count() > 0)
+                        {
+                            string rank = possibleFactions[0].Value[senderClient.userID.ToString()];
+
+                            if (rank == "owner" || rank == "admin")
+                            {
+                                List<string> messageList = new List<string>();
+                                int curIndex = 0;
+                                foreach (string s in args)
+                                {
+                                    if (curIndex > 1)
+                                        messageList.Add(s);
+                                    curIndex++;
+                                }
+
+                                string targetName = string.Join(" ", messageList.ToArray());
+                                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
+
+                                if (possibleTargets.Count() == 0)
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "No players equal or contain \"" + targetName + "\".");
+                                else if (possibleTargets.Count() > 1)
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + targetName + "\".");
+                                else
+                                {
+                                    PlayerClient targetClient = possibleTargets[0];
+
+                                    remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                    possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                    possibleFactions[0].Value.Add(targetClient.userID.ToString(), "normal");
+                                    addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "normal");
+                                    PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                    foreach (PlayerClient pc in targetClients)
+                                    {
+                                        Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player \"" + targetClient.userName + "\" is no longer a faction admin.");
+                                    }
+                                }
+                            }
+                            else
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You do not have permission to revoke admin from players.");
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.");
+                        break;
+                    case "ownership":
+                        if (possibleFactions.Count() > 0)
+                        {
+                            string rank = possibleFactions[0].Value[senderClient.userID.ToString()];
+
+                            if (rank == "owner")
+                            {
+                                List<string> messageList = new List<string>();
+                                int curIndex = 0;
+                                foreach (string s in args)
+                                {
+                                    if (curIndex > 1)
+                                        messageList.Add(s);
+                                    curIndex++;
+                                }
+
+                                string targetName = string.Join(" ", messageList.ToArray());
+                                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
+
+                                if (possibleTargets.Count() == 0)
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "No players equal or contain \"" + targetName + "\".");
+                                else if (possibleTargets.Count() > 1)
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + targetName + "\".");
+                                else
+                                {
+                                    PlayerClient targetClient = possibleTargets[0];
+
+                                    remFactionData(possibleFactions[0].Key, senderClient.userName, possibleFactions[0].Value[senderClient.userID.ToString()]);
+                                    possibleFactions[0].Value.Remove(senderClient.userID.ToString());
+                                    possibleFactions[0].Value.Add(senderClient.userID.ToString(), "admin");
+                                    addFactionData(possibleFactions[0].Key, senderClient.userName, senderClient.userID.ToString(), "admin");
+                                    remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                    possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                    possibleFactions[0].Value.Add(targetClient.userID.ToString(), "owner");
+                                    addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "owner");
+                                    PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                    foreach (PlayerClient pc in targetClients)
+                                    {
+                                        Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, senderClient.userName + " now owns the faction.");
+                                    }
+                                }
+                            }
+                            else
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You do not have permission to pass ownership.");
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.");
+                        break;
+                    case "list":
+                        break;
+                    case "info":
+                        break;
+                    case "help":
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        public static void clientSpeak(VoiceCom voiceCom, int setupData, byte[] data)
+        {
+            try
+            {
+                PlayerClient client;
+                if (((voice.distance > 0f) && PlayerClient.Find(voiceCom.networkViewOwner, out client)) && client.hasLastKnownPosition)
+                {
+                    float num = inGlobalV.Contains(client.userID.ToString()) ? (1000000000f * 1000000000f) : (voice.distance * voice.distance);
+                    Vector3 lastKnownPosition = client.lastKnownPosition;
+                    int num3 = 0;
+                    try
+                    {
+                        foreach (PlayerClient client2 in PlayerClient.All)
+                        {
+                            if (((client2 != null) && client2.hasLastKnownPosition) && (client2 != client))
+                            {
+                                Vector3 vector;
+                                vector.x = client2.lastKnownPosition.x - lastKnownPosition.x;
+                                vector.y = client2.lastKnownPosition.y - lastKnownPosition.y;
+                                vector.z = client2.lastKnownPosition.z - lastKnownPosition.z;
+                                float num2 = ((vector.x * vector.x) + (vector.y * vector.y)) + (vector.z * vector.z);
+                                if (num2 <= num)
+                                {
+                                    num3++;
+                                    voiceCom.playerList.Add(client2.netPlayer);
+                                }
+                            }
+                        }
+                        if (num3 > 0)
+                        {
+                            object[] args = new object[] { voice.distance, setupData, data };
+                            voiceCom.networkView.RPC("VoiceCom:voiceplay", voiceCom.playerList, args);
+                        }
+                    }
+                    finally
+                    {
+                        if (num3 > 0)
+                        {
+                            voiceCom.playerList.Clear();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error(ex.ToString());
+            }
+        }
+
+        public static void removerTool(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                string mode = args[1];
+                string UID = senderClient.userID.ToString();
+
+                switch (mode)
+                {
+                    case "on":
+                        if (!destroyerList.Contains(UID))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Remover tool activated. Hit AI or structures to delete them.");
+                            destroyerList.Add(UID);
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You already have the remover tool activated.");
+                        break;
+                    case "off":
+                        if (destroyerList.Contains(UID))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Remover tool deactivated.");
+                            destroyerList.Remove(UID);
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You do not have the remover tool activated.");
+                        break;
+                }
+            }
+        }
+
+        public static bool isPlayer(IDMain idMain)
+        {
+            if (idMain is Character)
+            {
+                Character character = idMain as Character;
+                Controller player = character.playerControlledController;
+                if (player != null)
+                    return true;
+                else
+                    return false;
+            }
+            else
+                return false;
+        }
+
+        public static void StructureUCH(IDMain idMain, StructureComponent structureComponent)
+        {
+            float health = idMain.GetComponent<TakeDamage>().health;
+            if (health != structureComponent.oldHealth)
+            {
+                NetEntityID entID = NetEntityID.Get((MonoBehaviour)structureComponent);
+                NetCull.RemoveRPCsByName(entID, "ClientHealthUpdate");
+                if (!beingDestroyed.Contains(idMain.gameObject))
+                    NetCull.RPC<float>(entID, "ClientHealthUpdate", uLink.RPCMode.OthersBuffered, health);
+                else
+                    beingDestroyed.Remove(idMain.gameObject);
+            }
+        }
+
+        public static void DeployableUCH(IDMain idMain, DeployableObject deployableObject)
+        {
+            TakeDamage component = idMain.GetComponent<TakeDamage>();
+            if (component != null)
+            {
+                float health = component.health;
+                NetEntityID entID = NetEntityID.Get((MonoBehaviour) deployableObject);
+                NetCull.RemoveRPCsByName(entID, "ClientHealthUpdate");
+                if (!beingDestroyed.Contains(idMain.gameObject))
+                    NetCull.RPC<float>(entID, "ClientHealthUpdate", uLink.RPCMode.OthersBuffered, health);
+                else
+                    beingDestroyed.Remove(idMain.gameObject);
+            }
+
+        }
+
+        public static void OnHurt(TakeDamage takeDamage, ref DamageEvent damage)
+        {
+            if (damage.extraData != null)
+            {
+                if (damage.victim.idMain is Character)
+                {
+                    if (isPlayer(damage.victim.idMain))
+                    {
+                        OnHumanHurt(ref damage);
+                    }
+                    else
+                    {
+                        OnAIHurt(ref damage);
+                    }
+                }
+                else
+                {
+                    if (damage.victim.idMain is StructureComponent || damage.victim.idMain is DeployableObject)
+                    {
+                        if (isPlayer(damage.attacker.idMain))
+                        {
+                            if (destroyerList.Contains(damage.attacker.userID.ToString()))
+                            {
+                                beingDestroyed.Add(damage.victim.idMain.gameObject);
+                                NetCull.Destroy(damage.victim.idMain.gameObject);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        public static void OnZombieHurt(Controller controller, ZombieController zombieController, DamageEvent damage)
+        {
+            if (!zombieController.HasTarget())
+            {
+                Character newTarg = damage.attacker.character;
+                if (newTarg != null)
+                {
+                    if (newTarg != zombieController.attackTarget)
+                    {
+                        zombieController.SetTarget(newTarg);
+                        zombieController.lastAttackedMePosition = newTarg.origin;
+                    }
+                    zombieController.targetAttackedMe = true;
+                    if (zombieController.wasRoaming)
+                    {
+                        zombieController.RoamFrameEnd();
+                        NavMeshAgent agent = controller.agent;
+                        if (agent != null)
+                        {
+                            if (!beingDestroyed.Contains(damage.victim.idMain.gameObject))
+                                agent.ResetPath();
+                            else
+                                beingDestroyed.Remove(damage.victim.idMain.gameObject);
+                        }
+                        zombieController.wasRoaming = false;
+                        zombieController.currentlyRoaming = false;
+                    }
+                }
+            }
+        }
+
+        public static void OnAIHurt(ref DamageEvent damage)
+        {
+            if (isPlayer(damage.attacker.idMain))
+            {
+                PlayerClient attackerClient = damage.attacker.client;
+
+                if (destroyerList.Contains(attackerClient.userID.ToString()))
+                {
+                    beingDestroyed.Add(damage.victim.idMain.gameObject);
+
+                    if (damage.victim.idMain.gameObject.name.Contains("Zombie"))
+                        NetCull.Destroy(damage.victim.idMain.gameObject);
+                    else
+                    {
+                        damage.amount = 1000f;
+                        damage.status = LifeStatus.WasKilled;
+                    }
+                }
+            }
+        }
+
+        public static void OnAIKilled(BasicWildLifeAI BWAI, DamageEvent damage)
+        {
+            BWAI.ExitCurrentState();
+            BWAI.EnterState_Dead();
+            Facepunch.NetworkView networkView = BWAI.networkView;
+            NetCull.RemoveRPCsByName(networkView, "GetNetworkUpdate");
+            object[] args = new object[] { BWAI._myTransform.position, damage.attacker.networkViewID };
+            networkView.RPC("ClientDeath", uLink.RPCMode.Others, args);
+            if (beingDestroyed.Contains(damage.victim.idMain.gameObject))
+                NetCull.Destroy(damage.victim.idMain.gameObject);
+            else
+                BWAI.Invoke("DelayedDestroy", 90f);
+            WildlifeManager.RemoveWildlifeInstance(BWAI);
+
+        }
+
+        public static void OnHumanHurt(ref DamageEvent damage)
+        { 
+            PlayerClient victim = damage.victim.client;
+            PlayerClient attacker = null;
+            
+            string victimFaction = "Neutral";
+            string attackerFaction = "";
+
+            KeyValuePair<string, Dictionary<string, string>>[] possibleFactions = Array.FindAll(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(victim.userID.ToString()));
+            if (possibleFactions.Count() > 0)
+            {
+                victimFaction = possibleFactions[0].Key;
+            }
+
+            if (isPlayer(damage.attacker.idMain))
+            {
+                attacker = damage.attacker.client;
+
+                possibleFactions = Array.FindAll(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(attacker.userID.ToString()));
+                if (possibleFactions.Count() > 0)
+                    attackerFaction = possibleFactions[0].Key;
+            }
+
+            if (victimFaction == attackerFaction && damage.attacker.IsDifferentPlayer(victim))
+            {
+                if (damage.damageTypes == DamageTypeFlags.damage_bullet)
+                {
+                    Broadcast.sideNoticeTo(attacker.netPlayer, "You shot " + victim.userName);
+                    Broadcast.sideNoticeTo(victim.netPlayer, attacker.userName + " shot you");
+                }
+                else
+                {
+                    Broadcast.sideNoticeTo(attacker.netPlayer, "You hit " + victim.userName);
+                    Broadcast.sideNoticeTo(victim.netPlayer, attacker.userName + " hit you");
+                }
+                damage.amount = 0f;
+                damage.status = LifeStatus.IsAlive;
+            }
+            else
+            {
+                if (isTeleporting.Contains(victim))
+                {
+                    wasHit.Add(victim);
+                }
+                if (isAccepting.Contains(victim))
+                {
+                    wasHit.Add(victim);
+                }
             }
         }
 
@@ -372,9 +1083,42 @@ namespace RustEssentials.Util
                 }
                 else
                 {
+                    if (!Vars.teleportRequests.ContainsKey(user.playerClient))
+                    {
+                        Vars.teleportRequests.Add(user.playerClient, new Dictionary<PlayerClient, TimerPlus>());
+                        Vars.latestRequests.Add(user.playerClient, null);
+                    }
+
                     if (Vars.useSteamGroup && Vars.groupMembers.Contains(steamUID))
                     {
                         Vars.conLog.Info("Player " + user.displayName + " (" + steamUID + ") has connected through steam group \"" + Vars.steamGroup + "\".");
+                        if (Vars.motdList.Keys.Contains("Join"))
+                        {
+                            foreach (string s in Vars.motdList["Join"])
+                            {
+                                Broadcast.broadcastTo(user.networkPlayer, s);
+                            }
+                        }
+                        switch (Vars.defaultChat)
+                        {
+                            case "global":
+                                if (!Vars.inGlobal.Contains(user.userID.ToString()))
+                                    Vars.inGlobal.Add(user.userID.ToString());
+                                break;
+                            case "direct":
+                                if (!Vars.inDirect.Contains(user.userID.ToString()))
+                                    Vars.inDirect.Add(user.userID.ToString());
+                                break;
+                        }
+                        if (!Vars.inDirectV.Contains(user.userID.ToString()))
+                            Vars.inDirectV.Add(user.userID.ToString());
+                        string joinMessage = "";
+                        if (Vars.enableJoin)
+                        {
+                            joinMessage = Vars.joinMessage.Replace("$USER$", Vars.filterFullNames(user.displayName, steamUID));
+                            Broadcast.broadcastJoinLeave(joinMessage);
+                        }
+                        Vars.conLog.Chat("<BROADCAST ALL> " + Vars.botName + ": " + joinMessage + " (" + steamUID + ")");
                     }
                     else
                     {
@@ -402,6 +1146,8 @@ namespace RustEssentials.Util
                                         Vars.inDirect.Add(user.userID.ToString());
                                     break;
                             }
+                            if (!Vars.inDirectV.Contains(user.userID.ToString()))
+                                Vars.inDirectV.Add(user.userID.ToString());
                             string joinMessage = "";
                             if (Vars.enableJoin)
                             {
@@ -409,18 +1155,13 @@ namespace RustEssentials.Util
                                 Broadcast.broadcastJoinLeave(joinMessage);
                             }
                             Vars.conLog.Chat("<BROADCAST ALL> " + Vars.botName + ": " + joinMessage + " (" + steamUID + ")");
-                            if (!Vars.teleportRequests.ContainsKey(user.playerClient))
-                            {
-                                Vars.teleportRequests.Add(user.playerClient, new Dictionary<PlayerClient, TimerPlus>());
-                                Vars.latestRequests.Add(user.playerClient, null);
-                            }
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Vars.conLog.Error(ex.ToString());
+                //Vars.conLog.Error(ex.ToString());
             }
         }
 
@@ -429,6 +1170,9 @@ namespace RustEssentials.Util
             try
             {
                 PlayerClient playerClient = Array.Find(Vars.teleportRequests.ToArray(), (KeyValuePair<PlayerClient, Dictionary<PlayerClient, TimerPlus>> kv) => kv.Key.netPlayer == user.networkPlayer).Key;
+
+                if (latestPM.ContainsKey(playerClient))
+                    latestPM.Remove(playerClient);
 
                 string leaveMessage = "";
                 if (Vars.enableLeave && !Vars.kickQueue.Contains(playerClient.userName))
@@ -444,7 +1188,7 @@ namespace RustEssentials.Util
             }
             catch (Exception ex)
             {
-                Vars.conLog.Error(ex.ToString());
+                //Vars.conLog.Error(ex.ToString());
             }
         }
 
@@ -737,6 +1481,8 @@ namespace RustEssentials.Util
                         Broadcast.broadcastTo(targetClient.netPlayer, "Teleporting to " + senderClient.userName + " in 10 seconds. Do not move...");
                         Thread t = new Thread(() => teleporting(targetClient, senderClient));
                         t.Start();
+                        isTeleporting.Add(targetClient);
+                        isAccepting.Add(senderClient);
                     }
                     else
                     {
@@ -746,11 +1492,17 @@ namespace RustEssentials.Util
             }
             else
             {
-                PlayerClient targetClient = latestRequests[senderClient];
-                Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting " + targetClient.userName + " in 10 seconds...");
-                Broadcast.broadcastTo(targetClient.netPlayer, "Teleporting to " + senderClient.userName + " in 10 seconds. Do not move...");
-                Thread t = new Thread(() => teleporting(targetClient, senderClient));
-                t.Start();
+                if (latestRequests[senderClient] != null)
+                {
+                    PlayerClient targetClient = latestRequests[senderClient];
+                    Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting " + targetClient.userName + " in 10 seconds...");
+                    Broadcast.broadcastTo(targetClient.netPlayer, "Teleporting to " + senderClient.userName + " in 10 seconds. Do not move...");
+                    Thread t = new Thread(() => teleporting(targetClient, senderClient));
+                    t.Start();
+                    isTeleporting.Add(targetClient);
+                }
+                else
+                    Broadcast.broadcastTo(senderClient.netPlayer, "You have no teleport requests to accept!");
             }
         }
 
@@ -764,10 +1516,37 @@ namespace RustEssentials.Util
             RustServerManagement serverManagement = RustServerManagement.Get();
             while (b)
             {
+                if (wasHit.Contains(targetClient))
+                {
+                    teleportRequests[senderClient].Remove(targetClient);
+                    latestRequests[senderClient] = null;
+                    isTeleporting.Remove(targetClient);
+                    isAccepting.Remove(senderClient);
+                    wasHit.Remove(targetClient);
+                    Broadcast.broadcastTo(senderClient.netPlayer, "Teleport request from " + targetClient.userName + " was interrupted due to damage.");
+                    Broadcast.broadcastTo(targetClient.netPlayer, "Teleport request to " + senderClient.userName + " was interrupted due to damage.");
+                    b = false;
+                    break;
+                }
+                if (wasHit.Contains(senderClient))
+                {
+                    teleportRequests[senderClient].Remove(targetClient);
+                    latestRequests[senderClient] = null;
+                    isTeleporting.Remove(targetClient);
+                    isAccepting.Remove(senderClient);
+                    wasHit.Remove(senderClient);
+                    Broadcast.broadcastTo(senderClient.netPlayer, "Teleport request from " + targetClient.userName + " was interrupted due to damage.");
+                    Broadcast.broadcastTo(targetClient.netPlayer, "Teleport request to " + senderClient.userName + " was interrupted due to damage.");
+                    b = false;
+                    break;
+                }
                 if (timeElapsed >= 10)
                 {
                     serverManagement.TeleportPlayerToPlayer(targetClient.netPlayer, senderClient.netPlayer);
                     teleportRequests[senderClient].Remove(targetClient);
+                    latestRequests[senderClient] = null;
+                    isTeleporting.Remove(targetClient);
+                    isAccepting.Remove(senderClient);
                     b = false;
                     break;
                 }
@@ -777,6 +1556,9 @@ namespace RustEssentials.Util
                     Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " moved. Teleportation canceled.");
                     Broadcast.broadcastTo(targetClient.netPlayer, "Teleportation canceled.");
                     teleportRequests[senderClient].Remove(targetClient);
+                    latestRequests[senderClient] = null;
+                    isTeleporting.Remove(targetClient);
+                    isAccepting.Remove(senderClient);
                     b = false;
                     break;
                 }
@@ -1258,6 +2040,81 @@ namespace RustEssentials.Util
             }
         }
 
+        public static void voiceChannels(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                string action = args[1];
+                string UID = senderClient.userID.ToString();
+                bool hasPermission = false;
+                switch (action)
+                {
+                    case "g":
+                        if (hasPermission)
+                        {
+                            if (!inGlobalV.Contains(UID))
+                            {
+                                inGlobalV.Add(UID);
+                                if (inDirectV.Contains(UID))
+                                    inDirectV.Remove(UID);
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You are now talking in global voice chat.");
+                            }
+                            else
+                            {
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You are already talking in global voice chat.");
+                            }
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You do not have access to global voice chat.");
+                        break;
+                    case "global":
+                        if (hasPermission)
+                        {
+                            if (!inGlobalV.Contains(UID))
+                            {
+                                inGlobalV.Add(UID);
+                                if (inDirectV.Contains(UID))
+                                    inDirectV.Remove(UID);
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You are now talking in global voice chat.");
+                            }
+                            else
+                            {
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You are already talking in global voice chat.");
+                            }
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You do not have access to global voice chat.");
+                        break;
+                    case "d":
+                        if (!inDirectV.Contains(UID))
+                        {
+                            inDirectV.Add(UID);
+                            if (inGlobalV.Contains(UID))
+                                inGlobalV.Remove(UID);
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are now talking in direct voice chat.");
+                        }
+                        else
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are already talking in direct voice chat.");
+                        }
+                        break;
+                    case "direct":
+                        if (!inDirectV.Contains(UID))
+                        {
+                            inDirectV.Add(UID);
+                            if (inGlobalV.Contains(UID))
+                                inGlobalV.Remove(UID);
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are now talking in direct voice chat.");
+                        }
+                        else
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are already talking in direct voice chat.");
+                        }
+                        break;
+                }
+            }
+        }
+
         public static void channels(PlayerClient senderClient, string[] args)
         {
             if (args.Count() > 1)
@@ -1419,36 +2276,40 @@ namespace RustEssentials.Util
         {
             TimerPlus timer = new TimerPlus();
             timer.AutoReset = true;
-            timer.Interval = 10000;
-            timer.Elapsed += ((sender, e) =>
-            {
-                grabGroupMembers(steamGroup);
-            });
+            timer.Interval = refreshInterval;
+            timer.Elapsed += ((sender, e) => grabGroupMembers());
             timer.Start();
         }
 
-        public static void grabGroupMembers(string groupName)
+        public static void grabGroupMembers()
         {
-            if (useSteamGroup)
+            try
             {
-                groupMembers.Clear();
-                string groupURL = @"http://steamcommunity.com/groups/" + groupName + @"/memberslistxml/?xml=1\";
-                using (XmlTextReader reader = new XmlTextReader(groupURL))
+                if (useSteamGroup)
                 {
-                    string currentElement = "";
-                    while (reader.Read())
+                    groupMembers.Clear();
+                    string groupURL = "http://steamcommunity.com/groups/" + steamGroup + "/memberslistxml/?xml=1\\";
+                    using (XmlTextReader reader = new XmlTextReader(groupURL))
                     {
-                        if (reader.NodeType == XmlNodeType.Element && reader.Name == "steamID64")
+                        string currentElement = "";
+                        while (reader.Read())
                         {
-                            currentElement = "steamID64";
-                        }
-                        if (reader.NodeType == XmlNodeType.Text && currentElement == "steamID64")
-                        {
-                            currentElement = "";
-                            groupMembers.Add(reader.Value);
+                            if (reader.NodeType == XmlNodeType.Element && reader.Name == "steamID64")
+                            {
+                                currentElement = "steamID64";
+                            }
+                            if (reader.NodeType == XmlNodeType.Text && currentElement == "steamID64")
+                            {
+                                currentElement = "";
+                                groupMembers.Add(reader.Value);
+                            }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Vars.conLog.Info(ex.ToString());
             }
         }
 
@@ -1463,11 +2324,11 @@ namespace RustEssentials.Util
             sb.AppendLine("useMySQL=false");
             sb.AppendLine("# Use the Steam Group specified as the whitelist");
             sb.AppendLine("useSteamGroup=false");
-            sb.AppendLine("steamGroup=");
+            sb.AppendLine("steamGroupName=");
             sb.AppendLine("# Auto refresh the whitelist every time the interval elapses");
             sb.AppendLine("autoRefresh=true");
-            sb.AppendLine("# Auto refresh interval");
-            sb.AppendLine("refreshInterval=30");
+            sb.AppendLine("# Auto refresh interval in seconds");
+            sb.AppendLine("refreshInterval=10");
             sb.AppendLine("# Instead of using whitelist as itself, users in whitelist will become [Members]");
             sb.AppendLine("useAsMembers=false");
             sb.AppendLine("# The message that is sent to unwhitelisted users upon /whitelist kick");
@@ -1490,6 +2351,10 @@ namespace RustEssentials.Util
             sb.AppendLine("timeScale=0.01");
             sb.AppendLine("# Freeze time upon server start");
             sb.AppendLine("freezeTime=false");
+            sb.AppendLine("# Set fall damage server-wide");
+            sb.AppendLine("fallDamage=true");
+            sb.AppendLine("# Set distance at which you can hear players in direct voice chat (Default 100)");
+            sb.AppendLine("voiceDistance=100");
             sb.AppendLine("");
             sb.AppendLine("[Channels]");
             sb.AppendLine("# Enables or disables direct chat. ATLEAST ONE MUST BE ENABLED!");
@@ -1745,6 +2610,7 @@ namespace RustEssentials.Util
             sb.AppendLine("/kill");
             sb.AppendLine("/stop");
             sb.AppendLine("/access");
+            sb.AppendLine("/remove");
             sb.AppendLine("");
             sb.AppendLine("[Administrator]");
             sb.AppendLine("/airdrop");
@@ -1778,20 +2644,120 @@ namespace RustEssentials.Util
             sb.AppendLine("/kits");
             sb.AppendLine("/help");
             sb.AppendLine("/pm");
+            sb.AppendLine("/f");
             sb.AppendLine("/online");
             sb.AppendLine("/players");
             sb.AppendLine("/chan");
             sb.AppendLine("/history");
-            //sb.AppendLine("/tpa");
-            //sb.AppendLine("/tpaccept");
-            //sb.AppendLine("/tpdeny");
-            //sb.AppendLine("/share");
-            //sb.AppendLine("/unshare");
+            sb.AppendLine("/tpa");
+            sb.AppendLine("/tpaccept");
+            sb.AppendLine("/tpdeny");
+            sb.AppendLine("/share");
+            sb.AppendLine("/unshare");
             sb.AppendLine("/rules");
             sb.AppendLine("/version");
             sb.AppendLine("/whitelist check");
 
             return sb;
+        }
+
+        public static void readFactionData()
+        {
+            List<string> factionFileData = File.ReadAllLines(factionsFile).ToList();
+            foreach (string s in factionFileData)
+            {
+                string factionName = s.Split('=')[0];
+                string membersString = s.Split('=')[1];
+
+                factions.Add(factionName, new Dictionary<string, string>());
+
+                foreach (string s2 in membersString.Split(';'))
+                {
+                    string nameAndUID = s2.Split(':')[0];
+                    string rank = s2.Split(':')[1];
+                    string UID = nameAndUID.Substring(nameAndUID.LastIndexOf(')') + 1);
+
+                    factions[factionName].Add(UID, rank);
+                }
+            }
+        }
+
+        public static void addFactionData(string factionName, string userName, string userID, string rank)
+        {
+            List<string> factionFileData = File.ReadAllLines(factionsFile).ToList();
+            List<string> factionNames = new List<string>();
+            foreach (string str in factionFileData)
+            {
+                factionNames.Add(str.Split('=')[0]);
+            }
+            if (factionNames.Contains(factionName))
+            {
+                string currentMembers = Array.Find(factionFileData.ToArray(), (string s) => s.StartsWith(factionName)).Split('=')[1];
+                string fullString = factionName + "=" + currentMembers;
+
+                fullString += ";(" + userName + ")" + userID + ":" + rank;
+
+                int index = Array.FindIndex(factionFileData.ToArray(), (string s) => s.StartsWith(factionName));
+                factionFileData[index] = fullString;
+            }
+            else
+            {
+                factionFileData.Add(factionName + "=(" + userName + ")" + userID + ":" + rank);
+            }
+            using (StreamWriter sw = new StreamWriter(factionsFile, false))
+            {
+                foreach (string s in factionFileData)
+                {
+                    sw.WriteLine(s);
+                }
+            }
+        }
+
+        public static void remFactionData(string factionName, string userName, string rank)
+        {
+            List<string> factionFileData = File.ReadAllLines(factionsFile).ToList();
+            if (userName == "disband")
+            {
+                string fullLine = Array.Find(factionFileData.ToArray(), (string s) => s.StartsWith(factionName));
+                factionFileData.Remove(fullLine);
+            }
+            else
+            {
+                foreach (string line in factionFileData)
+                {
+                    if (line.StartsWith(factionName))
+                    {
+                        string currentMembersString = Array.Find(factionFileData.ToArray(), (string s) => s.StartsWith(factionName)).Split('=')[1];
+                        Dictionary<string, string> currentMembers = new Dictionary<string,string>();
+                        foreach (string s in currentMembersString.Split(';'))
+                        {
+                            string name = s.Substring(1, s.LastIndexOf(')') - 1);
+                            string UID = s.Substring(s.LastIndexOf(')') + 1, 17);
+                            currentMembers.Add(name, UID);
+                        }
+                        string fullString = factionName + "=" + currentMembersString;
+
+                        if (currentMembersString.StartsWith("(" + userName + ")"))
+                        {
+                            fullString = fullString.Replace("(" + userName + ")" + currentMembers[userName] + ":" + rank + ";", "");
+                            factionFileData[factionFileData.IndexOf(line)] = fullString;
+                        }
+                        else
+                        {
+                            fullString = fullString.Replace(";(" + userName + ")" + currentMembers[userName] + ":" + rank, "");
+                            factionFileData[factionFileData.IndexOf(line)] = fullString;
+                        }
+                        break;
+                    }
+                }
+            }
+            using (StreamWriter sw = new StreamWriter(factionsFile, false))
+            {
+                foreach (string s in factionFileData)
+                {
+                    sw.WriteLine(s);
+                }
+            }
         }
 
         public static void readDoorData()
@@ -1813,6 +2779,7 @@ namespace RustEssentials.Util
             {
                 owners.Add(str.Split('=')[0]);
             }
+
             if (owners.Contains(ownerID))
             {
                 string previousPartners = Array.Find(doorDataFile.ToArray(), (string s) => s.StartsWith(ownerID)).Split('=')[1];
@@ -1827,6 +2794,7 @@ namespace RustEssentials.Util
             {
                 doorDataFile.Add(ownerID + "=" + partnerID);
             }
+
             using (StreamWriter sw = new StreamWriter(Vars.doorsFile, false))
             {
                 foreach (string s in doorDataFile)
@@ -1915,11 +2883,20 @@ namespace RustEssentials.Util
             sb.AppendLine("/chan {global} (Joins the global chat)");
             sb.AppendLine("/chan {d} (Joins the direct chat)");
             sb.AppendLine("/chan {direct} (Joins the direct chat)");
+            sb.AppendLine("/f {admin} *player name* (Gives faction admin to the specified faction member)");
+            sb.AppendLine("/f {create} *name* (Creates and joins a faction with specified name)");
+            sb.AppendLine("/f {deadmin} *player name* (Revokes faction admin from the specified faction member)");
+            sb.AppendLine("/f {disband} (Disbands the current faction if user is the owner of said faction)");
+            sb.AppendLine("/f {join} (Joins the faction from the last invitation received)");
+            sb.AppendLine("/f {join} *name* (Joins the specified faction if invited)");
+            sb.AppendLine("/f {leave} (Leaves current faction)");
+            sb.AppendLine("/f {kick} *name* (Kicks user with said name from faction)");
+            sb.AppendLine("/f {ownership} *player name* (Transfers ownership of faction to specified faction member)");
             sb.AppendLine("/give <player name> <item name> (Gives the item to that player)");
             sb.AppendLine("/give <player name> <item name> [amount] (Gives the amount of the item to that player)");
             sb.AppendLine("/give <player name> [item id] (Gives 1 of the item with the corresponding id to that player)");
             sb.AppendLine("/give <player name> [item id] [amount] (Gives the amount of the item with the corresponding id to that player)");
-            sb.AppendLine("/god <player name> (Gives the specified player god mode)");
+            sb.AppendLine("/god *player name* (Gives the specified player god mode)");
             sb.AppendLine("/heal *player name* (Heals the designated player)");
             sb.AppendLine("/help (Returns available commands for your current rank)");
             sb.AppendLine("/help [command without /] (Returns the documentation and syntax for the specified command)");
@@ -1933,11 +2910,11 @@ namespace RustEssentials.Util
             sb.AppendLine("/kick <player name> (Kick player with reason: \"Kicked by a(n) <Your Rank>\")");
             sb.AppendLine("/kick <player name> [reason] (Kick player with reason)");
             sb.AppendLine("/kickall (Kicks all users, except for the command executor, out of the server)");
-            sb.AppendLine("/kill <player name> (Kills the specified player)");
+            sb.AppendLine("/kill *player name* (Kills the specified player)");
             sb.AppendLine("/kit [kit name] (Gives the user the specified kit if the user has the correct authority level)");
             sb.AppendLine("/kits (Lists the kits available to you)");
             sb.AppendLine("/leave (Emulates the joining of yourself)");
-            sb.AppendLine("/leave <player name> (Emulates the leaving of a fake player)");
+            sb.AppendLine("/leave *player name* (Emulates the leaving of a fake player)");
             sb.AppendLine("/mute *player name* (Mutes the player on global chat)");
             sb.AppendLine("/mute *player name* <time[s/m/h]>(Mutes the player on global chat for a period of time (time example: 15s or 30m))");
             sb.AppendLine("/online (Returns the amount of players currently connected)");
@@ -1945,12 +2922,14 @@ namespace RustEssentials.Util
             sb.AppendLine("/pm <player name> *message* (Sends a private message to that player)");
             sb.AppendLine("/pos (Returns the player's position)");
             sb.AppendLine("/reload {config/whitelist/ranks/commands/kits/motd/bans/all} (Reloads the specified file)");
+            sb.AppendLine("/remove {on} (Gives access to delete entities (structures and AI entities) upon hit)");
+            sb.AppendLine("/remove {of} (Revokes access to delete entities (structures and AI entities) upon hit)");
             sb.AppendLine("/rules (Lists the server rules)");
             sb.AppendLine("/save (Saves all world data)");
             sb.AppendLine("/say *message* (Says a message through the plugin)");
             sb.AppendLine("/saypop *message* (Says a (!) dropdown message to all clients)");
             sb.AppendLine("/saypop [icon] *message* (Says a dropdown message to all clients with designated icon)");
-            //sb.AppendLine("/share *player name* (Shares ownership of your doors with the designated user)");
+            sb.AppendLine("/share *player name* (Shares ownership of your doors with the designated user)");
             sb.AppendLine("/stop (Saves, deactivates, and effectively stops the server)");
             sb.AppendLine("/time (Returns current time of day)");
             sb.AppendLine("/time {0-24} (Sets time to a number between 0 and 24)");
@@ -1962,19 +2941,19 @@ namespace RustEssentials.Util
             sb.AppendLine("/timescale [#] (Sets the speed at which time passes. Recommended between 0 and 1. WARNING: THIS AFFECTS AIRDROPS)");
             sb.AppendLine("/tp *player name* (Teleports the operator/sender to the designated user)");
             sb.AppendLine("/tp <player name 1> <player name 2> (Teleports player 1 to player 2)");
-            //sb.AppendLine("/tpa *player name* (Sends a teleport request to that user)");
-            //sb.AppendLine("/tpaccept (Accepts the last teleport request recieved)");
-            //sb.AppendLine("/tpaccept *player name* (Accepts the teleport request from that user)");
-            //sb.AppendLine("/tpdeny *player name* (Denies the teleport request from that user)");
-            //sb.AppendLine("/tpdeny {all} (Denies all current teleport requests)");
+            sb.AppendLine("/tpa *player name* (Sends a teleport request to that user)");
+            sb.AppendLine("/tpaccept (Accepts the last teleport request recieved)");
+            sb.AppendLine("/tpaccept *player name* (Accepts the teleport request from that user)");
+            sb.AppendLine("/tpdeny *player name* (Denies the teleport request from that user)");
+            sb.AppendLine("/tpdeny {all} (Denies all current teleport requests)");
             sb.AppendLine("/tppos [x] [y] [z] (Teleports your character to the designated vector)");
             sb.AppendLine("/uid (Returns your steam UID)");
             sb.AppendLine("/uid *player name* (Returns that user's steam UID)");
-            sb.AppendLine("/unban <player name> (Unbans the specified player)");
-            sb.AppendLine("/ungod <player name> (Revokes god mode from the specified player)");
-            sb.AppendLine("/unmute <player name> (Unmutes the player on global chat)");
-            //sb.AppendLine("/unshare {all} (Revokes ownership of your doors from everyone)");
-            //sb.AppendLine("/unshare *player name*(Revokes ownership of your doors from the designated user)");
+            sb.AppendLine("/unban *player name* (Unbans the specified player)");
+            sb.AppendLine("/ungod *player name* (Revokes god mode from the specified player)");
+            sb.AppendLine("/unmute *player name* (Unmutes the player on global chat)");
+            sb.AppendLine("/unshare {all} (Revokes ownership of your doors from everyone)");
+            sb.AppendLine("/unshare *player name*(Revokes ownership of your doors from the designated user)");
             sb.AppendLine("/version (Returns the current running version of Rust Essentials)");
             sb.AppendLine("/whitelist {add} [UID] (Adds the specified Steam UID to the whitelist)");
             sb.AppendLine("/whitelist {check} (Checks if you're currently on the whitelist)");
@@ -2243,7 +3222,6 @@ namespace RustEssentials.Util
                     }
 
                     component.SetGodMode(b);
-                    component.health = 100;
                     if (targetClient.netPlayer != sender)
                     {
                         Broadcast.noticeTo(sender, "♫", (b ? "God mode granted to " + targetClient.userName + "." : "Revoked " + targetClient.userName + "'s god mode."));
@@ -2284,16 +3262,18 @@ namespace RustEssentials.Util
                     PlayerClient targetClient = possibleTargets[0];
 
                     TakeDamage component = targetClient.controllable.GetComponent<TakeDamage>();
+                    Character targetChar;
+                    Character.FindByUser(targetClient.userID, out targetChar);
 
-                    //component.Heal();
-                    component.health = 100;
+                    component.Heal(targetChar.idMain, 100f);
+
                     if (targetClient.netPlayer != sender)
                     {
                         Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were healed by " + senderName + "."));
                     }
                     else
                     {
-                        Broadcast.noticeTo(sender, "♫", ("You were healed."));
+                        Broadcast.noticeTo(sender, "♫", "You were healed.");
                     }
                 }
             }
@@ -2321,6 +3301,18 @@ namespace RustEssentials.Util
         {
             if (args.Count() == 2)
             {
+                string mode = args[1];
+                switch (mode)
+                {
+                    case "on":
+                        Broadcast.broadcastAll("Fall damage has been disabled for everyone.");
+                        fallDamage = true;
+                        break;
+                    case "off":
+                        Broadcast.broadcastAll("Fall damage has been enabled for everyone.");
+                        fallDamage = false;
+                        break;
+                }
             }
         }
 
@@ -2948,7 +3940,7 @@ namespace RustEssentials.Util
 
         public static void restoreKit(object sender, ElapsedEventArgs e, PlayerClient playerClient, string kitName)
         {
-            playerCooldowns.Remove(playerClient);
+            playerCooldowns.Remove(playerClient.userID.ToString());
         }
 
         public static void showPlayers(PlayerClient senderClient)
@@ -3021,9 +4013,9 @@ namespace RustEssentials.Util
                             if (kitsForRanks[findRank(senderClient.userID.ToString())].Contains(kitNameToLower)) // If the kit I requested is permitted for my rank
                             {
                                 bool b = true;
-                                if (playerCooldowns.Keys.Contains(senderClient))
+                                if (playerCooldowns.Keys.Contains(senderClient.userID.ToString()))
                                 {
-                                    if (playerCooldowns[senderClient].Values.Contains(kitNameToLower))
+                                    if (playerCooldowns[senderClient.userID.ToString()].Values.Contains(kitNameToLower))
                                         b = false;
                                 }
 
@@ -3040,15 +4032,15 @@ namespace RustEssentials.Util
                                         t.Elapsed += (sender, e) => restoreKit(sender, e, senderClient, kitNameToLower);
                                         t.Start();
 
-                                        if (!playerCooldowns.Keys.Contains(senderClient))
-                                            playerCooldowns.Add(senderClient, new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
+                                        if (!playerCooldowns.Keys.Contains(senderClient.userID.ToString()))
+                                            playerCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
                                         else
-                                            playerCooldowns[senderClient].Add(t, kitNameToLower);
+                                            playerCooldowns[senderClient.userID.ToString()].Add(t, kitNameToLower);
                                     }
                                 }
                                 else // If I am on cool down
                                 {
-                                    foreach (KeyValuePair<TimerPlus, string> kv in playerCooldowns[senderClient])
+                                    foreach (KeyValuePair<TimerPlus, string> kv in playerCooldowns[senderClient.userID.ToString()])
                                     {
                                         if (kv.Value == kitNameToLower)
                                         {
@@ -3069,9 +4061,9 @@ namespace RustEssentials.Util
                             if (unassignedKits.Contains(kitNameToLower)) // If the kit is actually unassigned to a rank
                             {
                                 bool b = true;
-                                if (playerCooldowns.Keys.Contains(senderClient))
+                                if (playerCooldowns.Keys.Contains(senderClient.userID.ToString()))
                                 {
-                                    if (playerCooldowns[senderClient].Values.Contains(kitNameToLower))
+                                    if (playerCooldowns[senderClient.userID.ToString()].Values.Contains(kitNameToLower))
                                         b = false;
                                 }
 
@@ -3088,15 +4080,15 @@ namespace RustEssentials.Util
                                         t.Elapsed += (sender, e) => restoreKit(sender, e, senderClient, kitNameToLower);
                                         t.Start();
 
-                                        if (!playerCooldowns.Keys.Contains(senderClient))
-                                            playerCooldowns.Add(senderClient, new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
+                                        if (!playerCooldowns.Keys.Contains(senderClient.userID.ToString()))
+                                            playerCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
                                         else
-                                            playerCooldowns[senderClient].Add(t, kitNameToLower);
+                                            playerCooldowns[senderClient.userID.ToString()].Add(t, kitNameToLower);
                                     }
                                 }
                                 else // If I am on cool down
                                 {
-                                    foreach (KeyValuePair<TimerPlus, string> kv in playerCooldowns[senderClient])
+                                    foreach (KeyValuePair<TimerPlus, string> kv in playerCooldowns[senderClient.userID.ToString()])
                                     {
                                         if (kv.Value == kitNameToLower)
                                         {

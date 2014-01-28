@@ -123,7 +123,7 @@ namespace RustEssentials.Util
         {
             if (Vars.useSteamGroup)
             {
-                Thread t = new Thread(() => Vars.grabGroupMembers(Vars.steamGroup));
+                Thread t = new Thread(Vars.grabGroupMembers);
                 t.Start();
             }
             else

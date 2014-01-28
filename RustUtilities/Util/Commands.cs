@@ -48,6 +48,15 @@ namespace RustEssentials.Util
                     {
                         switch (command)
                         {
+                            case "/remove":
+                                Vars.removerTool(playerClient, commandArgs);
+                                break;
+                            case "/f":
+                                Vars.handleFactions(playerClient, commandArgs);
+                                break;
+                            case "/r":
+                                Broadcast.reply(playerClient, commandArgs);
+                                break;
                             case "/rules":
                                 Vars.showRules(playerClient);
                                 break;
@@ -75,15 +84,15 @@ namespace RustEssentials.Util
                             case "/tppos":
                                 Vars.teleportPos(playerClient, commandArgs);
                                 break;
-                            //case "/tpaccept":
-                            //    Vars.teleportAccept(playerClient, commandArgs);
-                            //    break;
-                            //case "/tpdeny":
-                            //    Vars.teleportDeny(playerClient, commandArgs);
-                            //    break;
-                            //case "/tpa":
-                            //    Vars.teleportRequest(playerClient, commandArgs);
-                            //    break;
+                            case "/tpaccept":
+                                Vars.teleportAccept(playerClient, commandArgs);
+                                break;
+                            case "/tpdeny":
+                                Vars.teleportDeny(playerClient, commandArgs);
+                                break;
+                            case "/tpa":
+                                Vars.teleportRequest(playerClient, commandArgs);
+                                break;
                             case "/tp":
                                 Vars.teleport(playerClient, commandArgs);
                                 break;
@@ -150,12 +159,12 @@ namespace RustEssentials.Util
                             case "/airdrop":
                                 Vars.airdrop(player, commandArgs);
                                 break;
-                            //case "/share":
-                            //    Share.shareWith(playerClient, commandArgs); // Needs work
-                            //    break;
-                            //case "/unshare":
-                            //    Share.unshareWith(playerClient, commandArgs); // Needs work
-                            //    break;
+                            case "/share":
+                                Share.shareWith(playerClient, commandArgs);
+                                break;
+                            case "/unshare":
+                                Share.unshareWith(playerClient, commandArgs);
+                                break;
                             case "/pm":
                                 Broadcast.sendPM(playerName, commandArgs);
                                 break;
@@ -172,7 +181,7 @@ namespace RustEssentials.Util
                                 Vars.godMode(player, playerName, commandArgs, false);
                                 break;
                             case "/fall":
-                                Vars.setFall(player, commandArgs); // Needs work
+                                Vars.setFall(player, commandArgs);
                                 break;
                             case "/kill":
                                 Vars.killTarget(player, commandArgs);
