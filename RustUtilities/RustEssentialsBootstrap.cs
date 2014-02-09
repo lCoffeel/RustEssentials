@@ -78,6 +78,7 @@ namespace RustEssentials
             _load.loadKits();
             _load.loadMOTD();
             _load.loadWarps();
+            _load.loadController();
             Vars.loadItems();
             Vars.cycleMOTD();
             Vars.onceMOTD();

@@ -82,6 +82,66 @@ namespace RustEssentials.Util
             catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
         }
 
+        public string currentRestriction = "";
+        public bool skipRestriction = false;
+        public void loadController()
+        {
+            try
+            {
+                if (File.Exists(Vars.craftControlFile))
+                {
+                    Vars.restrictCrafting.Clear();
+                    Vars.restrictResearch.Clear();
+                    Vars.restrictBlueprints.Clear();
+                    using (StreamReader sr = new StreamReader(Vars.craftControlFile))
+                    {
+                        string line;
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            if (!line.StartsWith("#"))
+                            {
+                                if (line.IndexOf("#") > -1)
+                                {
+                                    line = line.Substring(0, line.IndexOf("#"));
+                                }
+
+                                line = line.Trim();
+
+                                if (line.StartsWith("[") && line.EndsWith("]"))
+                                {
+                                    currentRestriction = line;
+                                }
+                                else
+                                {
+                                    if (!Vars.itemIDs.Values.Contains(line))
+                                        Vars.conLog.Error("No such item named \"" + line + "\" in section [" + currentRestriction + "].");
+                                    else
+                                    {
+                                        switch (currentRestriction)
+                                        {
+                                            case "[Crafting]":
+                                                if (!Vars.restrictCrafting.Contains(line))
+                                                    Vars.restrictCrafting.Add(line);
+                                                break;
+                                            case "[Researching]":
+                                                if (!Vars.restrictResearch.Contains(line))
+                                                    Vars.restrictResearch.Add(line);
+                                                break;
+                                            case "[Blueprints]":
+                                                if (!Vars.restrictBlueprints.Contains(line))
+                                                    Vars.restrictBlueprints.Add(line);
+                                                break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
+        }
+
         public void loadPrefixes()
         {
             // Replace this function with Pwn's Regex one-liners.
