@@ -1273,7 +1273,7 @@ namespace RustEssentials.Util
                                     Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + factionName + "\".");
                                 else
                                 {
-                                    KeyValuePair<string, Dictionary<string, string>> playerFaction = Array.Find(factionsByNames.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsValue(factionName));
+                                    KeyValuePair<string, Dictionary<string, string>> playerFaction = Array.Find(factionsByNames.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsValue(possibleClients[0].userName));
                                     int onlineMembers = 0;
                                     foreach (string s in playerFaction.Value.Keys)
                                     {
@@ -1318,7 +1318,7 @@ namespace RustEssentials.Util
                                         {
                                             names.Remove(s);
                                         }
-                                        Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, string.Join(", ", names2.ToArray()));
+                                        Broadcast.broadcastTo(senderClient.netPlayer, string.Join(", ", names2.ToArray()));
                                     }
                                 }
                             }
@@ -1582,8 +1582,8 @@ namespace RustEssentials.Util
                         Broadcast.broadcastTo(senderClient.netPlayer, "/f unally *name*: Removes an alliance with another faction.", true);
                         Broadcast.broadcastTo(senderClient.netPlayer, "/f players: Lists players in current faction.", true);
                         Broadcast.broadcastTo(senderClient.netPlayer, "/f online: Displays count of currently online faction members.", true);
-                        Broadcast.broadcastTo(senderClient.netPlayer, "/f safezone {1/2/set/clear/clearall}: Manages safezones.", true);
-                        Broadcast.broadcastTo(senderClient.netPlayer, "/f warzone {1/2/set/clear/clearall}: Manages warzones.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f safezone {1/2/3/4/set/clear/clearall}: Manages safezones.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f warzone {1/2/3/4/set/clear/clearall}: Manages warzones.", true);
                         Broadcast.broadcastTo(senderClient.netPlayer, "/f build {on/off}: Allows building within zones.", true);
                         break;
                     default:
@@ -3445,7 +3445,8 @@ namespace RustEssentials.Util
                 userName = user.playerClient.userID.ToString();
 
             RustProto.Avatar objB = user.LoadAvatar();
-            user.connector.ServerManagement.UpdateConnectingUserAvatar(user, ref user.avatar);
+            RustServerManagement RSM = RustServerManagement.Get();
+            RSM.UpdateConnectingUserAvatar(user, ref user.avatar);
             if (!object.ReferenceEquals(user.avatar, objB))
             {
                 user.SaveAvatar();
