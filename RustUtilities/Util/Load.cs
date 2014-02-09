@@ -1,7 +1,7 @@
 ﻿/**
  * @file: Load.cs
  * @author: Team Cerionn (https://github.com/Team-Cerionn)
- * @version: 1.0.0.0
+
  * @description: Load class for Rust Essentials
  */
 using System;
@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
+using UnityEngine;
 
 namespace RustEssentials.Util
 {
@@ -35,9 +36,9 @@ namespace RustEssentials.Util
                         {
                             if (!line.StartsWith("#"))
                             {
-                                if (line.LastIndexOf("#") > -1)
+                                if (line.IndexOf("#") > -1)
                                 {
-                                    line = line.Substring(0, line.LastIndexOf("#"));
+                                    line = line.Substring(0, line.IndexOf("#"));
                                 }
 
                                 line = line.Replace(" ", "");
@@ -96,9 +97,9 @@ namespace RustEssentials.Util
                         {
                             if (!line.StartsWith("#"))
                             {
-                                if (line.LastIndexOf("#") > -1)
+                                if (line.IndexOf("#") > -1)
                                 {
-                                    line = line.Substring(0, line.LastIndexOf("#"));
+                                    line = line.Substring(0, line.IndexOf("#"));
                                 }
 
                                 line = line.Trim();
@@ -110,6 +111,13 @@ namespace RustEssentials.Util
 
                                     if (!Vars.playerPrefixes.ContainsKey(UID))
                                         Vars.playerPrefixes.Add(UID, prefix);
+                                }
+                                else
+                                {
+                                    string UID = line.Trim();
+
+                                    if (!Vars.emptyPrefixes.Contains(UID))
+                                        Vars.emptyPrefixes.Add(UID);
                                 }
                             }
                         }
@@ -135,9 +143,9 @@ namespace RustEssentials.Util
                         {
                             if (!line.StartsWith("#"))
                             {
-                                if (line.LastIndexOf("#") > -1)
+                                if (line.IndexOf("#") > -1)
                                 {
-                                    line = line.Substring(0, line.LastIndexOf("#"));
+                                    line = line.Substring(0, line.IndexOf("#"));
                                 }
 
                                 line = line.Trim();
@@ -145,7 +153,15 @@ namespace RustEssentials.Util
                                 if (line.StartsWith("[") && line.EndsWith("]"))
                                 {
                                     currentRank = line.Substring(1, line.Length - 2);
-                                    Vars.conLog.Info("Adding commands for [" + currentRank + "]...");
+                                    if (!Vars.enabledCommands.Keys.Contains(currentRank))
+                                    {
+                                        Vars.enabledCommands.Add(currentRank, new List<string>());
+                                        Vars.conLog.Info("Adding commands for [" + currentRank + "]...");
+                                    }
+                                    else
+                                    {
+                                        Vars.conLog.Error("Rank [" + currentRank + "] already exists!");
+                                    }
                                 }
                                 else
                                 {
@@ -153,8 +169,6 @@ namespace RustEssentials.Util
                                     {
                                         if (Vars.enabledCommands.Keys.Contains(currentRank))
                                             Vars.enabledCommands[currentRank].Add(line);
-                                        else
-                                            Vars.enabledCommands.Add(currentRank, new List<string>(){ { line } });
 
                                         Vars.totalCommands.Add(line);
                                     }
@@ -201,6 +215,8 @@ namespace RustEssentials.Util
                     Vars.kitCooldowns.Clear();
                     Vars.kits.Clear();
                     Vars.kitsForRanks.Clear();
+                    Vars.kitsForUIDs.Clear();
+                    Vars.unassignedKits.Clear();
                     foreach (KeyValuePair<string, string> kv in Vars.rankPrefixes)
                     {
                         if (kv.Key != Vars.defaultRank)
@@ -215,9 +231,9 @@ namespace RustEssentials.Util
                         {
                             if (!line.StartsWith("#"))
                             {
-                                if (line.LastIndexOf("#") > -1)
+                                if (line.IndexOf("#") > -1)
                                 {
-                                    line = line.Substring(0, line.LastIndexOf("#"));
+                                    line = line.Substring(0, line.IndexOf("#"));
                                 }
 
                                 if (line.StartsWith("[") && line.EndsWith("]"))
@@ -243,8 +259,25 @@ namespace RustEssentials.Util
                                         }
                                         else
                                         {
-                                            Vars.conLog.Error("No such rank prefix " + prefix + ". Skipping kit [" + currentKit + "]...");
-                                            isSkipping = true;
+                                            long UID;
+                                            if (prefix.Length == 17 && long.TryParse(prefix, out UID))
+                                            {
+                                                if (!Vars.kitsForUIDs.ContainsKey(UID.ToString()))
+                                                    Vars.kitsForUIDs.Add(UID.ToString(), new List<string>() { { currentKit.ToLower() } });
+                                                else
+                                                    Vars.kitsForUIDs[UID.ToString()].Add(currentKit.ToLower());
+
+                                                if (!Vars.kits.ContainsKey(currentKit.ToLower()))
+                                                    Vars.kits.Add(currentKit.ToLower(), new Dictionary<string, int>());
+
+                                                isSkipping = false;
+                                                Vars.conLog.Info("Loading items for kit [" + currentKit + "] for user [" + UID.ToString() + "]...");
+                                            }
+                                            else
+                                            {
+                                                Vars.conLog.Error("No such rank prefix " + prefix + ". Skipping kit [" + currentKit + "]...");
+                                                isSkipping = true;
+                                            }
                                         }
                                     }
                                     else
@@ -343,11 +376,153 @@ namespace RustEssentials.Util
                         Vars.kitsForRanks[kv.Key].Add(kv2.Key);
                 }
             }
-            if (Vars.enabledCommands.Count > 0)
-                Vars.conLog.Info("Kits inherited for each rank successfully!");
+            Vars.conLog.Info("Kits inherited for each rank successfully!");
+        }
+
+        public string currentWarp = "";
+        public bool isSkippingWarp = false;
+        public void loadWarps()
+        {
+            try
+            {
+                if (File.Exists(Vars.warpsFile))
+                {
+                    Vars.warpCooldowns.Clear();
+                    Vars.warps.Clear();
+                    Vars.warpsForRanks.Clear();
+                    Vars.warpsForUIDs.Clear();
+                    Vars.unassignedWarps.Clear();
+                    foreach (KeyValuePair<string, string> kv in Vars.rankPrefixes)
+                    {
+                        if (kv.Key != Vars.defaultRank)
+                        {
+                            Vars.warpsForRanks.Add(kv.Key, new List<string>());
+                        }
+                    }
+                    using (StreamReader sr = new StreamReader(Vars.warpsFile))
+                    {
+                        string line;
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            if (!line.StartsWith("#"))
+                            {
+                                if (line.IndexOf("#") > -1)
+                                {
+                                    line = line.Substring(0, line.IndexOf("#"));
+                                }
+
+                                if (line.StartsWith("[") && line.EndsWith("]"))
+                                {
+                                    if (line.Contains("."))
+                                    {
+                                        currentKit = line.Substring(1, line.IndexOf(".") - 1);
+                                        string prefix = line.Substring(line.IndexOf(".") + 1, line.Length - line.IndexOf(".") - 2);
+                                        string rank = "";
+                                        foreach (KeyValuePair<string, string> kv in Vars.rankPrefixes)
+                                        {
+                                            if (kv.Value == "[" + prefix + "]")
+                                            {
+                                                rank = kv.Key;
+                                            }
+                                        }
+                                        if (Vars.rankPrefixes.Keys.Contains(rank))
+                                        {
+                                            Vars.warpsForRanks[rank].Add(currentWarp.ToLower());
+                                            Vars.warps.Add(currentWarp.ToLower(), new Vector3());
+                                            isSkippingWarp = false;
+                                            Vars.conLog.Info("Loading location for warp [" + currentWarp + "]...");
+                                        }
+                                        else
+                                        {
+                                            long UID;
+                                            if (prefix.Length == 17 && long.TryParse(prefix, out UID))
+                                            {
+                                                if (!Vars.warpsForUIDs.ContainsKey(UID.ToString()))
+                                                    Vars.warpsForUIDs.Add(UID.ToString(), new List<string>() { { currentWarp.ToLower() } });
+                                                else
+                                                    Vars.warpsForUIDs[UID.ToString()].Add(currentWarp.ToLower());
+
+                                                if (!Vars.warps.ContainsKey(currentWarp.ToLower()))
+                                                    Vars.warps.Add(currentWarp.ToLower(), new Vector3());
+                                                isSkippingWarp = false;
+                                                Vars.conLog.Info("Loading location for warp [" + currentWarp + "] for user [" + UID.ToString() + "]...");
+                                            }
+                                            else
+                                            {
+                                                Vars.conLog.Error("No such rank prefix " + prefix + ". Skipping warp [" + currentWarp + "]...");
+                                                isSkippingWarp = true;
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        currentWarp = line.Substring(1, line.Length - 2);
+                                        Vars.warps.Add(currentWarp.ToLower(), new Vector3());
+                                        Vars.unassignedWarps.Add(currentWarp.ToLower());
+                                        isSkippingWarp = false;
+                                        Vars.conLog.Info("Loading location for warp [" + currentWarp + "]...");
+                                    }
+                                }
+                                else
+                                {
+                                    line = line.Trim();
+                                    if (line.Contains("(") && line.Contains(",") && line.Contains(")") && !isSkipping)
+                                    {
+                                        line = line.Replace("(", "").Replace(")", "").Replace(" ", "");
+                                        string xposStr = line.Split(',')[0];
+                                        string yposStr = line.Split(',')[1];
+                                        string zposStr = line.Split(',')[2];
+                                        float xpos;
+                                        float ypos;
+                                        float zpos;
+
+                                        if (float.TryParse(xposStr, out xpos) && float.TryParse(yposStr, out ypos) && float.TryParse(zposStr, out zpos))
+                                        {
+                                            Vector3 warpLocation = new Vector3(xpos, ypos, zpos);
+                                            Vars.warps[currentWarp.ToLower()] = warpLocation;
+                                        }
+                                        else
+                                        {
+                                            Vars.conLog.Error("Something went wrong when loading warp [" + currentWarp + "]. Skipping...");
+                                            isSkippingWarp = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (Vars.inheritWarps)
+                    inheritWarps();
+            }
+            catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
+        }
+
+        public void inheritWarps()
+        {
+            foreach (KeyValuePair<string, List<string>> kv in Vars.warpsForRanks)
+            {
+                foreach (KeyValuePair<string, List<string>> nkv in Vars.warpsForRanks)
+                {
+                    if (Vars.ofLowerRank(nkv.Key, kv.Key, true))
+                    {
+                        foreach (string s in nkv.Value)
+                        {
+                            Vars.kitsForRanks[kv.Key].Add(s);
+                        }
+                    }
+                }
+                foreach (KeyValuePair<string, Vector3> kv2 in Vars.warps)
+                {
+                    if (Vars.unassignedWarps.Contains(kv2.Key))
+                        Vars.warpsForRanks[kv.Key].Add(kv2.Key);
+                }
+            }
+            Vars.conLog.Info("Warps inherited for each rank successfully!");
         }
 
         private string currentMode = "";
+        private int currentInstance = 0;
         public void loadMOTD()
         {
             // Replace this function with Pwn's Regex one-liners.
@@ -358,14 +533,16 @@ namespace RustEssentials.Util
                     Vars.motdList.Clear();
                     using (StreamReader sr = new StreamReader(Vars.motdFile))
                     {
+                        int lineNumber = 0;
                         string line;
                         while ((line = sr.ReadLine()) != null)
                         {
+                            lineNumber++;
                             if (!line.StartsWith("#"))
                             {
-                                if (line.LastIndexOf("#") > -1)
+                                if (line.IndexOf("#") > -1)
                                 {
-                                    line = line.Substring(0, line.LastIndexOf("#"));
+                                    line = line.Substring(0, line.IndexOf("#"));
                                 }
 
                                 if (line.StartsWith("[") && line.EndsWith("]"))
@@ -379,16 +556,37 @@ namespace RustEssentials.Util
                                             multiplier *= 60;
                                         if (interval.EndsWith("h"))
                                             multiplier *= 3600;
-                                        try
+                                        if (currentMode == "Cycle")
                                         {
-                                            Vars.cycleInterval = Convert.ToInt16(interval.Remove(interval.Length - 1)) * multiplier;
+                                            int instances = Vars.cycleMOTDList.Count() + 1;
+                                            currentInstance = instances;
+                                            Vars.conLog.Info("Adding MOTD [" + currentMode + "]...");
+                                            try
+                                            {
+                                                Vars.cycleMOTDList.Add(currentMode + instances, new Dictionary<string, List<string>>() { { (Convert.ToInt16(interval.Remove(interval.Length - 1)) * multiplier).ToString(), new List<string>() } });
+
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                Vars.conLog.Error("Cycle Interval must be an integer! Defaulting to 15 minutes...");
+                                                Vars.cycleMOTDList.Add(currentMode + instances, new Dictionary<string, List<string>>() { { "900000", new List<string>() } });
+                                            }
                                         }
-                                        catch (Exception ex)
+                                        else if (currentMode == "Once")
                                         {
-                                            Vars.conLog.Error("Cycle Interval must be an integer! Defaulting to 15 minutes...");
+                                            try
+                                            {
+                                                int instances = Vars.onceMOTDList.Count() + 1;
+                                                currentInstance = instances;
+                                                Vars.onceMOTDList.Add(currentMode + instances, new Dictionary<string, List<string>>() { { (Convert.ToInt16(interval.Remove(interval.Length - 1)) * multiplier).ToString(), new List<string>() } });
+
+                                                Vars.conLog.Info("Adding MOTD [" + currentMode + "]...");
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                Vars.conLog.Error("Once Interval must be an integer on line " + lineNumber + "! Skipping...");
+                                            }
                                         }
-                                        Vars.motdList.Add(currentMode, new List<string>());
-                                        Vars.conLog.Info("Adding MOTD [" + currentMode + "]...");
                                     }
                                     else
                                     {
@@ -401,7 +599,18 @@ namespace RustEssentials.Util
                                 {
                                     if (line.Length > 1)
                                     {
-                                        Vars.motdList[currentMode].Add(line);
+                                        if (Vars.cycleMOTDList.ContainsKey(currentMode + currentInstance))
+                                        {
+                                            Vars.cycleMOTDList[currentMode + currentInstance].ElementAt(0).Value.Add(line);
+                                        }
+                                        else if (Vars.onceMOTDList.ContainsKey(currentMode + currentInstance))
+                                        {
+                                            Vars.onceMOTDList[currentMode + currentInstance].ElementAt(0).Value.Add(line);
+                                        }
+                                        else
+                                        {
+                                            Vars.motdList[currentMode].Add(line);
+                                        }
                                     }
                                 }
                             }
@@ -471,6 +680,16 @@ namespace RustEssentials.Util
                 {
                     Vars.conLog.Error("voiceDistance could not be parsed as a number!");
                 }
+                try { Vars.enableRepair = Convert.ToBoolean(Config.enableRepair); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("enableRepair could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                }
+                try { Vars.forceNudity = Convert.ToBoolean(Config.forceNudity); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("forceNudity could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                }
 
                 try { Vars.directChat = Convert.ToBoolean(Config.directChat); }
                 catch (Exception ex)
@@ -489,7 +708,6 @@ namespace RustEssentials.Util
                 }
                 if (Vars.directChat)
                     Vars.removeTag = false;
-
                 Vars.defaultChat = Config.defaultChat;
                 if (!Vars.directChat && !Vars.globalChat)
                 {
@@ -501,52 +719,73 @@ namespace RustEssentials.Util
                         Vars.conLog.Error("Defaulting to direct...");
                     }
                 }
+                Vars.allowedChars = Config.allowedChars.Replace("\n", "").Split(',').ToList();
+                try { Vars.restrictChars = Convert.ToBoolean(Config.restrictChars); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("restrictChars could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                }
+                try { Vars.minimumNameCount = Convert.ToInt16(Config.minimumNameCount); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("minimumNameCount could not be parsed as a number!");
+                }
+                try { Vars.maximumNameCount = Convert.ToInt16(Config.maximumNameCount); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("maximumNameCount could not be parsed as a number!");
+                }
+                try { Vars.kickDuplicate = Convert.ToBoolean(Config.kickDuplicate); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("kickDuplicate could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                }
+                try { Vars.lowerAuthority = Convert.ToBoolean(Config.lowerAuthority); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("lowerAuthority could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                }
+                Vars.illegalWords = Config.illegalWords.Replace("\n", "").Split(',').ToList();
+                try { Vars.censorship = Convert.ToBoolean(Config.censorship); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("censorship could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                }
 
                 Vars.botName = Vars.replaceQuotes(Config.botName);
-                if (Config.joinMessage.Contains("$USER$"))
-                    Vars.joinMessage = Vars.replaceQuotes(Config.joinMessage).Replace("\n", "");
-                else
-                    Vars.conLog.Error("Join Message does not contain $USER$! Defaulting to original...");
+                Vars.joinMessage = Vars.replaceQuotes(Config.joinMessage).Replace("\n", "");
                 try { Vars.enableJoin = Convert.ToBoolean(Config.enableJoin); }
                 catch (Exception ex)
                 {
                     Vars.conLog.Error("enableJoin could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
                 }
 
-                if (Config.leaveMessage.Contains("$USER$"))
-                    Vars.leaveMessage = Vars.replaceQuotes(Config.leaveMessage).Replace("\n", "");
-                else
-                    Vars.conLog.Error("Leave Message does not contain $USER$! Defaulting to original...");
+                Vars.leaveMessage = Vars.replaceQuotes(Config.leaveMessage).Replace("\n", "");
                 try { Vars.enableLeave = Convert.ToBoolean(Config.enableLeave); }
                 catch (Exception ex)
                 {
                     Vars.conLog.Error("enableLeave could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
                 }
 
-                if (Config.suicideMessage.Contains("$VICTIM$"))
-                    Vars.suicideMessage = Vars.replaceQuotes(Config.suicideMessage).Replace("\n", "");
-                else
-                    Vars.conLog.Error("Suicide Message does not contain $VICTIM$! Defaulting to original...");
+                Vars.suicideMessage = Vars.replaceQuotes(Config.suicideMessage).Replace("\n", "");
                 try { Vars.suicideMessages = Convert.ToBoolean(Config.enableSuicide); }
                 catch (Exception ex)
                 {
                     Vars.conLog.Error("enableSuicide could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
                 }
 
-                if (Config.murderMessage.Contains("$VICTIM$") && Config.murderMessage.Contains("$KILLER$"))
-                    Vars.murderMessage = Vars.replaceQuotes(Config.murderMessage).Replace("\n", "");
+                Vars.murderMessage = Vars.replaceQuotes(Config.murderMessage).Replace("\n", "");
+                if (Config.murderMessageUnknown.Contains("$VICTIM$") && Config.murderMessageUnknown.Contains("$KILLER$"))
+                    Vars.murderMessageUnknown = Vars.replaceQuotes(Config.murderMessageUnknown).Replace("\n", "");
                 else
-                    Vars.conLog.Error("Murder Message must contain both $VICTIM$ and $KILLER$! Defaulting to original...");
+                    Vars.conLog.Error("Murder Message Unknown must contain both $VICTIM$ and $KILLER$! Defaulting to original...");
                 try { Vars.murderMessages = Convert.ToBoolean(Config.enableMurder); }
                 catch (Exception ex)
                 {
                     Vars.conLog.Error("enableMurder could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
                 }
 
-                if (Config.deathMessage.Contains("$VICTIM$") && Config.deathMessage.Contains("$KILLER$"))
-                    Vars.accidentMessage = Vars.replaceQuotes(Config.deathMessage).Replace("\n", "");
-                else
-                    Vars.conLog.Error("Death Message must contain both $VICTIM$ and $KILLER$! Defaulting to original...");
+                Vars.accidentMessage = Vars.replaceQuotes(Config.deathMessage).Replace("\n", "");
                 try { Vars.accidentMessages = Convert.ToBoolean(Config.enableDeath); }
                 catch (Exception ex)
                 {
@@ -589,6 +828,38 @@ namespace RustEssentials.Util
                 {
                     Vars.conLog.Error("teleportRequest could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
                 }
+                try { Vars.requestDelay = Convert.ToInt16(Config.requestDelay); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("requestDelay could not be parsed as a number!");
+                }
+                try { Vars.warpDelay = Convert.ToInt16(Config.warpDelay); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("warpDelay could not be parsed as a number!");
+                }
+                try { Vars.requestCooldownType = Convert.ToInt16(Config.requestCooldownType); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("requestCooldownType could not be parsed as a number!");
+                }
+                try
+                {
+                    int number = Convert.ToInt16(Config.requestCooldown.Substring(0, Config.requestCooldown.Length - 1));
+                    int multiplier = 1000;
+                    if (Config.requestCooldown.EndsWith("m"))
+                        multiplier *= 60;
+                    Vars.requestCooldown = number * multiplier; 
+                }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("requestCooldown could not be parsed!");
+                }
+                try { Vars.denyRequestWarzone = Convert.ToBoolean(Config.denyRequestWarzone); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("denyRequestWarzone could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                }
 
                 try { Vars.inheritCommands = Convert.ToBoolean(Config.inheritCommands); }
                 catch (Exception ex)
@@ -599,6 +870,42 @@ namespace RustEssentials.Util
                 catch (Exception ex)
                 {
                     Vars.conLog.Error("inheritKits could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                }
+                try { Vars.inheritWarps = Convert.ToBoolean(Config.inheritWarps); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("inheritWarps could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                }
+
+                try { Vars.friendlyFire = Convert.ToBoolean(Config.friendlyFire); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("friendlyFire could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                }
+                try { Vars.alliedFire = Convert.ToBoolean(Config.alliedFire); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("alliedFire could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                }
+                try { Vars.neutralDamage = Convert.ToInt16(Config.neutralDamage); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("neutralDamage could not be parsed as a number!");
+                }
+                try { Vars.warDamage = Convert.ToInt16(Config.warDamage); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("warDamage could not be parsed as a number!");
+                }
+                try { Vars.warFriendlyDamage = Convert.ToInt16(Config.warFriendlyDamage); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("warFriendlyDamage could not be parsed as a number!");
+                }
+                try { Vars.warAllyDamage = Convert.ToInt16(Config.warAllyDamage); }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("warAllyDamage could not be parsed as a number!");
                 }
 
                 Vars.conLog.Info("Config loaded.");

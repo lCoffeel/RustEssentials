@@ -1,7 +1,7 @@
 ﻿/**
  * @file: Vars.cs
  * @author: Team Cerionn (https://github.com/Team-Cerionn)
- * @version: 1.0.0.0
+
  * @description: Vars class for Rust Essentials
  */
 using System;
@@ -18,6 +18,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Xml;
+using Facepunch;
 using UnityEngine;
 
 namespace RustEssentials.Util
@@ -39,12 +40,16 @@ namespace RustEssentials.Util
         public static string kitsFile = Path.Combine(saveDir, "kits.ini");
         public static string motdFile = Path.Combine(saveDir, "motd.ini");
         public static string bansFile = Path.Combine(saveDir, "bans.txt");
-        public static string prefixFile = Path.Combine(saveDir, "prefix.txt");
+        public static string prefixFile = Path.Combine(saveDir, "prefix.ini");
+        public static string warpsFile = Path.Combine(saveDir, "warps.ini");
         public static string doorsFile = Path.Combine(saveDir, "door_data.dat");
         public static string factionsFile = Path.Combine(saveDir, "factions.dat");
+        public static string cooldownsFile = Path.Combine(saveDir, "kit_cooldowns.dat");
+        public static string requestCooldownsFile = Path.Combine(saveDir, "tpaPer_cooldowns.dat");
+        public static string requestCooldownsAllFile = Path.Combine(saveDir, "tpaAll_cooldowns.dat");
+        public static string zonesFile = Path.Combine(saveDir, "zones.dat");
         public static string defaultRank = "Default";
         public static string currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString().Substring(0, 5);
-        public static string rustCurrentVer = "4.3.1.93830";
         public static string remoteVersion = "?.?.?";
         public static string currentLog;
         public static string currentChatLog;
@@ -70,10 +75,20 @@ namespace RustEssentials.Util
         public static bool removePrefix = true;
         public static bool inheritCommands = true;
         public static bool inheritKits = true;
+        public static bool inheritWarps = true;
         public static bool suicideMessages = false;
         public static bool murderMessages = true;
         public static bool accidentMessages = true;
         public static bool fallDamage = true;
+        public static bool restrictChars = true;
+        public static bool kickDuplicate = false;
+        public static bool lowerAuthority = false;
+        public static bool censorship = false;
+        public static bool friendlyFire = false;
+        public static bool alliedFire = false;
+        public static bool enableRepair = true;
+        public static bool forceNudity = false;
+        public static bool denyRequestWarzone = true;
 
         public static string whitelistKickCMD = "Whitelist was enabled and you are not whitelisted.";
         public static string whitelistKickJoin = "You are not whitelisted!";
@@ -86,13 +101,39 @@ namespace RustEssentials.Util
         public static string steamGroup = "";
         public static string suicideMessage = "$VICTIM$ killed himself.";
         public static string murderMessage = "$KILLER$ [$WEAPON$ ($PART$)] $VICTIM$";
+        public static string murderMessageUnknown = "$KILLER$ killed $VICTIM$.";
         public static string accidentMessage = "$VICTIM$ got mauled by a $KILLER$.";
 
-        public static int cycleInterval = 900000;
+        public static List<string> allowedChars = new List<string>()
+        {
+            { "a" },{ "b" },{ "c" },{ "d" },{ "e" },{ "f" },{ "g" },{ "h" },{ "i" },{ "j" },
+            { "k" },{ "l" },{ "m" },{ "n" },{ "o" },{ "p" },{ "q" },{ "r" },{ "s" },{ "t" },
+            { "u" },{ "v" },{ "w" },{ "x" },{ "y" },{ "z" },{ "1" },{ "2" },{ "3" },{ "4" },
+            { "5" },{ "6" },{ "7" },{ "8" },{ "9" },{ "0" },{ "`" },{ "-" },{ "=" },{ "'" },
+            { "." },{ "[" },{ "]" },{ "(" },{ ")" },{ "{" },{ "}" }
+        };
+        public static List<string> illegalWords = new List<string>()
+        {
+            { "fuck" },{ "shit" },{ "cunt" },{ "bitch" },{ "pussy" },{ "slut" },{ "whore" },
+            { "ass" }
+        };
+
         public static int refreshInterval = 15000;
         public static int directDistance = 150;
         public static int chatLogCap = 15;
         public static int logCap = 15;
+        public static int maxMembers = 15;
+        public static int minimumNameCount = 2;
+        public static int maximumNameCount = 15;
+        public static int requestDelay = 10;
+        public static int warpDelay = 10;
+        public static int requestCooldownType = 0;
+        public static int requestCooldown = 900000;
+
+        public static float neutralDamage = 1f;
+        public static float warDamage = 1f;
+        public static float warFriendlyDamage = 0f;
+        public static float warAllyDamage = 0.70f;
         // SAVED VARIABLES END
 
         public static bool noErrors = true;
@@ -111,8 +152,13 @@ namespace RustEssentials.Util
             { motdFile },
             { doorsFile },
             { factionsFile },
+            { cooldownsFile },
+            { requestCooldownsFile },
+            { requestCooldownsAllFile },
             { bansFile },
-            { prefixFile }
+            { prefixFile },
+            { warpsFile },
+            { zonesFile }
         };
         public static List<string> allDirs = new List<string>()
         {
@@ -124,6 +170,7 @@ namespace RustEssentials.Util
         public static List<string> totalCommands = new List<string>();
         public static List<string> inGlobal = new List<string>();
         public static List<string> inDirect = new List<string>();
+        public static List<string> inFaction = new List<string>();
         public static List<string> inGlobalV = new List<string>();
         public static List<string> inDirectV = new List<string>();
         public static List<string> inFactionV = new List<string>();
@@ -135,6 +182,22 @@ namespace RustEssentials.Util
         public static List<string> completeDoorAccess = new List<string>();
         public static List<string> godList = new List<string>();
         public static List<string> destroyerList = new List<string>();
+        public static List<string> ownershipList = new List<string>();
+        public static List<string> hiddenList = new List<string>();
+        public static List<string> unassignedWarps = new List<string>();
+        public static List<string> unassignedKits = new List<string>();
+        public static List<string> emptyPrefixes = new List<string>();
+        public static List<string> vanishedList = new List<string>();
+        public static List<string> buildList = new List<string>();
+        public static List<PlayerClient> AllPlayerClients = new List<PlayerClient>();
+        public static Dictionary<string, Zone> safeZones = new Dictionary<string, Zone>();
+        public static Dictionary<string, Zone> warZones = new Dictionary<string, Zone>();
+        public static Dictionary<PlayerClient, Vector2> firstPoints = new Dictionary<PlayerClient, Vector2>();
+        public static Dictionary<PlayerClient, Vector2> secondPoints = new Dictionary<PlayerClient, Vector2>();
+        public static Dictionary<PlayerClient, Vector2> thirdPoints = new Dictionary<PlayerClient, Vector2>();
+        public static Dictionary<PlayerClient, Vector2> forthPoints = new Dictionary<PlayerClient, Vector2>();
+        public static Dictionary<PlayerClient, string> inWarZone = new Dictionary<PlayerClient, string>();
+        public static Dictionary<PlayerClient, string> inSafeZone = new Dictionary<PlayerClient, string>();
         public static List<GameObject> beingDestroyed = new List<GameObject>();
         public static List<PlayerClient> killList = new List<PlayerClient>();
         public static List<PlayerClient> isTeleporting = new List<PlayerClient>();
@@ -146,21 +209,33 @@ namespace RustEssentials.Util
         public static Dictionary<string, string> rankPrefixes = new Dictionary<string, string>();
         public static Dictionary<string, string> currentBans = new Dictionary<string, string>();
         public static Dictionary<string, string> currentBanReasons = new Dictionary<string, string>();
+        public static Dictionary<string, TimerPlus> blockedRequestsAll = new Dictionary<string, TimerPlus>();
+        public static Dictionary<string, List<string>> previousArmor = new Dictionary<string, List<string>>();
         public static Dictionary<string, List<string>> rankList = new Dictionary<string, List<string>>();
         public static Dictionary<string, List<string>> motdList = new Dictionary<string, List<string>>();
         public static Dictionary<string, List<string>> enabledCommands = new Dictionary<string, List<string>>();
         public static Dictionary<string, List<string>> kitsForRanks = new Dictionary<string, List<string>>();
+        public static Dictionary<string, List<string>> kitsForUIDs = new Dictionary<string, List<string>>();
+        public static Dictionary<string, List<string>> warpsForRanks = new Dictionary<string, List<string>>();
+        public static Dictionary<string, List<string>> warpsForUIDs = new Dictionary<string, List<string>>();
         public static Dictionary<string, List<string>> factionInvites = new Dictionary<string, List<string>>();
+        public static Dictionary<string, List<string>> alliances = new Dictionary<string, List<string>>();
+        public static OrderedDictionary historyFaction = new OrderedDictionary();
         public static Dictionary<string, TimerPlus> muteTimes = new Dictionary<string, TimerPlus>();
         public static Dictionary<PlayerClient, PlayerClient> latestPM = new Dictionary<PlayerClient, PlayerClient>();
         public static Dictionary<PlayerClient, PlayerClient> latestRequests = new Dictionary<PlayerClient, PlayerClient>();
         public static Dictionary<PlayerClient, PlayerClient> latestFactionRequests = new Dictionary<PlayerClient, PlayerClient>();
         public static Dictionary<PlayerClient, Dictionary<PlayerClient, TimerPlus>> teleportRequests = new Dictionary<PlayerClient, Dictionary<PlayerClient, TimerPlus>>();
+        public static Dictionary<string, Dictionary<string, TimerPlus>> blockedRequestsPer = new Dictionary<string, Dictionary<string, TimerPlus>>();
         public static Dictionary<string, Dictionary<string, string>> factions = new Dictionary<string, Dictionary<string, string>>();
-        public static List<string> unassignedKits = new List<string>();
+        public static Dictionary<string, Dictionary<string, string>> factionsByNames = new Dictionary<string, Dictionary<string, string>>();
         public static Dictionary<int, string> itemIDs = new Dictionary<int, string>();
         public static Dictionary<string, Dictionary<string, int>> kits = new Dictionary<string, Dictionary<string, int>>();
+        public static Dictionary<string, Vector3> warps = new Dictionary<string, Vector3>();
+        public static Dictionary<string, Dictionary<string, List<string>>> cycleMOTDList = new Dictionary<string, Dictionary<string, List<string>>>();
+        public static Dictionary<string, Dictionary<string, List<string>>> onceMOTDList = new Dictionary<string, Dictionary<string, List<string>>>();
         public static Dictionary<string, int> kitCooldowns = new Dictionary<string, int>();
+        public static Dictionary<string, int> warpCooldowns = new Dictionary<string, int>();
         public static Dictionary<string, Dictionary<TimerPlus, string>> playerCooldowns = new Dictionary<string, Dictionary<TimerPlus, string>>();
         public static Dictionary<string, StringBuilder> textForFiles = new Dictionary<string, StringBuilder>()
         {
@@ -170,44 +245,32 @@ namespace RustEssentials.Util
             { allCommandsFile, allCommandsText() },
             { kitsFile, kitsText() },
             { motdFile, motdText() },
-            { prefixFile, prefixText() }
+            { prefixFile, prefixText() },
+            { warpsFile, warpsText() }
         };
 
         public static string filterNames(string playerName, string uid)
         {
-            foreach (KeyValuePair<string, string> kv in rankPrefixes)
+            if (!emptyPrefixes.Contains(uid))
             {
-                playerName = playerName.Replace("[" + kv.Key + "]", "");
-                playerName = playerName.Replace(kv.Value, "");
-            }
-
-            foreach (KeyValuePair<string, string> kv in playerPrefixes)
-            {
-                playerName = playerName.Replace("[" + kv.Value + "]", "");
-            }
-
-            playerName = playerName.Replace("<G> ", "");
-            playerName = playerName.Replace("* <G> ", "");
-            playerName = playerName.Replace("<D> ", "");
-            playerName = playerName.Replace("* <D> ", "");
-
-            if (!playerPrefixes.ContainsKey(uid))
-            {
-                foreach (KeyValuePair<string, List<string>> kv in rankList)
+                if (!playerPrefixes.ContainsKey(uid))
                 {
-                    if (kv.Value.Contains(uid))
+                    foreach (KeyValuePair<string, List<string>> kv in rankList)
                     {
-                        if (rankPrefixes.Keys.Contains(kv.Key))
+                        if (kv.Value.Contains(uid))
                         {
-                            playerName = (removePrefix ? "" : rankPrefixes[kv.Key] + " ") + playerName;
-                            break;
+                            if (rankPrefixes.Keys.Contains(kv.Key))
+                            {
+                                playerName = (removePrefix ? "" : rankPrefixes[kv.Key] + " ") + playerName;
+                                break;
+                            }
                         }
                     }
                 }
-            }
-            else
-            {
-                playerName = "[" + playerPrefixes[uid] + "] " + playerName;
+                else
+                {
+                    playerName = "[" + playerPrefixes[uid] + "] " + playerName;
+                }
             }
 
             return playerName;
@@ -262,11 +325,7 @@ namespace RustEssentials.Util
                         {
                             if (Vars.murderMessages)
                             {
-                                message = Vars.murderMessage.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", playerControlledController.playerClient.userName).Replace("$WEAPON$", extraData.dataBlock.name);
-                                if (Vars.murderMessage.Contains("$PART$"))
-                                    message = message.Replace("$PART$", BodyParts.GetNiceName(damage.bodyPart));
-                                if (Vars.murderMessage.Contains("$DISTANCE$"))
-                                    message = message.Replace("$DISTANCE$", Convert.ToString(distance) + "m");
+                                message = Vars.murderMessage.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", playerControlledController.playerClient.userName).Replace("$WEAPON$", extraData.dataBlock.name).Replace("$PART$", BodyParts.GetNiceName(damage.bodyPart)).Replace("$DISTANCE$", Convert.ToString(distance) + "m");
 
                                 Broadcast.broadcastAll(message);
                             }
@@ -275,11 +334,7 @@ namespace RustEssentials.Util
                         }
                         if (Vars.murderMessages)
                         {
-                            message = Vars.murderMessage.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", playerControlledController.playerClient.userName).Replace("[$WEAPON$]", "killed");
-                            if (Vars.murderMessage.Contains("$PART$"))
-                                message = message.Replace("$PART$", BodyParts.GetNiceName(damage.bodyPart));
-                            if (Vars.murderMessage.Contains("$DISTANCE$"))
-                                message = message.Replace("$DISTANCE$", Convert.ToString(distance) + "m");
+                            message = Vars.murderMessageUnknown.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", playerControlledController.playerClient.userName);
 
                             Broadcast.broadcastAll(message);
                         }
@@ -294,14 +349,11 @@ namespace RustEssentials.Util
 
                 switch (killer)
                 {
-                    case "ZombieNPC_SLOW":
-                        killer = "Dark Zombie";
+                    case "MutantBear":
+                        killer = "Mutant Bear";
                         break;
-                    case "ZombieNPC_FAST":
-                        killer = "Red Zombie";
-                        break;
-                    case "ZombieNPC":
-                        killer = "Zombie";
+                    case "MutantWolf":
+                        killer = "Mutant Wolf";
                         break;
                 }
 
@@ -372,21 +424,24 @@ namespace RustEssentials.Util
                             {
                                 if (possibleFactions.Count() == 0)
                                 {
-                                    if (factionName.Length < 15)
+                                    if (factionName.Length < 16)
                                     {
                                         factions.Add(factionName, new Dictionary<string, string>());
+                                        factionsByNames.Add(factionName, new Dictionary<string, string>());
+                                        alliances.Add(factionName, new List<string>());
                                         factions[factionName].Add(senderClient.userID.ToString(), "owner");
-                                        Broadcast.broadcastTo(senderClient.netPlayer, "Faction \"" + factionName + "\" created.");
+                                        factionsByNames[factionName].Add(senderClient.userID.ToString(), senderClient.userName);
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Faction [" + factionName + "] created.");
                                         addFactionData(factionName, senderClient.userName, senderClient.userID.ToString(), "owner");
                                     }
                                     else
-                                        Broadcast.broadcastTo(senderClient.netPlayer, "Faction names must be less than 15 characters!");
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Faction names must be less than 16 characters!");
                                 }
                                 else
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "You are already in the faction \"" + factionName + "\".");
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "You are already in the faction [" + factionName + "].");
                             }
                             else
-                                Broadcast.broadcastTo(senderClient.netPlayer, "Faction \"" + factionName + "\" already exists.");
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Faction [" + factionName + "] already exists.");
                         }
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "Improper syntax! Syntax: /f create *name*");
@@ -398,7 +453,7 @@ namespace RustEssentials.Util
 
                             if (rank == "owner" || completeDoorAccess.Contains(senderClient.userID.ToString()))
                             {
-                                PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
                                 foreach (PlayerClient pc in targetClients)
                                 {
                                     Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Your faction was disbanded.");
@@ -429,30 +484,128 @@ namespace RustEssentials.Util
                                 }
 
                                 string targetName = string.Join(" ", messageList.ToArray());
-                                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
 
-                                if (possibleTargets.Count() == 0)
+                                if (targetName.StartsWith("\"") && targetName.EndsWith("\""))
                                 {
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "No member equal or contain \"" + targetName + "\".");
+                                    targetName = targetName.Substring(1, targetName.Length - 2);
+
+                                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(targetName));
+
+                                    if (possibleTargets.Count() == 0)
+                                    {
+                                        List<string> possibleUIDs = new List<string>();
+                                        foreach (KeyValuePair<string, string> kv in factionsByNames[possibleFactions[0].Key])
+                                        {
+                                            if (kv.Value.Equals(targetName))
+                                                possibleUIDs.Add(kv.Key);
+                                        }
+
+                                        if (possibleUIDs.Count() == 0)
+                                        {
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "No member name equals \"" + targetName + "\".");
+                                        }
+                                        else if (possibleUIDs.Count() > 1)
+                                        {
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many member names equal \"" + targetName + "\".");
+                                        }
+                                        else
+                                        {
+                                            PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                            foreach (PlayerClient pc in targetClients)
+                                            {
+                                                Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, factionsByNames[possibleFactions[0].Key][possibleUIDs[0]] + " was kicked from the faction.");
+                                            }
+                                            remFactionData(possibleFactions[0].Key, factionsByNames[possibleFactions[0].Key][possibleUIDs[0]], possibleFactions[0].Value[possibleUIDs[0]]);
+                                            factions[possibleFactions[0].Key].Remove(possibleUIDs[0]);
+                                            factionsByNames[possibleFactions[0].Key].Remove(possibleUIDs[0]);
+                                            if (latestFactionRequests.ContainsKey(senderClient))
+                                                latestFactionRequests.Remove(senderClient);
+                                            factionInvites[senderClient.userID.ToString()].Remove(possibleFactions[0].Key);
+                                        }
+                                    }
+                                    else if (possibleTargets.Count() > 1)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many member names equal \"" + targetName + "\".");
+                                    else
+                                    {
+                                        PlayerClient targetClient = possibleTargets[0];
+
+                                        if (possibleFactions[0].Value.ContainsKey(targetClient.userID.ToString()))
+                                        {
+                                            PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                            foreach (PlayerClient pc in targetClients)
+                                            {
+                                                Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " was kicked from the faction.");
+                                            }
+                                            remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                            factions[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
+                                            factionsByNames[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
+                                            if (latestFactionRequests.ContainsKey(senderClient))
+                                                latestFactionRequests.Remove(senderClient);
+                                            factionInvites[senderClient.userID.ToString()].Remove(possibleFactions[0].Key);
+                                        }
+                                        else
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is not in your faction.");
+                                    }
                                 }
-                                else if (possibleTargets.Count() > 1)
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many member names contain \"" + targetName + "\".");
                                 else
                                 {
-                                    PlayerClient targetClient = possibleTargets[0];
+                                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
 
-                                    if (possibleFactions[0].Value.ContainsKey(targetClient.userID.ToString()))
+                                    if (possibleTargets.Count() == 0)
                                     {
-                                        PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
-                                        foreach (PlayerClient pc in targetClients)
+                                        List<string> possibleUIDs = new List<string>();
+                                        foreach (KeyValuePair<string, string> kv in factionsByNames[possibleFactions[0].Key])
                                         {
-                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " was kicked from the faction.");
+                                            if (kv.Value.Contains(targetName))
+                                                possibleUIDs.Add(kv.Key);
                                         }
-                                        remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
-                                        possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+
+                                        if (possibleUIDs.Count() == 0)
+                                        {
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "No member name contain \"" + targetName + "\".");
+                                        }
+                                        else if (possibleUIDs.Count() > 1)
+                                        {
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many member names contain \"" + targetName + "\".");
+                                        }
+                                        else
+                                        {
+                                            PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                            foreach (PlayerClient pc in targetClients)
+                                            {
+                                                Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, factionsByNames[possibleFactions[0].Key][possibleUIDs[0]] + " was kicked from the faction.");
+                                            }
+                                            remFactionData(possibleFactions[0].Key, factionsByNames[possibleFactions[0].Key][possibleUIDs[0]], possibleFactions[0].Value[possibleUIDs[0]]);
+                                            factions[possibleFactions[0].Key].Remove(possibleUIDs[0]);
+                                            factionsByNames[possibleFactions[0].Key].Remove(possibleUIDs[0]);
+                                            if (latestFactionRequests.ContainsKey(senderClient))
+                                                latestFactionRequests.Remove(senderClient);
+                                            factionInvites[senderClient.userID.ToString()].Remove(possibleFactions[0].Key);
+                                        }
                                     }
+                                    else if (possibleTargets.Count() > 1)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many member names contain \"" + targetName + "\".");
                                     else
-                                        Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is not in your faction.");
+                                    {
+                                        PlayerClient targetClient = possibleTargets[0];
+
+                                        if (possibleFactions[0].Value.ContainsKey(targetClient.userID.ToString()))
+                                        {
+                                            PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                            foreach (PlayerClient pc in targetClients)
+                                            {
+                                                Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " was kicked from the faction.");
+                                            }
+                                            remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                            factions[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
+                                            factionsByNames[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
+                                            if (latestFactionRequests.ContainsKey(senderClient))
+                                                latestFactionRequests.Remove(senderClient);
+                                            factionInvites[senderClient.userID.ToString()].Remove(possibleFactions[0].Key);
+                                        }
+                                        else
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is not in your faction.");
+                                    }
                                 }
                             }
                             else
@@ -478,48 +631,111 @@ namespace RustEssentials.Util
                                 }
 
                                 string targetName = string.Join(" ", messageList.ToArray());
-                                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
 
-                                if (possibleTargets.Count() == 0)
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "No players equal or contain \"" + targetName + "\".");
-                                else if (possibleTargets.Count() > 1)
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + targetName + "\".");
-                                else
+                                if (targetName.StartsWith("\"") && targetName.EndsWith("\""))
                                 {
-                                    PlayerClient targetClient = possibleTargets[0];
+                                    targetName = targetName.Substring(1, targetName.Length - 2);
 
-                                    if (possibleFactions[0].Value.Count < 15)
+                                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(targetName));
+
+                                    if (possibleTargets.Count() == 0)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "No players equal \"" + targetName + "\".");
+                                    else if (possibleTargets.Count() > 1)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + targetName + "\".");
+                                    else
                                     {
-                                        if (!factionInvites.ContainsKey(targetClient.userID.ToString()))
-                                        {
-                                            factionInvites.Add(targetClient.userID.ToString(), new List<string>() { { possibleFactions[0].Key } });
+                                        PlayerClient targetClient = possibleTargets[0];
 
-                                            Broadcast.broadcastTo(senderClient.netPlayer, "You invited \"" + targetClient.userName + "\" to the faction .");
-                                            Broadcast.broadcastTo(targetClient.netPlayer, "You were invited to the faction \"" + possibleFactions[0].Key + "\".");
-                                            if (!latestFactionRequests.ContainsKey(targetClient))
-                                                latestFactionRequests.Add(targetClient, senderClient);
-                                            else
-                                                latestFactionRequests[targetClient] = senderClient;
-                                        }
-                                        else
+                                        if (possibleFactions[0].Value.Count < maxMembers)
                                         {
-                                            if (!factionInvites[targetClient.userID.ToString()].Contains(possibleFactions[0].Key))
+                                            if (!possibleFactions[0].Value.ContainsKey(targetClient.userID.ToString()))
                                             {
-                                                factionInvites[targetClient.userID.ToString()].Add(possibleFactions[0].Key);
+                                                if (!factionInvites.ContainsKey(targetClient.userID.ToString()))
+                                                {
+                                                    factionInvites.Add(targetClient.userID.ToString(), new List<string>() { { possibleFactions[0].Key } });
 
-                                                Broadcast.broadcastTo(senderClient.netPlayer, "You invited \"" + targetClient.userName + "\" to the faction .");
-                                                Broadcast.broadcastTo(targetClient.netPlayer, "You were invited to the faction \"" + possibleFactions[0].Key + "\".");
-                                                if (!latestFactionRequests.ContainsKey(targetClient))
-                                                    latestFactionRequests.Add(targetClient, senderClient);
+                                                    Broadcast.broadcastTo(senderClient.netPlayer, "You invited \"" + targetClient.userName + "\" to the faction .");
+                                                    Broadcast.broadcastTo(targetClient.netPlayer, "You were invited to the faction \"" + possibleFactions[0].Key + "\".");
+                                                    if (!latestFactionRequests.ContainsKey(targetClient))
+                                                        latestFactionRequests.Add(targetClient, senderClient);
+                                                    else
+                                                        latestFactionRequests[targetClient] = senderClient;
+                                                }
                                                 else
-                                                    latestFactionRequests[targetClient] = senderClient;
+                                                {
+                                                    if (!factionInvites[targetClient.userID.ToString()].Contains(possibleFactions[0].Key))
+                                                    {
+                                                        factionInvites[targetClient.userID.ToString()].Add(possibleFactions[0].Key);
+
+                                                        Broadcast.broadcastTo(senderClient.netPlayer, "You invited \"" + targetClient.userName + "\" to the faction .");
+                                                        Broadcast.broadcastTo(targetClient.netPlayer, "You were invited to the faction \"" + possibleFactions[0].Key + "\".");
+                                                        if (!latestFactionRequests.ContainsKey(targetClient))
+                                                            latestFactionRequests.Add(targetClient, senderClient);
+                                                        else
+                                                            latestFactionRequests[targetClient] = senderClient;
+                                                    }
+                                                    else
+                                                        Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " has already been invited.");
+                                                }
                                             }
                                             else
-                                                Broadcast.broadcastCustomTo(targetClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " has already been invited.");
+                                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is already in the faction.");
                                         }
+                                        else
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You have reached your member capacity.");
                                     }
+                                }
+                                else
+                                {
+                                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
+
+                                    if (possibleTargets.Count() == 0)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "No players equal or contain \"" + targetName + "\".");
+                                    else if (possibleTargets.Count() > 1)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + targetName + "\".");
                                     else
-                                        Broadcast.broadcastCustomTo(targetClient.netPlayer, "[F] " + possibleFactions[0].Key, "You have reached your member capacity.");
+                                    {
+                                        PlayerClient targetClient = possibleTargets[0];
+
+                                        if (possibleFactions[0].Value.Count < maxMembers)
+                                        {
+                                            KeyValuePair<string, Dictionary<string, string>>[] targetFactions = Array.FindAll(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(targetClient.userID.ToString()));
+                                            if (targetFactions.Count() == 0)
+                                            {
+                                                if (!factionInvites.ContainsKey(targetClient.userID.ToString()))
+                                                {
+                                                    factionInvites.Add(targetClient.userID.ToString(), new List<string>() { { possibleFactions[0].Key } });
+
+                                                    Broadcast.broadcastTo(senderClient.netPlayer, "You invited " + targetClient.userName + " to the faction .");
+                                                    Broadcast.broadcastTo(targetClient.netPlayer, "You were invited to the faction [" + possibleFactions[0].Key + "].");
+                                                    if (!latestFactionRequests.ContainsKey(targetClient))
+                                                        latestFactionRequests.Add(targetClient, senderClient);
+                                                    else
+                                                        latestFactionRequests[targetClient] = senderClient;
+                                                }
+                                                else
+                                                {
+                                                    if (!factionInvites[targetClient.userID.ToString()].Contains(possibleFactions[0].Key))
+                                                    {
+                                                        factionInvites[targetClient.userID.ToString()].Add(possibleFactions[0].Key);
+
+                                                        Broadcast.broadcastTo(senderClient.netPlayer, "You invited " + targetClient.userName + " to the faction .");
+                                                        Broadcast.broadcastTo(targetClient.netPlayer, "You were invited to the faction [" + possibleFactions[0].Key + "].");
+                                                        if (!latestFactionRequests.ContainsKey(targetClient))
+                                                            latestFactionRequests.Add(targetClient, senderClient);
+                                                        else
+                                                            latestFactionRequests[targetClient] = senderClient;
+                                                    }
+                                                    else
+                                                        Broadcast.broadcastCustomTo(targetClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " has already been invited.");
+                                                }
+                                            }
+                                            else
+                                                Broadcast.broadcastCustomTo(targetClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is already in the faction [" + targetFactions[0] + "].");
+                                        }
+                                        else
+                                            Broadcast.broadcastCustomTo(targetClient.netPlayer, "[F] " + possibleFactions[0].Key, "You have reached your member capacity.");
+                                    }
                                 }
                             }
                             else
@@ -555,13 +771,14 @@ namespace RustEssentials.Util
                                     }
                                     
                                     if (inviterFactions.Count() == 0)
-                                        Broadcast.broadcastTo(senderClient.netPlayer, "No factions equal or contain \"" + targetFaction + "\".");
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "No invitations from factions that equal or contain \"" + targetFaction + "\".");
                                     else if (inviterFactions.Count() > 1)
-                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many faction names contain \"" + targetFaction + "\".");
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many invitations from factions that names contain \"" + targetFaction + "\".");
                                     else
                                     {
                                         factions[inviterFactions[0]].Add(senderClient.userID.ToString(), "normal");
-                                        PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => factions[inviterFactions[0]].ContainsKey(pc.userID.ToString()));
+                                        factionsByNames[inviterFactions[0]].Add(senderClient.userID.ToString(), senderClient.userName);
+                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => factions[inviterFactions[0]].ContainsKey(pc.userID.ToString()));
                                         foreach (PlayerClient pc in targetClients)
                                         {
                                             Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + inviterFactions[0], senderClient.userName + " has joined the faction.");
@@ -571,14 +788,21 @@ namespace RustEssentials.Util
                                 }
                                 else
                                 {
-                                    KeyValuePair<string, Dictionary<string, string>> inviterFaction = Array.Find(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(latestFactionRequests[senderClient].userID.ToString()));
-                                    inviterFaction.Value.Add(senderClient.userID.ToString(), "normal");
-                                    PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => inviterFaction.Value.ContainsKey(pc.userID.ToString()));
-                                    foreach (PlayerClient pc in targetClients)
+                                    try
                                     {
-                                        Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + inviterFaction.Key, senderClient.userName + " has joined the faction.");
+                                        KeyValuePair<string, Dictionary<string, string>> inviterFaction = Array.Find(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(latestFactionRequests[senderClient].userID.ToString()));
+                                        inviterFaction.Value.Add(senderClient.userID.ToString(), "normal");
+                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => inviterFaction.Value.ContainsKey(pc.userID.ToString()));
+                                        foreach (PlayerClient pc in targetClients)
+                                        {
+                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + inviterFaction.Key, senderClient.userName + " has joined the faction.");
+                                        }
+                                        addFactionData(inviterFaction.Key, senderClient.userName, senderClient.userID.ToString(), "normal");
                                     }
-                                    addFactionData(inviterFaction.Key, senderClient.userName, senderClient.userID.ToString(), "normal");
+                                    catch (Exception ex)
+                                    {
+                                        Vars.conLog.Info(ex.ToString());
+                                    }
                                 }
                             }
                             else
@@ -594,7 +818,7 @@ namespace RustEssentials.Util
 
                             if (rank != "owner")
                             {
-                                PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
                                 foreach (PlayerClient pc in targetClients)
                                 {
                                     Broadcast.broadcastCustomTo(pc.netPlayer, possibleFactions[0].Key, senderClient.userName + " has left the faction.");
@@ -602,7 +826,11 @@ namespace RustEssentials.Util
                                 try
                                 {
                                     remFactionData(possibleFactions[0].Key, senderClient.userName, possibleFactions[0].Value[senderClient.userID.ToString()]);
-                                    possibleFactions[0].Value.Remove(senderClient.userID.ToString());
+                                    factions[possibleFactions[0].Key].Remove(senderClient.userID.ToString());
+                                    factionsByNames[possibleFactions[0].Key].Remove(senderClient.userID.ToString());
+                                    if (latestFactionRequests.ContainsKey(senderClient))
+                                        latestFactionRequests.Remove(senderClient);
+                                    factionInvites[senderClient.userID.ToString()].Remove(possibleFactions[0].Key);
                                 }
                                 catch (Exception ex)
                                 {
@@ -632,24 +860,53 @@ namespace RustEssentials.Util
                                 }
 
                                 string targetName = string.Join(" ", messageList.ToArray());
-                                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
 
-                                if (possibleTargets.Count() == 0)
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "No players equal or contain \"" + targetName + "\".");
-                                else if (possibleTargets.Count() > 1)
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + targetName + "\".");
+                                if (targetName.StartsWith("\"") && targetName.EndsWith("\""))
+                                {
+                                    targetName = targetName.Substring(1, targetName.Length - 2);
+
+                                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(targetName));
+
+                                    if (possibleTargets.Count() == 0)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "No players equal \"" + targetName + "\".");
+                                    else if (possibleTargets.Count() > 1)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + targetName + "\".");
+                                    else
+                                    {
+                                        PlayerClient targetClient = possibleTargets[0];
+
+                                        remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                        possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                        possibleFactions[0].Value.Add(targetClient.userID.ToString(), "admin");
+                                        addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "admin");
+                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                        foreach (PlayerClient pc in targetClients)
+                                        {
+                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player " + targetClient.userName + " is now a faction admin.");
+                                        }
+                                    }
+                                }
                                 else
                                 {
-                                    PlayerClient targetClient = possibleTargets[0];
+                                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
 
-                                    remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
-                                    possibleFactions[0].Value.Remove(targetClient.userID.ToString());
-                                    possibleFactions[0].Value.Add(targetClient.userID.ToString(), "admin");
-                                    addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "admin");
-                                    PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
-                                    foreach (PlayerClient pc in targetClients)
+                                    if (possibleTargets.Count() == 0)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "No players equal or contain \"" + targetName + "\".");
+                                    else if (possibleTargets.Count() > 1)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + targetName + "\".");
+                                    else
                                     {
-                                        Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player \"" + targetClient.userName + "\" is now a faction admin.");
+                                        PlayerClient targetClient = possibleTargets[0];
+
+                                        remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                        possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                        possibleFactions[0].Value.Add(targetClient.userID.ToString(), "admin");
+                                        addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "admin");
+                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                        foreach (PlayerClient pc in targetClients)
+                                        {
+                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player \"" + targetClient.userName + "\" is now a faction admin.");
+                                        }
                                     }
                                 }
                             }
@@ -676,24 +933,53 @@ namespace RustEssentials.Util
                                 }
 
                                 string targetName = string.Join(" ", messageList.ToArray());
-                                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
 
-                                if (possibleTargets.Count() == 0)
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "No players equal or contain \"" + targetName + "\".");
-                                else if (possibleTargets.Count() > 1)
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + targetName + "\".");
+                                if (targetName.StartsWith("\"") && targetName.EndsWith("\""))
+                                {
+                                    targetName = targetName.Substring(1, targetName.Length - 2);
+
+                                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(targetName));
+
+                                    if (possibleTargets.Count() == 0)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "No players equal \"" + targetName + "\".");
+                                    else if (possibleTargets.Count() > 1)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + targetName + "\".");
+                                    else
+                                    {
+                                        PlayerClient targetClient = possibleTargets[0];
+
+                                        remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                        possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                        possibleFactions[0].Value.Add(targetClient.userID.ToString(), "normal");
+                                        addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "normal");
+                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                        foreach (PlayerClient pc in targetClients)
+                                        {
+                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player " + targetClient.userName + " is no longer a faction admin.");
+                                        }
+                                    }
+                                }
                                 else
                                 {
-                                    PlayerClient targetClient = possibleTargets[0];
+                                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
 
-                                    remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
-                                    possibleFactions[0].Value.Remove(targetClient.userID.ToString());
-                                    possibleFactions[0].Value.Add(targetClient.userID.ToString(), "normal");
-                                    addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "normal");
-                                    PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
-                                    foreach (PlayerClient pc in targetClients)
+                                    if (possibleTargets.Count() == 0)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "No players equal or contain \"" + targetName + "\".");
+                                    else if (possibleTargets.Count() > 1)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + targetName + "\".");
+                                    else
                                     {
-                                        Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player \"" + targetClient.userName + "\" is no longer a faction admin.");
+                                        PlayerClient targetClient = possibleTargets[0];
+
+                                        remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                        possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                        possibleFactions[0].Value.Add(targetClient.userID.ToString(), "normal");
+                                        addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "normal");
+                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                        foreach (PlayerClient pc in targetClients)
+                                        {
+                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player " + targetClient.userName + " is no longer a faction admin.");
+                                        }
                                     }
                                 }
                             }
@@ -720,28 +1006,61 @@ namespace RustEssentials.Util
                                 }
 
                                 string targetName = string.Join(" ", messageList.ToArray());
-                                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
 
-                                if (possibleTargets.Count() == 0)
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "No players equal or contain \"" + targetName + "\".");
-                                else if (possibleTargets.Count() > 1)
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + targetName + "\".");
+                                if (targetName.StartsWith("\"") && targetName.EndsWith("\""))
+                                {
+                                    targetName = targetName.Substring(1, targetName.Length - 2);
+
+                                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(targetName));
+
+                                    if (possibleTargets.Count() == 0)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "No players equal \"" + targetName + "\".");
+                                    else if (possibleTargets.Count() > 1)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + targetName + "\".");
+                                    else
+                                    {
+                                        PlayerClient targetClient = possibleTargets[0];
+
+                                        remFactionData(possibleFactions[0].Key, senderClient.userName, possibleFactions[0].Value[senderClient.userID.ToString()]);
+                                        possibleFactions[0].Value.Remove(senderClient.userID.ToString());
+                                        possibleFactions[0].Value.Add(senderClient.userID.ToString(), "admin");
+                                        addFactionData(possibleFactions[0].Key, senderClient.userName, senderClient.userID.ToString(), "admin");
+                                        remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                        possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                        possibleFactions[0].Value.Add(targetClient.userID.ToString(), "owner");
+                                        addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "owner");
+                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                        foreach (PlayerClient pc in targetClients)
+                                        {
+                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, senderClient.userName + " now owns the faction.");
+                                        }
+                                    }
+                                }
                                 else
                                 {
-                                    PlayerClient targetClient = possibleTargets[0];
+                                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
 
-                                    remFactionData(possibleFactions[0].Key, senderClient.userName, possibleFactions[0].Value[senderClient.userID.ToString()]);
-                                    possibleFactions[0].Value.Remove(senderClient.userID.ToString());
-                                    possibleFactions[0].Value.Add(senderClient.userID.ToString(), "admin");
-                                    addFactionData(possibleFactions[0].Key, senderClient.userName, senderClient.userID.ToString(), "admin");
-                                    remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
-                                    possibleFactions[0].Value.Remove(targetClient.userID.ToString());
-                                    possibleFactions[0].Value.Add(targetClient.userID.ToString(), "owner");
-                                    addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "owner");
-                                    PlayerClient[] targetClients = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
-                                    foreach (PlayerClient pc in targetClients)
+                                    if (possibleTargets.Count() == 0)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "No players equal or contain \"" + targetName + "\".");
+                                    else if (possibleTargets.Count() > 1)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + targetName + "\".");
+                                    else
                                     {
-                                        Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, senderClient.userName + " now owns the faction.");
+                                        PlayerClient targetClient = possibleTargets[0];
+
+                                        remFactionData(possibleFactions[0].Key, senderClient.userName, possibleFactions[0].Value[senderClient.userID.ToString()]);
+                                        possibleFactions[0].Value.Remove(senderClient.userID.ToString());
+                                        possibleFactions[0].Value.Add(senderClient.userID.ToString(), "admin");
+                                        addFactionData(possibleFactions[0].Key, senderClient.userName, senderClient.userID.ToString(), "admin");
+                                        remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                        possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                        possibleFactions[0].Value.Add(targetClient.userID.ToString(), "owner");
+                                        addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "owner");
+                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                        foreach (PlayerClient pc in targetClients)
+                                        {
+                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, senderClient.userName + " now owns the faction.");
+                                        }
                                     }
                                 }
                             }
@@ -752,12 +1071,1328 @@ namespace RustEssentials.Util
                             Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.");
                         break;
                     case "list":
+                        try
+                        {
+                            Dictionary<string, List<string>> factionNames = new Dictionary<string, List<string>>();
+                            List<string> factionNames2 = new List<string>();
+                            int currentPage = 1;
+                            int lastPage = 1;
+
+                            foreach (string factionName in factions.Keys)
+                            {
+                                if (!factionNames.ContainsKey(currentPage.ToString()))
+                                {
+                                    factionNames.Add(currentPage.ToString(), new List<string>() { { factionName } });
+                                }
+                                else
+                                {
+                                    if (factionNames[currentPage.ToString()].Count <= 20)
+                                        factionNames[currentPage.ToString()].Add(factionName);
+                                    else
+                                    {
+                                        currentPage++;
+                                        lastPage = currentPage;
+                                        factionNames[currentPage.ToString()].Add(factionName);
+                                    }
+                                }
+                            }
+
+                            int pageNumber = 1;
+                            bool continueOn = true;
+                            if (args.Count() > 2)
+                            {
+                                if (!Int32.TryParse(args[2], out pageNumber) || !factionNames.ContainsKey(pageNumber.ToString()))
+                                {
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "No such page \"" + args[2] + "\".");
+                                    continueOn = false;
+                                }
+                            }
+
+                            if (continueOn)
+                            {
+                                List<string> otherFactionNames = new List<string>();
+                                Broadcast.broadcastTo(senderClient.netPlayer, "All factions [" + pageNumber + "/" + lastPage + "]:", true);
+                                while (factionNames[pageNumber.ToString()].Count > 0)
+                                {
+                                    factionNames2.Clear();
+                                    otherFactionNames.Clear();
+                                    foreach (string s in factionNames[pageNumber.ToString()])
+                                    {
+                                        factionNames2.Add(s);
+                                        otherFactionNames.Add(s);
+
+                                        if ((string.Join(", ", factionNames2.ToArray())).Length > 70)
+                                        {
+                                            factionNames2.Remove(s);
+                                            otherFactionNames.Remove(s);
+                                            break;
+                                        }
+                                    }
+                                    foreach (string s in otherFactionNames)
+                                    {
+                                        factionNames[pageNumber.ToString()].Remove(s);
+                                    }
+
+                                    Broadcast.broadcastTo(senderClient.netPlayer, string.Join(", ", factionNames2.ToArray()), true);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Vars.conLog.Info(ex.ToString());
+                        }
+                        break;
+                    case "ally":
+                        if (possibleFactions.Count() > 0)
+                        {
+                            string rank = possibleFactions[0].Value[senderClient.userID.ToString()];
+
+                            if (rank == "owner" || rank == "admin")
+                            {
+                                if (args.Count() > 2)
+                                {
+                                    List<string> messageList = new List<string>();
+                                    int curIndex = 0;
+                                    foreach (string s in args)
+                                    {
+                                        if (curIndex > 1)
+                                            messageList.Add(s);
+                                        curIndex++;
+                                    }
+
+                                    string factionName = string.Join(" ", messageList.ToArray());
+
+                                    KeyValuePair<string, Dictionary<string, string>>[] factionResults = Array.FindAll(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Key.Contains(factionName));
+                                    
+                                    if (factionResults.Count() == 0)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "No factions equal or contain \"" + factionName + "\".");
+                                    else if (factionResults.Count() > 1)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many faction names contain \"" + factionName + "\".");
+                                    else
+                                    {
+                                        if (possibleFactions[0].Key != factionResults[0].Key)
+                                        {
+                                            if (!alliances[possibleFactions[0].Key].Contains(factionResults[0].Key))
+                                            {
+                                                PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                                foreach (PlayerClient pc in targetClients)
+                                                {
+                                                    Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "You are now allied with the faction [" + factionResults[0].Key + "].");
+                                                }
+                                                alliances[factionResults[0].Key].Add(possibleFactions[0].Key);
+                                                alliances[possibleFactions[0].Key].Add(factionResults[0].Key);
+                                            }
+                                            else
+                                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You are already allied with [" + factionResults[0].Key + "].");
+                                        }
+                                        else
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You cannot ally your own faction.");
+                                    }
+                                }
+                                else
+                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You must specify a faction name in order to form an alliance.");
+                            }
+                            else
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You do not have permission to form alliances.");
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.", true);
+                        break;
+                    case "unally":
+                        if (possibleFactions.Count() > 0)
+                        {
+                            string rank = possibleFactions[0].Value[senderClient.userID.ToString()];
+
+                            if (rank == "owner" || rank == "admin")
+                            {
+                                if (args.Count() > 2)
+                                {
+                                    List<string> messageList = new List<string>();
+                                    int curIndex = 0;
+                                    foreach (string s in args)
+                                    {
+                                        if (curIndex > 1)
+                                            messageList.Add(s);
+                                        curIndex++;
+                                    }
+
+                                    string factionName = string.Join(" ", messageList.ToArray());
+
+                                    KeyValuePair<string, Dictionary<string, string>>[] factionResults = Array.FindAll(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Key.Contains(factionName));
+
+                                    if (factionResults.Count() == 0)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "No factions equal or contain \"" + factionName + "\".");
+                                    else if (factionResults.Count() > 1)
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many faction names contain \"" + factionName + "\".");
+                                    else
+                                    {
+                                        if (!alliances[possibleFactions[0].Key].Contains(factionResults[0].Key))
+                                        {
+                                            PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                            foreach (PlayerClient pc in targetClients)
+                                            {
+                                                Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "You are no longer allied with the faction [" + factionResults[0].Key + "].");
+                                            }
+                                            alliances[factionResults[0].Key].Remove(possibleFactions[0].Key);
+                                            alliances[possibleFactions[0].Key].Remove(factionResults[0].Key);
+                                        }
+                                        else
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You are not allied with [" + factionResults[0].Key +"].");
+                                    }
+                                }
+                                else
+                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You must specify a faction name in order to remove an alliance.");
+                            }
+                            else
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You do not have permission to remove alliances.");
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.", true);
                         break;
                     case "info":
+                        if (args.Count() > 2)
+                        {
+                            List<string> messageList = new List<string>();
+                            int curIndex = 0;
+                            foreach (string s in args)
+                            {
+                                if (curIndex > 1)
+                                    messageList.Add(s);
+                                curIndex++;
+                            }
+
+                            string factionName = string.Join(" ", messageList.ToArray());
+                            KeyValuePair<string, Dictionary<string, string>>[] factionResults = Array.FindAll(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Key.Contains(factionName));
+
+                            if (factionResults.Count() == 0)
+                            {
+                                PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(factionName));
+                                if (possibleClients.Count() == 0)
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "No factions or players equal or contain \"" + factionName + "\".");
+                                else if (possibleClients.Count() > 1)
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + factionName + "\".");
+                                else
+                                {
+                                    KeyValuePair<string, Dictionary<string, string>> playerFaction = Array.Find(factionsByNames.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsValue(factionName));
+                                    int onlineMembers = 0;
+                                    foreach (string s in playerFaction.Value.Keys)
+                                    {
+                                        PlayerClient[] possibleClients2 = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == s);
+                                        if (possibleClients2.Count() > 0)
+                                            onlineMembers++;
+                                    }
+                                    string ownerName = factionsByNames[playerFaction.Key][Array.Find(playerFaction.Value.ToArray(), (KeyValuePair<string, string> kv) => kv.Value == "owner").Key];
+
+                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "=== [" + playerFaction.Key + "]'s information ===");
+                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Total members: " + playerFaction.Value.Count);
+                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Online members: " + onlineMembers);
+                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Offline members: " + (playerFaction.Value.Count - onlineMembers));
+                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Owner: " + ownerName);
+                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Members:");
+                                    List<string> names = new List<string>();
+                                    List<string> names2 = new List<string>();
+                                    foreach (string name in factionsByNames[playerFaction.Key].Values)
+                                    {
+                                        if (name != ownerName)
+                                            names.Add(name);
+                                    }
+
+                                    List<string> otherNames = new List<string>();
+                                    while (names.Count > 0)
+                                    {
+                                        names2.Clear();
+                                        otherNames.Clear();
+                                        foreach (string s in names)
+                                        {
+                                            names2.Add(s);
+                                            otherNames.Add(s);
+
+                                            if ((string.Join(", ", names2.ToArray())).Length > 70)
+                                            {
+                                                names2.Remove(s);
+                                                otherNames.Remove(s);
+                                                break;
+                                            }
+                                        }
+                                        foreach (string s in otherNames)
+                                        {
+                                            names.Remove(s);
+                                        }
+                                        Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, string.Join(", ", names2.ToArray()));
+                                    }
+                                }
+                            }
+                            else if (factionResults.Count() > 1)
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Too many faction names contain \"" + factionName + "\".");
+                            else
+                            {
+                                int onlineMembers = 0;
+                                foreach (string s in factionResults[0].Value.Keys)
+                                {
+                                    PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == s);
+                                    if (possibleClients.Count() > 0)
+                                        onlineMembers++;
+                                }
+                                string ownerName = factionsByNames[factionResults[0].Key][Array.Find(factionResults[0].Value.ToArray(), (KeyValuePair<string, string> kv) => kv.Value == "owner").Key];
+
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + factionResults[0].Key, "=== [" + factionResults[0].Key + "]'s information ===");
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + factionResults[0].Key, "Total members: " + factionResults[0].Value.Count);
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + factionResults[0].Key, "Online members: " + onlineMembers);
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + factionResults[0].Key, "Offline members: " + (factionResults[0].Value.Count - onlineMembers));
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + factionResults[0].Key, "Owner: " + ownerName);
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + factionResults[0].Key, "Members:");
+                                List<string> names = new List<string>();
+                                List<string> names2 = new List<string>();
+                                foreach (string name in factionsByNames[factionResults[0].Key].Values)
+                                {
+                                    if (name != ownerName)
+                                        names.Add(name);
+                                }
+
+                                List<string> otherNames = new List<string>();
+                                while (names.Count > 0)
+                                {
+                                    names2.Clear();
+                                    otherNames.Clear();
+                                    foreach (string s in names)
+                                    {
+                                        names2.Add(s);
+                                        otherNames.Add(s);
+
+                                        if ((string.Join(", ", names2.ToArray())).Length > 70)
+                                        {
+                                            names2.Remove(s);
+                                            otherNames.Remove(s);
+                                            break;
+                                        }
+                                    }
+                                    foreach (string s in otherNames)
+                                    {
+                                        names.Remove(s);
+                                    }
+                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + factionResults[0].Key, string.Join(", ", names2.ToArray()));
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (possibleFactions.Count() > 0)
+                            {
+                                int onlineMembers = 0;
+                                foreach (string s in possibleFactions[0].Value.Keys)
+                                {
+                                    PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == s);
+                                    if (possibleClients.Count() > 0)
+                                        onlineMembers++;
+                                }
+                                string ownerName = factionsByNames[possibleFactions[0].Key][Array.Find(possibleFactions[0].Value.ToArray(), (KeyValuePair<string, string> kv) => kv.Value == "owner").Key];
+
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "=== Your faction's information ===");
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "Total members: " + possibleFactions[0].Value.Count);
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "Online members: " + onlineMembers);
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "Offline members: " + (possibleFactions[0].Value.Count - onlineMembers));
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "Owner: " + ownerName);
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "Members:");
+                                List<string> names = new List<string>();
+                                List<string> names2 = new List<string>();
+                                foreach (string name in factionsByNames[possibleFactions[0].Key].Values)
+                                {
+                                    names.Add(name);
+                                }
+
+                                List<string> otherNames = new List<string>();
+                                while (names.Count > 0)
+                                {
+                                    names2.Clear();
+                                    otherNames.Clear();
+                                    foreach (string s in names)
+                                    {
+                                        names2.Add(s);
+                                        otherNames.Add(s);
+
+                                        if ((string.Join(", ", names2.ToArray())).Length > 70)
+                                        {
+                                            names2.Remove(s);
+                                            otherNames.Remove(s);
+                                            break;
+                                        }
+                                    }
+                                    foreach (string s in otherNames)
+                                    {
+                                        names.Remove(s);
+                                    }
+                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, string.Join(", ", names2.ToArray()));
+                                }
+                            }
+                            else
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.", true);
+                        }
+                        break;
+                    case "players":
+                        if (possibleFactions.Count() > 0)
+                        {
+                            List<string> UIDs = new List<string>();
+                            List<string> onlineNames = new List<string>();
+                            List<string> offlineNames = new List<string>();
+                            foreach (string s in possibleFactions[0].Value.Keys)
+                            {
+                                UIDs.Add(s);
+                            }
+
+                            List<string> otherNames = new List<string>();
+                            bool saidOnline = false;
+                            bool saidOffline = false;
+                            while (UIDs.Count > 0)
+                            {
+                                onlineNames.Clear();
+                                offlineNames.Clear();
+                                otherNames.Clear();
+                                bool hasOnline = false;
+                                foreach (string s in UIDs)
+                                {
+                                    PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == s);
+
+                                    if (possibleClients.Count() > 0)
+                                    {
+                                        if (possibleClients[0].userName.Length > 0)
+                                            hasOnline = true;
+                                    }
+                                }
+                                foreach (string s in UIDs)
+                                {
+                                    if (hasOnline)
+                                    {
+                                        PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == s);
+                                        string playerName = factionsByNames[possibleFactions[0].Key][s];
+
+                                        if (possibleClients.Count() > 0)
+                                        {
+                                            if (!saidOnline)
+                                            {
+                                                saidOnline = true;
+                                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "All online faction members:");
+                                            }
+
+                                            onlineNames.Add(playerName);
+                                            otherNames.Add(s);
+
+                                            if ((string.Join(", ", onlineNames.ToArray())).Length > 70)
+                                            {
+                                                onlineNames.Remove(playerName);
+                                                otherNames.Remove(s);
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        string playerName = factionsByNames[possibleFactions[0].Key][s];
+
+                                        if (!saidOffline)
+                                        {
+                                            saidOffline = true;
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "All offline faction members:");
+                                        }
+
+                                        offlineNames.Add(playerName);
+                                        otherNames.Add(s);
+
+                                        if ((string.Join(", ", offlineNames.ToArray())).Length > 70)
+                                        {
+                                            offlineNames.Remove(playerName);
+                                            otherNames.Remove(s);
+                                            break;
+                                        }
+                                    }
+                                }
+                                foreach (string s in otherNames)
+                                {
+                                    UIDs.Remove(s);
+                                }
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, string.Join(", ", (hasOnline ? onlineNames.ToArray() : offlineNames.ToArray())));
+                            }
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.", true);
+                        break;
+                    case "online":
+                        if (possibleFactions.Count() > 0)
+                        {
+                            int onlineMembers = 0;
+                            foreach (string s in possibleFactions[0].Value.Keys)
+                            {
+                                PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == s);
+                                if (possibleClients.Count() > 0)
+                                {
+                                    if (possibleClients[0].userName.Length > 0)
+                                        onlineMembers++;
+                                }
+                            }
+
+                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, onlineMembers + "/" + possibleFactions[0].Value.Count + " faction members currently connected. Faction is at " + possibleFactions[0].Value.Count + "/" + maxMembers + " member capacity.");
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.", true);
+                        break;
+                    case "build":
+                        if (args.Count() > 2)
+                        {
+                            string mode = args[2];
+                            string UID = senderClient.userID.ToString();
+
+                            switch (mode)
+                            {
+                                case "on":
+                                    if (!buildList.Contains(UID))
+                                    {
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "You can now build in safe zones and war zones.");
+                                        buildList.Add(UID);
+                                    }
+                                    else
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "You are already in build mode.");
+                                    break;
+                                case "off":
+                                    if (buildList.Contains(UID))
+                                    {
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "You can no longer build in safe zones and war zones.");
+                                        buildList.Remove(UID);
+                                    }
+                                    else
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "You are not in build mode.");
+                                    break;
+                            }
+                        }
                         break;
                     case "help":
+                        Broadcast.broadcastTo(senderClient.netPlayer, "=================== Factions ===================", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f create *name*: Creates a faction.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f disband: Disbands current faction if you're the owner.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f kick *name*: Kicks the player from your faction. Partials accepted.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f invite *name*: Invites the player to your faction. Partials accepted.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f join: Joins the faction last invited to.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f join *name*: Joins the faction by name if invited.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f leave: Leaves current faction.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f admin *name*: Leaves current faction.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f deadmin *name*: Leaves current faction.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f ownership *name*: Leaves current faction.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f list: List all factions.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f info: Displays current faction information.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f info *name*: Displays that faction's information.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f ally *name*: Forms an alliance with another faction.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f unally *name*: Removes an alliance with another faction.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f players: Lists players in current faction.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f online: Displays count of currently online faction members.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f safezone {1/2/set/clear/clearall}: Manages safezones.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f warzone {1/2/set/clear/clearall}: Manages warzones.", true);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "/f build {on/off}: Allows building within zones.", true);
                         break;
                     default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Unknown faction action \"" + arg + "\".");
+                        break;
+                }
+            }
+        }
+
+        public static void ResourceUseItem(IResourceTypeItem rs, ResourceTypeItemDataBlock RTIDB)
+        {
+            RaycastHit hit;
+            bool flag;
+            Facepunch.MeshBatch.MeshBatchInstance instance;
+            if (MeshBatchPhysics.SphereCast(rs.character.eyesRay, 0.5f, out hit, 4f, out flag, out instance))
+            {
+                IDMain idMain;
+                if (flag)
+                {
+                    idMain = instance.idMain;
+                }
+                else
+                {
+                    idMain = IDBase.GetMain(hit.collider.gameObject);
+                }
+                if (idMain != null)
+                {
+                    RepairReceiver local = idMain.GetLocal<RepairReceiver>();
+                    TakeDamage damage = idMain.GetLocal<TakeDamage>();
+                    if ((((local != null) && (damage != null)) && (local.GetRepairAmmo() == RTIDB)) && (damage.health != damage.maxHealth))
+                    {
+                        if (enableRepair)
+                        {
+                            if (damage.TimeSinceHurt() < 5f)
+                            {
+                                int timeToWait = 5 - (int)Math.Round(damage.TimeSinceHurt());
+                                Rust.Notice.Popup(rs.character.netUser.networkPlayer, "⌛", "You must wait " + timeToWait + " seconds.", 4f);
+                            }
+                            else
+                            {
+                                float amount = damage.maxHealth / ((float)local.ResForMaxHealth);
+                                if (amount > (damage.maxHealth - damage.health))
+                                {
+                                    amount = damage.maxHealth - damage.health;
+                                }
+                                damage.Heal(rs.character.idMain, amount);
+                                rs.lastUseTime = UnityEngine.Time.time;
+                                int count = 1;
+                                if (rs.Consume(ref count))
+                                {
+                                    rs.inventory.RemoveItem(rs.slot);
+                                }
+                                string strText = string.Format("Healed {0} ({1}/{2})", (int)amount, (int)damage.health, (int)damage.maxHealth);
+                                Broadcast.sideNoticeTo(rs.inventory.networkViewOwner, strText);
+                            }
+                        }
+                        else
+                            Broadcast.broadcastTo(rs.inventory.networkViewOwner, "Repairing is disabled on this server.");
+                    }
+                }
+            }
+
+        }
+
+        public static void zoneTimer()
+        {
+            TimerPlus t = new TimerPlus();
+            t.AutoReset = true;
+            t.Interval = 500;
+            t.Elapsed += cycleZones;
+            t.Start();
+        }
+
+        public static void readZoneData()
+        {
+            List<string> zoneFileData = File.ReadAllLines(zonesFile).ToList();
+            foreach (string s in zoneFileData)
+            {
+                string zoneName = s.Split('=')[0];
+                string posString = s.Split('=')[1];
+                string firstPoint = posString.Split(';')[0].Replace("(", "").Replace(")", ""); // (x,y) - EX:(500.2,802.7)
+                string secPoint = posString.Split(';')[1].Replace("(", "").Replace(")", "");
+                string thirdPoint = posString.Split(';')[2].Replace("(", "").Replace(")", "");
+                string forthPoint = posString.Split(';')[3].Replace("(", "").Replace(")", "");
+                Vector2 point1 = new Vector2(Convert.ToSingle(firstPoint.Split(',')[0]), Convert.ToSingle(firstPoint.Split(',')[1]));
+                Vector2 point2 = new Vector2(Convert.ToSingle(secPoint.Split(',')[0]), Convert.ToSingle(secPoint.Split(',')[1]));
+                Vector2 point3 = new Vector2(Convert.ToSingle(thirdPoint.Split(',')[0]), Convert.ToSingle(thirdPoint.Split(',')[1]));
+                Vector2 point4 = new Vector2(Convert.ToSingle(forthPoint.Split(',')[0]), Convert.ToSingle(forthPoint.Split(',')[1]));
+
+                if (zoneName.StartsWith("safezone"))
+                    safeZones.Add(zoneName, new Zone(point1, point2, point3, point4));
+
+                if (zoneName.StartsWith("warzone"))
+                    warZones.Add(zoneName, new Zone(point1, point2, point3, point4));
+
+                Vars.conLog.Info("Adding zone [" + zoneName + "]...");
+            }
+        }
+
+        public static void addZoneData(string zoneName, Vector2 point1, Vector2 point2, Vector2 point3, Vector2 point4)
+        {
+            List<string> zoneFileData = File.ReadAllLines(zonesFile).ToList();
+            List<string> safezones = new List<string>();
+            List<string> warzones = new List<string>();
+            foreach (string s in zoneFileData)
+            {
+                bool isSafeZone = s.StartsWith("safezone");
+
+                if (!s.StartsWith(zoneName))
+                {
+                    string points = s.Split('=')[1];
+
+                    if (isSafeZone)
+                    {
+                        safezones.Add("safezone_" + safezones.Count + "=" + points);
+                    }
+                    else
+                    {
+                        warzones.Add("warzone_" + warzones.Count + "=" + points);
+                    }
+                }
+            }
+            zoneFileData.Clear();
+            foreach (string s in safezones)
+            {
+                zoneFileData.Add(s);
+            }
+            if (zoneName.StartsWith("safezone"))
+            {
+                zoneFileData.Add("safezone_" + safezones.Count + "=(" + point1.x + "," + point1.y + ");(" + point2.x + "," + point2.y + ");(" + point3.x + "," + point3.y + ");(" + point4.x + "," + point4.y + ")");
+            }
+            foreach (string s in warzones)
+            {
+                zoneFileData.Add(s);
+            }
+            if (zoneName.StartsWith("warzone"))
+            {
+                zoneFileData.Add("warzone_" + warzones.Count + "=(" + point1.x + "," + point1.y + ");(" + point2.x + "," + point2.y + ");(" + point3.x + "," + point3.y + ");(" + point4.x + "," + point4.y + ")");
+            }
+            using (StreamWriter sw = new StreamWriter(zonesFile, false))
+            {
+                foreach (string s in zoneFileData)
+                {
+                    sw.WriteLine(s);
+                }
+            }
+        }
+
+        public static void remZoneData(string zoneName)
+        {
+            List<string> zoneFileData = File.ReadAllLines(zonesFile).ToList();
+            List<string> safezones = new List<string>();
+            List<string> warzones = new List<string>();
+            bool clearAllSafe = zoneName == "clearallS";
+            bool clearAllWar = zoneName == "clearallW";
+            foreach (string s in zoneFileData)
+            {
+                bool isSafeZone = s.StartsWith("safezone");
+
+                if (!s.StartsWith(zoneName))
+                {
+                    string points = s.Split('=')[1];
+
+                    if (isSafeZone)
+                    {
+                        if (!clearAllSafe)
+                            safezones.Add("safezone_" + safezones.Count + "=" + points);
+                    }
+                    else
+                    {
+                        if (!clearAllWar)
+                            warzones.Add("warzone_" + warzones.Count + "=" + points);
+                    }
+                }
+            }
+            zoneFileData.Clear();
+            foreach (string s in safezones)
+            {
+                zoneFileData.Add(s);
+            }
+            foreach (string s in warzones)
+            {
+                zoneFileData.Add(s);
+            }
+            using (StreamWriter sw = new StreamWriter(zonesFile, false))
+            {
+                foreach (string s in zoneFileData)
+                {
+                    sw.WriteLine(s);
+                }
+            }
+        }
+
+        public static double PolygonArea(Vector2[] polygon)
+        {
+            int i, j;
+            double area = 0;
+
+            for (i = 0; i < polygon.Length; i++)
+            {
+                j = (i + 1) % polygon.Length;
+
+                area += polygon[i].x * polygon[j].y;
+                area -= polygon[i].y * polygon[j].x;
+            }
+
+            area /= 2;
+            return (area < 0 ? -area : area);
+        }
+
+        public static void cycleZones(object sender, ElapsedEventArgs e)
+        {
+            foreach (PlayerClient pc in AllPlayerClients)
+            {
+                Character playerChar;
+                Character.FindByUser(pc.userID, out playerChar);
+                Vector2 playerPos = new Vector2(playerChar.transform.position.x, playerChar.transform.position.z);
+
+                string safeZone = "";
+                bool inZoneS = false;
+                foreach (KeyValuePair<string, Zone> kv in safeZones)
+                {
+                    Zone zone = kv.Value;
+                    Vector2 point1 = zone.firstPoint;
+                    Vector2 point2 = zone.secondPoint;
+                    Vector2 point3 = zone.thirdPoint;
+                    Vector2 point4 = zone.forthPoint;
+                    float s1 = (Vector2.Distance(point1,point2) + Vector2.Distance(point2,playerPos) + Vector2.Distance(playerPos,point1)) / 2;
+                    float s2 = (Vector2.Distance(point2,point3) + Vector2.Distance(point3,playerPos) + Vector2.Distance(playerPos,point2)) / 2;
+                    float s3 = (Vector2.Distance(point3,point4) + Vector2.Distance(point4,playerPos) + Vector2.Distance(playerPos,point3)) / 2;
+                    float s4 = (Vector2.Distance(point4,point1) + Vector2.Distance(point1,playerPos) + Vector2.Distance(playerPos,point4)) / 2;
+                    double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1,point2)) * (s1 - Vector2.Distance(point2,playerPos)) * (s1 - Vector2.Distance(playerPos,point1)));
+                    double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2,point3)) * (s2 - Vector2.Distance(point3,playerPos)) * (s2 - Vector2.Distance(playerPos,point2)));
+                    double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3,point4)) * (s3 - Vector2.Distance(point4,playerPos)) * (s3 - Vector2.Distance(playerPos,point3)));
+                    double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4,point1)) * (s4 - Vector2.Distance(point1,playerPos)) * (s4 - Vector2.Distance(playerPos,point4)));
+                    double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                    double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                    if (areaAdded <= (areaActual + 1))
+                        inZoneS = true;
+
+                    if (inZoneS)
+                        safeZone = kv.Key;
+                }
+                if (!inZoneS && inSafeZone.ContainsKey(pc))
+                {
+                    Broadcast.noticeTo(pc.netPlayer, "⊛", "You have left the safe zone.");
+                    inSafeZone.Remove(pc);
+                }
+
+                if (!inSafeZone.ContainsKey(pc) && inZoneS)
+                {
+                    Broadcast.noticeTo(pc.netPlayer, "⊛", "You have entered a safe zone. Players cannot harm you.");
+                    inSafeZone.Add(pc, safeZone);
+                }
+
+                string warZone = "";
+                bool inZoneW = false;
+                foreach (KeyValuePair<string, Zone> kv in warZones)
+                {
+                    Zone zone = kv.Value;
+                    Vector2 point1 = zone.firstPoint;
+                    Vector2 point2 = zone.secondPoint;
+                    Vector2 point3 = zone.thirdPoint;
+                    Vector2 point4 = zone.forthPoint;
+                    float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, playerPos) + Vector2.Distance(playerPos, point1)) / 2;
+                    float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, playerPos) + Vector2.Distance(playerPos, point2)) / 2;
+                    float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, playerPos) + Vector2.Distance(playerPos, point3)) / 2;
+                    float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, playerPos) + Vector2.Distance(playerPos, point4)) / 2;
+                    double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, playerPos)) * (s1 - Vector2.Distance(playerPos, point1)));
+                    double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, playerPos)) * (s2 - Vector2.Distance(playerPos, point2)));
+                    double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, playerPos)) * (s3 - Vector2.Distance(playerPos, point3)));
+                    double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, playerPos)) * (s4 - Vector2.Distance(playerPos, point4)));
+                    double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                    double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                    if (areaAdded <= (areaActual + 1))
+                        inZoneS = true;
+
+                    if (inZoneW)
+                        warZone = kv.Key;
+                }
+                if (!inZoneW && inWarZone.ContainsKey(pc))
+                {
+                    Broadcast.noticeTo(pc.netPlayer, "", "You have left the war zone.");
+                    inWarZone.Remove(pc);
+                }
+
+                if (!inWarZone.ContainsKey(pc) && inZoneW)
+                {
+                    Broadcast.noticeTo(pc.netPlayer, "", "You have entered a war zone. Damage is multiplied by " + warDamage + "x.");
+                    inWarZone.Add(pc, warZone);
+                }
+            }
+        }
+
+        public static void StructureComponentAction(uLink.BitStream stream, ItemRepresentation rep, ref uLink.NetworkMessageInfo info, StructureComponentDataBlock SCDB)
+        {
+            uLink.NetworkPlayer netPlayer = info.sender;
+            PlayerClient playerClient = Array.Find(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == netPlayer);
+            IStructureComponentItem item;
+            NetCull.VerifyRPC(ref info);
+            if (rep.Item<IStructureComponentItem>(out item) && (item.uses > 0))
+            {
+                StructureComponent structureToPlacePrefab = SCDB.structureToPlacePrefab;
+                Vector3 origin = stream.ReadVector3();
+                Vector3 direction = stream.ReadVector3();
+                Vector3 position = stream.ReadVector3();
+                Quaternion rotation = stream.ReadQuaternion();
+                uLink.NetworkViewID viewID = stream.ReadNetworkViewID();
+                StructureMaster component = null;
+                if (nearZone(position) && !buildList.Contains(playerClient.userID.ToString()))
+                {
+                    Rust.Notice.Popup(info.sender, "", "You can't place that near safe zones or war zones.", 4f);
+                }
+                else
+                {
+                    if (viewID == uLink.NetworkViewID.unassigned)
+                    {
+                        if (SCDB.MasterFromRay(new Ray(origin, direction)))
+                        {
+                            return;
+                        }
+                        if (structureToPlacePrefab.type != StructureComponent.StructureComponentType.Foundation)
+                        {
+                            Debug.Log("ERROR, tried to place non foundation structure on terrain!");
+                        }
+                        else
+                        {
+                            component = NetCull.InstantiateClassic<StructureMaster>(Bundling.Load<StructureMaster>("content/structures/StructureMasterPrefab"), position, rotation, 0);
+                            component.SetupCreator(item.controllable);
+                        }
+                    }
+                    else
+                    {
+                        component = uLink.NetworkView.Find(viewID).gameObject.GetComponent<StructureMaster>();
+                    }
+                    if (component == null)
+                    {
+                        Debug.Log("NO master, something seriously wrong");
+                    }
+                    else if (SCDB._structureToPlace.CheckLocation(component, position, rotation) && SCDB.CheckBlockers(position))
+                    {
+                        StructureComponent comp = NetCull.InstantiateStatic(SCDB.structureToPlaceName, position, rotation).GetComponent<StructureComponent>();
+                        if (comp != null)
+                        {
+                            component.AddStructureComponent(comp);
+                            int count = 1;
+                            if (item.Consume(ref count))
+                            {
+                                item.inventory.RemoveItem(item.slot);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void DeployableItemAction(uLink.BitStream stream, ItemRepresentation rep, ref uLink.NetworkMessageInfo info, DeployableItemDataBlock DIDB)
+        {
+            uLink.NetworkPlayer netPlayer = info.sender;
+            PlayerClient playerClient = Array.Find(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == netPlayer);
+            IDeployableItem item;
+            NetCull.VerifyRPC(ref info);
+            if (rep.Item<IDeployableItem>(out item) && (item.uses > 0))
+            {
+                Vector3 vector3;
+                Quaternion quaternion;
+                TransCarrier carrier;
+                Vector3 origin = stream.ReadVector3();
+                Vector3 direction = stream.ReadVector3();
+                Ray ray = new Ray(origin, direction);
+                if (!DIDB.CheckPlacementResults(ray, out vector3, out quaternion, out carrier).Valid())
+                {
+                    Rust.Notice.Popup(info.sender, "", "You can't place that here.", 4f);
+                }
+                else
+                {
+                    if (nearZone(vector3) && !buildList.Contains(playerClient.userID.ToString()))
+                    {
+                        Rust.Notice.Popup(info.sender, "", "You can't place that near safe zones or war zones.", 4f);
+                    }
+                    else
+                    {
+                        DeployableObject component = NetCull.InstantiateStatic(DIDB.DeployableObjectPrefabName, vector3, quaternion).GetComponent<DeployableObject>(); // Creates model in world space
+                        if (component != null)
+                        {
+                            try
+                            {
+                                component.SetupCreator(item.controllable); // Sets object variables such as ownerID
+                                DIDB.SetupDeployableObject(stream, rep, ref info, component, carrier);
+                            }
+                            finally
+                            {
+                                int count = 1;
+                                if (item.Consume(ref count))
+                                {
+                                    item.inventory.RemoveItem(item.slot);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static bool inZone(Vector3 origin)
+        {
+            Vector2 origin2D = new Vector2(origin.x, origin.z);
+
+            bool inZone = false;
+            foreach (KeyValuePair<string, Zone> kv in safeZones)
+            {
+                Zone zone = kv.Value;
+                Vector2 point1 = zone.firstPoint;
+                Vector2 point2 = zone.secondPoint;
+                Vector2 point3 = zone.thirdPoint;
+                Vector2 point4 = zone.forthPoint;
+                float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, origin2D) + Vector2.Distance(origin2D, point1)) / 2;
+                float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, origin2D) + Vector2.Distance(origin2D, point2)) / 2;
+                float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, origin2D) + Vector2.Distance(origin2D, point3)) / 2;
+                float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, origin2D) + Vector2.Distance(origin2D, point4)) / 2;
+                double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, origin2D)) * (s1 - Vector2.Distance(origin2D, point1)));
+                double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, origin2D)) * (s2 - Vector2.Distance(origin2D, point2)));
+                double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, origin2D)) * (s3 - Vector2.Distance(origin2D, point3)));
+                double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, origin2D)) * (s4 - Vector2.Distance(origin2D, point4)));
+                double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                if (areaAdded <= (areaActual + 1))
+                    inZone = true;
+            }
+            foreach (KeyValuePair<string, Zone> kv in warZones)
+            {
+                Zone zone = kv.Value;
+                Vector2 point1 = zone.firstPoint;
+                Vector2 point2 = zone.secondPoint;
+                Vector2 point3 = zone.thirdPoint;
+                Vector2 point4 = zone.forthPoint;
+                float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, origin2D) + Vector2.Distance(origin2D, point1)) / 2;
+                float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, origin2D) + Vector2.Distance(origin2D, point2)) / 2;
+                float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, origin2D) + Vector2.Distance(origin2D, point3)) / 2;
+                float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, origin2D) + Vector2.Distance(origin2D, point4)) / 2;
+                double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, origin2D)) * (s1 - Vector2.Distance(origin2D, point1)));
+                double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, origin2D)) * (s2 - Vector2.Distance(origin2D, point2)));
+                double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, origin2D)) * (s3 - Vector2.Distance(origin2D, point3)));
+                double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, origin2D)) * (s4 - Vector2.Distance(origin2D, point4)));
+                double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                if (areaAdded <= (areaActual + 1))
+                    inZone = true;
+            }
+
+            return inZone;
+        }
+
+        public static bool nearZone(Vector3 origin)
+        {
+            Vector2 origin2D = new Vector2(origin.x, origin.z);
+            Vector2 originLeft = new Vector2(origin.x - 15, origin.z);
+            Vector2 originRight = new Vector2(origin.x + 15, origin.z);
+            Vector2 originBottom = new Vector2(origin.x, origin.z - 15);
+            Vector2 originTop = new Vector2(origin.x, origin.z + 15);
+
+            bool inZone = false;
+            foreach (KeyValuePair<string, Zone> kv in safeZones)
+            {
+                Zone zone = kv.Value;
+                Vector2 point1 = zone.firstPoint;
+                Vector2 point2 = zone.secondPoint;
+                Vector2 point3 = zone.thirdPoint;
+                Vector2 point4 = zone.forthPoint;
+                float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, origin2D) + Vector2.Distance(origin2D, point1)) / 2;
+                float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, origin2D) + Vector2.Distance(origin2D, point2)) / 2;
+                float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, origin2D) + Vector2.Distance(origin2D, point3)) / 2;
+                float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, origin2D) + Vector2.Distance(origin2D, point4)) / 2;
+                double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, origin2D)) * (s1 - Vector2.Distance(origin2D, point1)));
+                double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, origin2D)) * (s2 - Vector2.Distance(origin2D, point2)));
+                double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, origin2D)) * (s3 - Vector2.Distance(origin2D, point3)));
+                double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, origin2D)) * (s4 - Vector2.Distance(origin2D, point4)));
+                double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                if (areaAdded <= (areaActual + 1))
+                {
+                    inZone = true;
+                    break;
+                }
+
+                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originLeft) + Vector2.Distance(originLeft, point1)) / 2;
+                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originLeft) + Vector2.Distance(originLeft, point2)) / 2;
+                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originLeft) + Vector2.Distance(originLeft, point3)) / 2;
+                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originLeft) + Vector2.Distance(originLeft, point4)) / 2;
+                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originLeft)) * (s1 - Vector2.Distance(originLeft, point1)));
+                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originLeft)) * (s2 - Vector2.Distance(originLeft, point2)));
+                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originLeft)) * (s3 - Vector2.Distance(originLeft, point3)));
+                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originLeft)) * (s4 - Vector2.Distance(originLeft, point4)));
+                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                if (areaAdded <= (areaActual + 1))
+                {
+                    inZone = true;
+                    break;
+                }
+
+                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originRight) + Vector2.Distance(originRight, point1)) / 2;
+                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originRight) + Vector2.Distance(originRight, point2)) / 2;
+                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originRight) + Vector2.Distance(originRight, point3)) / 2;
+                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originRight) + Vector2.Distance(originRight, point4)) / 2;
+                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originRight)) * (s1 - Vector2.Distance(originRight, point1)));
+                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originRight)) * (s2 - Vector2.Distance(originRight, point2)));
+                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originRight)) * (s3 - Vector2.Distance(originRight, point3)));
+                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originRight)) * (s4 - Vector2.Distance(originRight, point4)));
+                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                if (areaAdded <= (areaActual + 1))
+                {
+                    inZone = true;
+                    break;
+                }
+
+                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originTop) + Vector2.Distance(originTop, point1)) / 2;
+                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originTop) + Vector2.Distance(originTop, point2)) / 2;
+                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originTop) + Vector2.Distance(originTop, point3)) / 2;
+                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originTop) + Vector2.Distance(originTop, point4)) / 2;
+                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originTop)) * (s1 - Vector2.Distance(originTop, point1)));
+                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originTop)) * (s2 - Vector2.Distance(originTop, point2)));
+                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originTop)) * (s3 - Vector2.Distance(originTop, point3)));
+                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originTop)) * (s4 - Vector2.Distance(originTop, point4)));
+                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                if (areaAdded <= (areaActual + 1))
+                {
+                    inZone = true;
+                    break;
+                }
+
+                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originBottom) + Vector2.Distance(originBottom, point1)) / 2;
+                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originBottom) + Vector2.Distance(originBottom, point2)) / 2;
+                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originBottom) + Vector2.Distance(originBottom, point3)) / 2;
+                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originBottom) + Vector2.Distance(originBottom, point4)) / 2;
+                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originBottom)) * (s1 - Vector2.Distance(originBottom, point1)));
+                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originBottom)) * (s2 - Vector2.Distance(originBottom, point2)));
+                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originBottom)) * (s3 - Vector2.Distance(originBottom, point3)));
+                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originBottom)) * (s4 - Vector2.Distance(originBottom, point4)));
+                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                if (areaAdded <= (areaActual + 1))
+                {
+                    inZone = true;
+                    break;
+                }
+            }
+
+            foreach (KeyValuePair<string, Zone> kv in warZones)
+            {
+                Zone zone = kv.Value;
+                Vector2 point1 = zone.firstPoint;
+                Vector2 point2 = zone.secondPoint;
+                Vector2 point3 = zone.thirdPoint;
+                Vector2 point4 = zone.forthPoint;
+                float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, origin2D) + Vector2.Distance(origin2D, point1)) / 2;
+                float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, origin2D) + Vector2.Distance(origin2D, point2)) / 2;
+                float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, origin2D) + Vector2.Distance(origin2D, point3)) / 2;
+                float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, origin2D) + Vector2.Distance(origin2D, point4)) / 2;
+                double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, origin2D)) * (s1 - Vector2.Distance(origin2D, point1)));
+                double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, origin2D)) * (s2 - Vector2.Distance(origin2D, point2)));
+                double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, origin2D)) * (s3 - Vector2.Distance(origin2D, point3)));
+                double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, origin2D)) * (s4 - Vector2.Distance(origin2D, point4)));
+                double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                if (areaAdded <= (areaActual + 1))
+                {
+                    inZone = true;
+                    break;
+                }
+
+                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originLeft) + Vector2.Distance(originLeft, point1)) / 2;
+                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originLeft) + Vector2.Distance(originLeft, point2)) / 2;
+                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originLeft) + Vector2.Distance(originLeft, point3)) / 2;
+                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originLeft) + Vector2.Distance(originLeft, point4)) / 2;
+                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originLeft)) * (s1 - Vector2.Distance(originLeft, point1)));
+                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originLeft)) * (s2 - Vector2.Distance(originLeft, point2)));
+                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originLeft)) * (s3 - Vector2.Distance(originLeft, point3)));
+                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originLeft)) * (s4 - Vector2.Distance(originLeft, point4)));
+                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                if (areaAdded <= (areaActual + 1))
+                {
+                    inZone = true;
+                    break;
+                }
+
+                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originRight) + Vector2.Distance(originRight, point1)) / 2;
+                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originRight) + Vector2.Distance(originRight, point2)) / 2;
+                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originRight) + Vector2.Distance(originRight, point3)) / 2;
+                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originRight) + Vector2.Distance(originRight, point4)) / 2;
+                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originRight)) * (s1 - Vector2.Distance(originRight, point1)));
+                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originRight)) * (s2 - Vector2.Distance(originRight, point2)));
+                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originRight)) * (s3 - Vector2.Distance(originRight, point3)));
+                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originRight)) * (s4 - Vector2.Distance(originRight, point4)));
+                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                if (areaAdded <= (areaActual + 1))
+                {
+                    inZone = true;
+                    break;
+                }
+
+                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originTop) + Vector2.Distance(originTop, point1)) / 2;
+                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originTop) + Vector2.Distance(originTop, point2)) / 2;
+                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originTop) + Vector2.Distance(originTop, point3)) / 2;
+                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originTop) + Vector2.Distance(originTop, point4)) / 2;
+                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originTop)) * (s1 - Vector2.Distance(originTop, point1)));
+                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originTop)) * (s2 - Vector2.Distance(originTop, point2)));
+                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originTop)) * (s3 - Vector2.Distance(originTop, point3)));
+                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originTop)) * (s4 - Vector2.Distance(originTop, point4)));
+                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                if (areaAdded <= (areaActual + 1))
+                {
+                    inZone = true;
+                    break;
+                }
+
+                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originBottom) + Vector2.Distance(originBottom, point1)) / 2;
+                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originBottom) + Vector2.Distance(originBottom, point2)) / 2;
+                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originBottom) + Vector2.Distance(originBottom, point3)) / 2;
+                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originBottom) + Vector2.Distance(originBottom, point4)) / 2;
+                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originBottom)) * (s1 - Vector2.Distance(originBottom, point1)));
+                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originBottom)) * (s2 - Vector2.Distance(originBottom, point2)));
+                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originBottom)) * (s3 - Vector2.Distance(originBottom, point3)));
+                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originBottom)) * (s4 - Vector2.Distance(originBottom, point4)));
+                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                if (areaAdded <= (areaActual + 1))
+                {
+                    inZone = true;
+                    break;
+                }
+            }
+
+            return inZone;
+        }
+
+        public static void manageZones(PlayerClient senderClient, string[] args, bool safeZone)
+        {
+            if (args.Count() > 2)
+            {
+                string mode = args[2];
+                Character senderChar;
+                Character.FindByUser(senderClient.userID, out senderChar);
+                Vector3 posV3 = senderChar.transform.position;
+                Vector2 currentPos = new Vector2(posV3.x, posV3.z);
+
+                switch (mode)
+                {
+                    case "1":
+                        if (!firstPoints.ContainsKey(senderClient))
+                        {
+                            firstPoints.Add(senderClient, currentPos);
+                            Broadcast.broadcastTo(senderClient.netPlayer, "First zone point set to " + currentPos.ToString());
+                        }
+                        else
+                        {
+                            firstPoints[senderClient] = currentPos;
+                            Broadcast.broadcastTo(senderClient.netPlayer, "First zone point reset to " + currentPos.ToString());
+                        }
+                        break;
+                    case "2":
+                        if (!secondPoints.ContainsKey(senderClient))
+                        {
+                            secondPoints.Add(senderClient, currentPos);
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Second zone point set to " + currentPos.ToString());
+                        }
+                        else
+                        {
+                            secondPoints[senderClient] = currentPos;
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Second zone point reset to " + currentPos.ToString());
+                        }
+                        break;
+                    case "3":
+                        if (!thirdPoints.ContainsKey(senderClient))
+                        {
+                            thirdPoints.Add(senderClient, currentPos);
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Third zone point set to " + currentPos.ToString());
+                        }
+                        else
+                        {
+                            thirdPoints[senderClient] = currentPos;
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Third zone point reset to " + currentPos.ToString());
+                        }
+                        break;
+                    case "4":
+                        if (!forthPoints.ContainsKey(senderClient))
+                        {
+                            forthPoints.Add(senderClient, currentPos);
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Forth zone point set to " + currentPos.ToString());
+                        }
+                        else
+                        {
+                            forthPoints[senderClient] = currentPos;
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Forth zone point reset to " + currentPos.ToString());
+                        }
+                        break;
+                    case "set":
+                        if (!secondPoints.ContainsKey(senderClient) && !firstPoints.ContainsKey(senderClient))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You must set points before creating a zone.");
+                            return;
+                        }
+                        if (!firstPoints.ContainsKey(senderClient))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You must set the first point before creating a zone.");
+                            return;
+                        }
+                        if (!secondPoints.ContainsKey(senderClient))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You must set the second point before creating a zone.");
+                            return;
+                        }
+
+                        Vector2 firstPoint = firstPoints[senderClient];
+                        Vector2 secondPoint = secondPoints[senderClient];
+                        Vector2 thirdPoint = thirdPoints[senderClient];
+                        Vector2 forthPoint = forthPoints[senderClient];
+
+                        if (safeZone)
+                        {
+                            safeZones.Add("safezone_" + safeZones.Count, new Zone(firstPoint, secondPoint, thirdPoint, forthPoint));
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Safe zone created! Size: " + Math.Round(Vector2.Distance(firstPoint, secondPoint), 2) + " square meters.");
+                            addZoneData("safezone_" + safeZones.Count, firstPoint, secondPoint, thirdPoint, forthPoint);
+                        }
+                        else
+                        {
+                            warZones.Add("warzone_" + warZones.Count, new Zone(firstPoint, secondPoint, thirdPoint, forthPoint));
+                            Broadcast.broadcastTo(senderClient.netPlayer, "War zone created! Size: " + Math.Round(Vector2.Distance(firstPoint, secondPoint), 2) + " square meters.");
+                            addZoneData("warzone_" + safeZones.Count, firstPoint, secondPoint, thirdPoint, forthPoint);
+                        }
+                        break;
+                    case "clear":
+                        if (safeZone)
+                        {
+                            if (inSafeZone.ContainsKey(senderClient))
+                            {
+                                KeyValuePair<PlayerClient, string>[] clients = Array.FindAll(inSafeZone.ToArray(), (KeyValuePair<PlayerClient, string> kv) => kv.Value == inSafeZone[senderClient]);
+                                foreach (KeyValuePair<PlayerClient, string> kv in clients)
+                                {
+                                    Broadcast.noticeTo(kv.Key.netPlayer, "!", "Safe zone deleted! You are no longer in a safe zone.", 3);
+                                    inSafeZone.Remove(kv.Key);
+                                    if (safeZones.ContainsKey(kv.Value))
+                                        safeZones.Remove(kv.Value);
+                                    remZoneData(kv.Value);
+                                }
+                            }
+                            else
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You must be in a safe zone to delete it.");
+                        }
+                        else
+                        {
+                            if (inWarZone.ContainsKey(senderClient))
+                            {
+                                KeyValuePair<PlayerClient, string>[] clients = Array.FindAll(inWarZone.ToArray(), (KeyValuePair<PlayerClient, string> kv) => kv.Value == inWarZone[senderClient]);
+                                foreach (KeyValuePair<PlayerClient, string> kv in clients)
+                                {
+                                    Broadcast.noticeTo(kv.Key.netPlayer, "!", "War zone deleted! You are no longer in a war zone.", 3);
+                                    inWarZone.Remove(kv.Key);
+                                    if (warZones.ContainsKey(kv.Value))
+                                        warZones.Remove(kv.Value);
+                                    remZoneData(kv.Value);
+                                }
+                            }
+                            else
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You must be in a war zone to delete it.");
+                        }
+                        break;
+                    case "clearall":
+                        if (safeZone)
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "All safe zones deleted.");
+                            safeZones.Clear();
+                            foreach (PlayerClient pc in inSafeZone.Keys)
+                            {
+                                Broadcast.noticeTo(pc.netPlayer, "!", "Safe zone deleted! You are no longer in a safe zone.", 3);
+                            }
+                            inSafeZone.Clear();
+                            remZoneData("clearallS");
+                        }
+                        else
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "All war zones deleted.");
+                            warZones.Clear();
+                            foreach (PlayerClient pc in inWarZone.Keys)
+                            {
+                                Broadcast.noticeTo(pc.netPlayer, "!", "War zone deleted! You are no longer in a war zone.", 3);
+                            }
+                            inWarZone.Clear();
+                            remZoneData("clearallW");
+                        }
                         break;
                 }
             }
@@ -765,50 +2400,361 @@ namespace RustEssentials.Util
 
         public static void clientSpeak(VoiceCom voiceCom, int setupData, byte[] data)
         {
-            try
+            //try
+            //{
+            //    PlayerClient client;
+            //    if (((voice.distance > 0f) && PlayerClient.Find(voiceCom.networkViewOwner, out client)) && client.hasLastKnownPosition)
+            //    {
+            //        float num = inGlobalV.Contains(client.userID.ToString()) ? (1000000000f * 1000000000f) : (voice.distance * voice.distance);
+            //        Vector3 lastKnownPosition = client.lastKnownPosition;
+            //        int num3 = 0;
+            //        try
+            //        {
+            //            foreach (PlayerClient client2 in AllPlayerClients)
+            //            {
+            //                if (((client2 != null) && client2.hasLastKnownPosition) && (client2 != client))
+            //                {
+            //                    Vector3 vector;
+            //                    vector.x = client2.lastKnownPosition.x - lastKnownPosition.x;
+            //                    vector.y = client2.lastKnownPosition.y - lastKnownPosition.y;
+            //                    vector.z = client2.lastKnownPosition.z - lastKnownPosition.z;
+            //                    float num2 = ((vector.x * vector.x) + (vector.y * vector.y)) + (vector.z * vector.z);
+            //                    if (num2 <= num)
+            //                    {
+            //                        num3++;
+            //                        voiceCom.playerList.Add(client2.netPlayer);
+            //                    }
+            //                }
+            //            }
+            //            if (num3 > 0)
+            //            {
+            //                object[] args = new object[] { voice.distance, setupData, data };
+            //                voiceCom.networkView.RPC("VoiceCom:voiceplay", voiceCom.playerList, args);
+            //            }
+            //        }
+            //        finally
+            //        {
+            //            if (num3 > 0)
+            //            {
+            //                voiceCom.playerList.Clear();
+            //            }
+            //        }
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    conLog.Error(ex.ToString());
+            //}
+        }
+
+        public static void showDistance(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
             {
-                PlayerClient client;
-                if (((voice.distance > 0f) && PlayerClient.Find(voiceCom.networkViewOwner, out client)) && client.hasLastKnownPosition)
+                List<string> messageList = new List<string>();
+                int curIndex = 0;
+                foreach (string s in args)
                 {
-                    float num = inGlobalV.Contains(client.userID.ToString()) ? (1000000000f * 1000000000f) : (voice.distance * voice.distance);
-                    Vector3 lastKnownPosition = client.lastKnownPosition;
-                    int num3 = 0;
-                    try
-                    {
-                        foreach (PlayerClient client2 in PlayerClient.All)
-                        {
-                            if (((client2 != null) && client2.hasLastKnownPosition) && (client2 != client))
-                            {
-                                Vector3 vector;
-                                vector.x = client2.lastKnownPosition.x - lastKnownPosition.x;
-                                vector.y = client2.lastKnownPosition.y - lastKnownPosition.y;
-                                vector.z = client2.lastKnownPosition.z - lastKnownPosition.z;
-                                float num2 = ((vector.x * vector.x) + (vector.y * vector.y)) + (vector.z * vector.z);
-                                if (num2 <= num)
-                                {
-                                    num3++;
-                                    voiceCom.playerList.Add(client2.netPlayer);
-                                }
-                            }
-                        }
-                        if (num3 > 0)
-                        {
-                            object[] args = new object[] { voice.distance, setupData, data };
-                            voiceCom.networkView.RPC("VoiceCom:voiceplay", voiceCom.playerList, args);
-                        }
-                    }
-                    finally
-                    {
-                        if (num3 > 0)
-                        {
-                            voiceCom.playerList.Clear();
-                        }
-                    }
+                    if (curIndex > 0)
+                        messageList.Add(s);
+                    curIndex++;
+                }
+
+                string targetName = string.Join(" ", messageList.ToArray());
+
+                PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
+
+                if (possibleTargets.Count() == 0)
+                    Broadcast.broadcastTo(senderClient.netPlayer, "No players equal or contain \"" + targetName + "\".");
+                else if (possibleTargets.Count() > 1)
+                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal or contain \"" + targetName + "\".");
+                else
+                {
+                    PlayerClient targetClient = possibleTargets[0];
+                    Character targetChar;
+                    Character.FindByUser(targetClient.userID, out targetChar);
+                    Character senderChar;
+                    Character.FindByUser(senderClient.userID, out senderChar);
+
+                    Vector2 targetPos = new Vector2(targetChar.transform.position.x, targetChar.transform.position.z);
+                    Vector2 senderPos = new Vector2(senderChar.transform.position.x, senderChar.transform.position.z);
+
+                    Broadcast.broadcastTo(senderClient.netPlayer, "Distance: " + Vector2.Distance(targetPos, senderPos) + "m.");
                 }
             }
-            catch (Exception ex)
+        }
+
+        public static void showOwner(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
             {
-                conLog.Error(ex.ToString());
+                string mode = args[1];
+                string UID = senderClient.userID.ToString();
+
+                switch (mode)
+                {
+                    case "on":
+                        if (!ownershipList.Contains(UID))
+                        {
+                            if (destroyerList.Contains(UID))
+                            {
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Remover tool deactivated.");
+                                destroyerList.Remove(UID);
+                            }
+
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Ownership tool activated. Hit structures to show who owns them.");
+                            ownershipList.Add(UID);
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You already have the ownership tool activated.");
+                        break;
+                    case "off":
+                        if (ownershipList.Contains(UID))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Ownership tool deactivated.");
+                            ownershipList.Remove(UID);
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You do not have the ownership tool activated.");
+                        break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Unknown argument \"" + mode + "\".");
+                        break;
+                }
+            }
+        }
+
+        public static void clearInventory(PlayerClient playerClient)
+        {
+            Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
+
+            for (int i = 0; i < inventory.slotCount - 1; i++)
+            {
+                IInventoryItem item;
+                if (inventory.GetItem(i, out item))
+                {
+                    try
+                    {
+                        if (item.datablock.name != null && i != 36 && i != 37 && i != 38 && i != 39)
+                        {
+                            inventory.RemoveItem(i);
+                        }
+                    }
+                    catch { }
+                }
+            }
+        }
+
+        public static void clearArmor(PlayerClient playerClient)
+        {
+            Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
+
+            for (int i = 36; i < 40; i++)
+            {
+                inventory.RemoveItem(i);
+            }
+        }
+
+        public static bool addItem(PlayerClient playerClient, string itemName, int amount)
+        {
+            Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
+
+            if (inventory.vacantSlotCount > 0)
+            {
+                inventory.AddItemAmount(DatablockDictionary.GetByName(itemName), amount);
+                return true;
+            }
+            else
+                return false;
+        }
+
+        public static bool addArmor(PlayerClient playerClient, string itemName, bool replaceCurrent = false)
+        {
+            Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
+            int slot = 0;
+            
+            if (itemName.Contains("Helmet"))
+                slot = 36;
+            if (itemName.Contains("Vest"))
+                slot = 37;
+            if (itemName.Contains("Pants"))
+                slot = 38;
+            if (itemName.Contains("Boots"))
+                slot = 39;
+
+            if (slot > 0)
+            {
+                if (replaceCurrent)
+                    inventory.RemoveItem(slot);
+                inventory.AddItemAmount(DatablockDictionary.GetByName(itemName), 1, Inventory.Slot.Preference.Define(Inventory.Slot.Kind.Armor, false, Inventory.Slot.KindFlags.Armor));
+                return true;
+            }
+            else
+                return false;
+        }
+
+        public static bool grabArmor(PlayerClient playerClient, out List<IInventoryItem> items)
+        {
+            Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
+            items = new List<IInventoryItem>();
+            for (int i = 0; i < inventory.slotCount - 1; i++)
+            {
+                IInventoryItem item;
+                if (inventory.GetItem(i, out item))
+                {
+                    try
+                    {
+                        if (i > 35 && i < 40 && item != null)
+                            items.Add(item);
+                    }
+                    catch { }
+                }
+            }
+            return items.Count() > 0;
+        }
+
+        public static bool grabItem(PlayerClient playerClient, string itemName, out List<IInventoryItem> items)
+        {
+            Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
+            items = new List<IInventoryItem>();
+            for (int i = 0; i < inventory.slotCount - 1; i++)
+            {
+                IInventoryItem item;
+                if (inventory.GetItem(i, out item))
+                {
+                    try
+                    {
+                        if (item.datablock.name == itemName)
+                            items.Add(item);
+                    }
+                    catch { }
+                }
+            }
+            return items.Count() > 0;
+        }
+
+        public static bool hasItem(PlayerClient playerClient, string itemName, out IInventoryItem item)
+        {
+            Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
+            for (int i = 0; i < inventory.slotCount - 1; i++)
+            {
+                IInventoryItem item2;
+                if (inventory.GetItem(i, out item2))
+                {
+                    try
+                    {
+                        if (item2.datablock.name == itemName)
+                        {
+                            item = item2;
+                            return true;
+                        }
+                    }
+                    catch { }
+                }
+            }
+            item = null;
+            return false;
+        }
+
+        public static void vanishTool(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                string mode = args[1];
+                string UID = senderClient.userID.ToString();
+                Inventory senderInv = senderClient.controllable.GetComponent<Inventory>();
+
+                switch (mode)
+                {
+                    case "on":
+                        if (!vanishedList.Contains(UID))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You have vanished. Your body is invisible. Reconnect to make your name invisible.");
+                            vanishedList.Add(UID);
+
+                            List<IInventoryItem> armorList = new List<IInventoryItem>();
+                            previousArmor.Add(UID, new List<string>());
+                            if (grabArmor(senderClient, out armorList))
+                            {
+                                foreach (IInventoryItem item in armorList)
+                                {
+                                    previousArmor[UID].Add(item.datablock.name);
+                                }
+                            }
+                            addArmor(senderClient, "Invisible Helmet", true);
+                            addArmor(senderClient, "Invisible Vest", true);
+                            addArmor(senderClient, "Invisible Pants", true);
+                            addArmor(senderClient, "Invisible Boots", true);
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You have already vanished.");
+                        break;
+                    case "off":
+                        if (vanishedList.Contains(UID))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You have appeared. Your body is visible. Reconnect to make your body visible.");
+                            vanishedList.Remove(UID);
+                            clearArmor(senderClient);
+                            foreach (string s in previousArmor[UID])
+                            {
+                                addArmor(senderClient, s);
+                            }
+                            previousArmor.Remove(UID);
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You have not vanished.");
+                        break;
+                }
+            }
+        }
+
+        public static PlayerClient CreatePlayerClientForUser(NetUser user)
+        {
+            ServerManagement SM = ServerManagement.Get();
+            string userName = user.user.Displayname;
+            if (vanishedList.Contains(user.userID.ToString()))
+                userName = "";
+
+            object[] args = new object[] { user.user.Userid, userName };
+            GameObject go = NetCull.InstantiateClassicWithArgs(user.networkPlayer, ":client", Vector3.zero, Quaternion.identity, 0, args);
+            PlayerClient component = go.GetComponent<PlayerClient>();
+            if (component == null)
+            {
+                NetCull.Destroy(go);
+                return component;
+            }
+            SM._playerClientList.Add(component);
+            return component;
+        }
+
+        public static void hideTool(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                string mode = args[1];
+                string UID = senderClient.userID.ToString();
+
+                switch (mode)
+                {
+                    case "on":
+                        if (!hiddenList.Contains(UID))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are now hidden from AI.");
+                            hiddenList.Add(UID);
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are already hidden from AI.");
+                        break;
+                    case "off":
+                        if (hiddenList.Contains(UID))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are no longer hidden from AI.");
+                            hiddenList.Remove(UID);
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not currently hidden from AI.");
+                        break;
+                }
             }
         }
 
@@ -824,6 +2770,12 @@ namespace RustEssentials.Util
                     case "on":
                         if (!destroyerList.Contains(UID))
                         {
+                            if (ownershipList.Contains(UID))
+                            {
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Ownership tool deactivated.");
+                                ownershipList.Remove(UID);
+                            }
+
                             Broadcast.broadcastTo(senderClient.netPlayer, "Remover tool activated. Hit AI or structures to delete them.");
                             destroyerList.Add(UID);
                         }
@@ -841,6 +2793,129 @@ namespace RustEssentials.Util
                         break;
                 }
             }
+        }
+
+        public static StructureMaster.DecayStatus DoDecay(StructureMaster SM)
+        {
+            float num = UnityEngine.Time.time - SM._lastDecayTime;
+            SM._lastDecayTime = UnityEngine.Time.time;
+            if (SM._decayRate <= 0f)
+            {
+                return StructureMaster.DecayStatus.Delaying;
+            }
+            SM._decayDelayRemaining -= num;
+            num = -SM._decayDelayRemaining;
+            if (SM._decayDelayRemaining < 0f)
+            {
+                SM._decayDelayRemaining = 0f;
+            }
+            if (num <= 0f)
+            {
+                return StructureMaster.DecayStatus.Delaying;
+            }
+            SM._pentUpDecayTime += num;
+            float decayTimeMaxHealth = SM.GetDecayTimeMaxHealth();
+            float num3 = SM._pentUpDecayTime / decayTimeMaxHealth;
+            if (num3 < structure.minpercentdmg)
+            {
+                return StructureMaster.DecayStatus.PentUpDecay;
+            }
+            SM._pentUpDecayTime = 0f;
+            foreach (StructureComponent component in SM._structureComponents)
+            {
+                Vector3 position = component.transform.position;
+                if (!inZone(position))
+                {
+                    TakeDamage damage = component.GetComponent<TakeDamage>();
+                    if (damage != null)
+                    {
+                        float damageQuantity = ((damage.maxHealth * num3) * UnityEngine.Random.Range((float)0.75f, (float)1.25f)) * SM._decayRate;
+                        if (((component.type == StructureComponent.StructureComponentType.Wall) || (component.type == StructureComponent.StructureComponentType.Doorway)) || (component.type == StructureComponent.StructureComponentType.WindowWall))
+                        {
+                            RaycastHit hit;
+                            bool flag4;
+                            Facepunch.MeshBatch.MeshBatchInstance instance;
+                            Ray ray = new Ray(component.transform.position + new Vector3(0f, 2.5f, 0f), component.transform.forward);
+                            Ray ray2 = new Ray(component.transform.position + new Vector3(0f, 2.5f, 0f), -component.transform.forward);
+                            bool flag3 = false;
+                            if (Facepunch.MeshBatch.MeshBatchPhysics.Raycast(ray, out hit, 25f, out flag4, out instance))
+                            {
+                                RaycastHit hit2;
+                                IDMain main = !flag4 ? IDBase.GetMain(hit.collider.gameObject) : instance.idMain;
+                                if (((main != null) && ((main is StructureComponent) || main.CompareTag("Door"))) && Facepunch.MeshBatch.MeshBatchPhysics.Raycast(ray2, out hit2, 25f, out flag4, out instance))
+                                {
+                                    main = !flag4 ? IDBase.GetMain(hit2.collider.gameObject) : instance.idMain;
+                                    if ((main != null) && ((main is StructureComponent) || main.CompareTag("Door")))
+                                    {
+                                        flag3 = true;
+                                    }
+                                }
+                            }
+                            if (flag3)
+                            {
+                                damageQuantity *= 0.2f;
+                            }
+                            TakeDamage.HurtSelf(component, damageQuantity, null);
+                        }
+                        else if (component.type == StructureComponent.StructureComponentType.Pillar)
+                        {
+                            if (!SM.ComponentCarryingWeight(component))
+                            {
+                                TakeDamage.HurtSelf(component, damageQuantity, null);
+                            }
+                        }
+                        else if (component.type == StructureComponent.StructureComponentType.Ceiling)
+                        {
+                            if (!SM.ComponentCarryingWeight(component))
+                            {
+                                TakeDamage.HurtSelf(component, damageQuantity, null);
+                            }
+                        }
+                        else if (component.type == StructureComponent.StructureComponentType.Foundation)
+                        {
+                            if (!SM.ComponentCarryingWeight(component))
+                            {
+                                TakeDamage.HurtSelf(component, damageQuantity, null);
+                            }
+                        }
+                        else
+                        {
+                            TakeDamage.HurtSelf(component, damageQuantity, null);
+                        }
+                    }
+                }
+            }
+            return StructureMaster.DecayStatus.Decaying;
+        }
+
+        public static EnvDecay.ThinkResult DecayThink(EnvDecay ED)
+        {
+            if (ED._takeDamage == null)
+            {
+                return EnvDecay.ThinkResult.Done;
+            }
+            if ((ED._deployable == null) || (ED._deployable.GetCarrier() == null))
+            {
+                float num = UnityEngine.Time.time - ED.lastDecayThink;
+                if (num < decay.decaytickrate)
+                {
+                    return EnvDecay.ThinkResult.TooEarly;
+                }
+                if (ED.CanApplyDecayDamage())
+                {
+                    float damageQuantity = ((Mathf.Clamp(UnityEngine.Time.time - ED.lastDecayThink, 0f, decay.decaytickrate) / decay.deploy_maxhealth_sec) * ED._takeDamage.maxHealth) * ED.decayMultiplier;
+                    
+                    Vector3 position = ED.transform.position;
+                    if (!inZone(position))
+                    {
+                        if (TakeDamage.HurtSelf(ED, damageQuantity, null) == LifeStatus.WasKilled)
+                        {
+                            return EnvDecay.ThinkResult.Done;
+                        }
+                    }
+                }
+            }
+            return EnvDecay.ThinkResult.AgainLater;
         }
 
         public static bool isPlayer(IDMain idMain)
@@ -863,7 +2938,7 @@ namespace RustEssentials.Util
             float health = idMain.GetComponent<TakeDamage>().health;
             if (health != structureComponent.oldHealth)
             {
-                NetEntityID entID = NetEntityID.Get((MonoBehaviour)structureComponent);
+                NetEntityID entID = NetEntityID.Get((UnityEngine.MonoBehaviour)structureComponent);
                 NetCull.RemoveRPCsByName(entID, "ClientHealthUpdate");
                 if (!beingDestroyed.Contains(idMain.gameObject))
                     NetCull.RPC<float>(entID, "ClientHealthUpdate", uLink.RPCMode.OthersBuffered, health);
@@ -878,7 +2953,7 @@ namespace RustEssentials.Util
             if (component != null)
             {
                 float health = component.health;
-                NetEntityID entID = NetEntityID.Get((MonoBehaviour) deployableObject);
+                NetEntityID entID = NetEntityID.Get((UnityEngine.MonoBehaviour)deployableObject);
                 NetCull.RemoveRPCsByName(entID, "ClientHealthUpdate");
                 if (!beingDestroyed.Contains(idMain.gameObject))
                     NetCull.RPC<float>(entID, "ClientHealthUpdate", uLink.RPCMode.OthersBuffered, health);
@@ -914,37 +2989,37 @@ namespace RustEssentials.Util
                                 beingDestroyed.Add(damage.victim.idMain.gameObject);
                                 NetCull.Destroy(damage.victim.idMain.gameObject);
                             }
+
+                            if (ownershipList.Contains(damage.attacker.userID.ToString()))
+                            {
+                                damage.amount = 0f;
+                                damage.status = LifeStatus.IsAlive;
+                                string ownerUID = "";
+                                if (damage.victim.idMain is StructureComponent)
+                                    ownerUID = (damage.victim.idMain as StructureComponent)._master.ownerID.ToString();
+
+                                if (damage.victim.idMain is DeployableObject)
+                                    ownerUID = (damage.victim.idMain as DeployableObject).ownerID.ToString();
+
+                                string userName = grabNameByUID(ownerUID);
+
+                                Broadcast.noticeTo(damage.attacker.client.netPlayer, "✲", "This is owned by " + userName + "!");
+                            }
                         }
                     }
                 }
             }
-        }
-        public static void OnZombieHurt(Controller controller, ZombieController zombieController, DamageEvent damage)
-        {
-            if (!zombieController.HasTarget())
+            else
             {
-                Character newTarg = damage.attacker.character;
-                if (newTarg != null)
+                if (damage.victim.idMain is Character)
                 {
-                    if (newTarg != zombieController.attackTarget)
+                    if (isPlayer(damage.victim.idMain))
                     {
-                        zombieController.SetTarget(newTarg);
-                        zombieController.lastAttackedMePosition = newTarg.origin;
-                    }
-                    zombieController.targetAttackedMe = true;
-                    if (zombieController.wasRoaming)
-                    {
-                        zombieController.RoamFrameEnd();
-                        NavMeshAgent agent = controller.agent;
-                        if (agent != null)
+                        if (godList.Contains(damage.victim.userID.ToString()))
                         {
-                            if (!beingDestroyed.Contains(damage.victim.idMain.gameObject))
-                                agent.ResetPath();
-                            else
-                                beingDestroyed.Remove(damage.victim.idMain.gameObject);
+                            damage.amount = 0f;
+                            damage.status = LifeStatus.IsAlive;
                         }
-                        zombieController.wasRoaming = false;
-                        zombieController.currentlyRoaming = false;
                     }
                 }
             }
@@ -959,14 +3034,8 @@ namespace RustEssentials.Util
                 if (destroyerList.Contains(attackerClient.userID.ToString()))
                 {
                     beingDestroyed.Add(damage.victim.idMain.gameObject);
-
-                    if (damage.victim.idMain.gameObject.name.Contains("Zombie"))
-                        NetCull.Destroy(damage.victim.idMain.gameObject);
-                    else
-                    {
-                        damage.amount = 1000f;
-                        damage.status = LifeStatus.WasKilled;
-                    }
+                    damage.amount = 1000f;
+                    damage.status = LifeStatus.WasKilled;
                 }
             }
         }
@@ -990,7 +3059,13 @@ namespace RustEssentials.Util
         public static void OnHumanHurt(ref DamageEvent damage)
         { 
             PlayerClient victim = damage.victim.client;
+            TakeDamage takeDamage = victim.controllable.GetComponent<TakeDamage>();
             PlayerClient attacker = null;
+
+            if (godList.Contains(victim.userID.ToString()))
+            {
+                damage.amount = 0f;
+            }
             
             string victimFaction = "Neutral";
             string attackerFaction = "";
@@ -1008,6 +3083,17 @@ namespace RustEssentials.Util
                 possibleFactions = Array.FindAll(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(attacker.userID.ToString()));
                 if (possibleFactions.Count() > 0)
                     attackerFaction = possibleFactions[0].Key;
+
+                if (inSafeZone.ContainsKey(attacker) && !inWarZone.ContainsKey(attacker))
+                {
+                    Broadcast.noticeTo(attacker.netPlayer, "☃", "You cannot hurt players while in a safe zone!");
+                    damage.amount = 0f;
+                }
+                else if (inSafeZone.ContainsKey(victim) && !inWarZone.ContainsKey(victim))
+                {
+                    Broadcast.noticeTo(attacker.netPlayer, "☃", "You cannot hurt players in a safe zone!");
+                    damage.amount = 0f;
+                }
             }
 
             if (victimFaction == attackerFaction && damage.attacker.IsDifferentPlayer(victim))
@@ -1022,19 +3108,81 @@ namespace RustEssentials.Util
                     Broadcast.sideNoticeTo(attacker.netPlayer, "You hit " + victim.userName);
                     Broadcast.sideNoticeTo(victim.netPlayer, attacker.userName + " hit you");
                 }
-                damage.amount = 0f;
+                if (!inWarZone.ContainsKey(attacker) && !inWarZone.ContainsKey(victim))
+                {
+                    if (!friendlyFire)
+                    {
+                        damage.amount = 0f;
+                    }
+                }
+                else
+                {
+                    damage.amount = damage.amount * warFriendlyDamage;
+                }
+            }
+            else
+            {
+                if (damage.attacker.IsDifferentPlayer(victim) && alliances.ContainsKey(attackerFaction))
+                {
+                    if (alliances[attackerFaction].Contains(victimFaction))
+                    {
+                        if (damage.damageTypes == DamageTypeFlags.damage_bullet)
+                        {
+                            Broadcast.sideNoticeTo(attacker.netPlayer, "You shot an ally");
+                            Broadcast.sideNoticeTo(victim.netPlayer, "An ally shot you");
+                        }
+                        else
+                        {
+                            Broadcast.sideNoticeTo(attacker.netPlayer, "You hit an ally");
+                            Broadcast.sideNoticeTo(victim.netPlayer, "An ally hit you");
+                        }
+                        if (!inWarZone.ContainsKey(attacker) && !inWarZone.ContainsKey(victim))
+                        {
+                            if (!alliedFire)
+                                damage.amount = (damage.amount * 2) / 3;
+                        }
+                        else
+                        {
+                            damage.amount = damage.amount * warAllyDamage;
+                        }
+                    }
+                }
+                else
+                {
+                    if (!inWarZone.ContainsKey(attacker) && !inWarZone.ContainsKey(victim))
+                    {
+                        damage.amount = damage.amount * neutralDamage;
+                    }
+                    else
+                    {
+                        damage.amount = damage.amount * warDamage;
+                    }
+                }
+
+                if (!godList.Contains(victim.userID.ToString()))
+                {
+                    if (isTeleporting.Contains(victim))
+                    {
+                        wasHit.Add(victim);
+                    }
+                    if (isAccepting.Contains(victim))
+                    {
+                        wasHit.Add(victim);
+                    }
+                }
+            }
+
+            if (takeDamage.dead)
+            {
+                damage.status = LifeStatus.IsDead;
+            }
+            else if (takeDamage.health > damage.amount)
+            {
                 damage.status = LifeStatus.IsAlive;
             }
             else
             {
-                if (isTeleporting.Contains(victim))
-                {
-                    wasHit.Add(victim);
-                }
-                if (isAccepting.Contains(victim))
-                {
-                    wasHit.Add(victim);
-                }
+                damage.status = LifeStatus.WasKilled;
             }
         }
 
@@ -1065,6 +3213,54 @@ namespace RustEssentials.Util
             return false;
         }
 
+        public static RustProto.User BuildUser(SteamConnector sc)
+        {
+            string userName = sc.Login.SteamLogin.UserName;
+
+            foreach (KeyValuePair<string, string> kv in rankPrefixes)
+            {
+                userName = userName.Replace("[" + kv.Key + "]", "");
+                userName = userName.Replace(kv.Value, "");
+            }
+
+            foreach (KeyValuePair<string, string> kv in playerPrefixes)
+            {
+                userName = userName.Replace("[" + kv.Value + "]", "");
+            }
+
+            userName = userName.Replace("<G> ", "");
+            userName = userName.Replace("* <G> ", "");
+            userName = userName.Replace("<D> ", "");
+            userName = userName.Replace("* <D> ", "");
+            userName = userName.Replace("<F> ", "");
+            userName = userName.Replace("* <F> ", "");
+
+            RustProto.User.Builder builder = new RustProto.User.Builder();
+
+            bool nameOccupied = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName == userName).Count() > 0;
+            int instanceNum = 0;
+            if (nameOccupied && kickDuplicate)
+            {
+                instanceNum = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName == userName).Count();
+
+                nameOccupied = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName == userName + " (" + instanceNum + ")").Count() > 0;
+                while (nameOccupied)
+                {
+                    instanceNum++;
+                    nameOccupied = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName == userName + " (" + instanceNum + ")").Count() > 0;
+                }
+                string newName = userName + " (" + instanceNum + ")";
+
+                builder.SetDisplayname(newName);
+            }
+            else
+                builder.SetDisplayname(userName);
+
+            builder.SetUserid(sc.Login.SteamLogin.SteamID);
+            builder.SetUsergroup(RustProto.User.Types.UserGroup.REGULAR);
+            return builder.Build();
+        }
+
         public static void OnUserConnected(NetUser user)
         {
             try
@@ -1083,51 +3279,90 @@ namespace RustEssentials.Util
                 }
                 else
                 {
-                    if (!Vars.teleportRequests.ContainsKey(user.playerClient))
+                    bool containsIllegalWord = false;
+                    List<string> illegalWords = new List<string>();
+                    foreach (string s in illegalWords)
                     {
-                        Vars.teleportRequests.Add(user.playerClient, new Dictionary<PlayerClient, TimerPlus>());
-                        Vars.latestRequests.Add(user.playerClient, null);
+                        if (user.displayName.ToLower().Contains(s.ToLower()))
+                        {
+                            containsIllegalWord = true;
+                            illegalWords.Add(s);
+                        }
                     }
 
-                    if (Vars.useSteamGroup && Vars.groupMembers.Contains(steamUID))
+                    bool containsIllegalChar = false;
+                    List<string> illegalChars = new List<string>();
+                    foreach (char c in user.displayName)
                     {
-                        Vars.conLog.Info("Player " + user.displayName + " (" + steamUID + ") has connected through steam group \"" + Vars.steamGroup + "\".");
-                        if (Vars.motdList.Keys.Contains("Join"))
+                        if (!allowedChars.Contains(c.ToString().ToLower()) && !allowedChars.Contains(c.ToString()) && c != ' ')
                         {
-                            foreach (string s in Vars.motdList["Join"])
+                            illegalChars.Add(c.ToString());
+                            containsIllegalChar = true;
+                        }
+                    }
+                    bool nameOccupied = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName == user.displayName).Count() - 1 > 0;
+                    PlayerClient connectedClient = null;
+                    int instanceNum = 0;
+                    if (nameOccupied)
+                    {
+                        connectedClient = Array.Find(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName == user.displayName && pc.userID != user.userID);
+                        instanceNum = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName == user.displayName).Count();
+                    }
+
+                    if ((censorship && containsIllegalWord) || (restrictChars && containsIllegalChar) || (user.displayName.Length > maximumNameCount) || (user.displayName.Length < minimumNameCount) || (kickDuplicate && nameOccupied))
+                    {
+                        if (containsIllegalWord)
+                            Vars.otherKick(user, "Illegal words in name: " + string.Join(", ", illegalWords.ToArray()));
+                        else
+                        {
+                            if (containsIllegalChar)
+                                Vars.otherKick(user, "Illegal characters in name: " + string.Join(", ", illegalChars.ToArray()));
+                            else
                             {
-                                Broadcast.broadcastTo(user.networkPlayer, s);
+                                if (user.displayName.Length > maximumNameCount)
+                                    Vars.otherKick(user, "Name must be less than " + maximumNameCount + " characters.");
+                                else
+                                {
+                                    if (user.displayName.Length < minimumNameCount)
+                                        Vars.otherKick(user, "Name must be more than " + minimumNameCount + " characters.");
+                                    else
+                                    {
+                                        if (nameOccupied)
+                                        {
+                                            if (lowerAuthority)
+                                            {
+                                                if (ofLowerRank(user.userID.ToString(), connectedClient.userID.ToString(), false))
+                                                    Vars.otherKick(user, "Player name \"" + user.displayName + "\" already in use.");
+
+                                                if (ofLowerRank(connectedClient.userID.ToString(), user.userID.ToString(), false))
+                                                    Vars.otherKick(connectedClient.netUser, "Player of higher authority with name \"" + user.displayName + "\" joined.");
+                                            }
+                                            else
+                                                Vars.otherKick(user, "Player name \"" + user.displayName + "\" already in use.");
+                                        }
+                                    }
+                                }
                             }
                         }
-                        switch (Vars.defaultChat)
-                        {
-                            case "global":
-                                if (!Vars.inGlobal.Contains(user.userID.ToString()))
-                                    Vars.inGlobal.Add(user.userID.ToString());
-                                break;
-                            case "direct":
-                                if (!Vars.inDirect.Contains(user.userID.ToString()))
-                                    Vars.inDirect.Add(user.userID.ToString());
-                                break;
-                        }
-                        if (!Vars.inDirectV.Contains(user.userID.ToString()))
-                            Vars.inDirectV.Add(user.userID.ToString());
-                        string joinMessage = "";
-                        if (Vars.enableJoin)
-                        {
-                            joinMessage = Vars.joinMessage.Replace("$USER$", Vars.filterFullNames(user.displayName, steamUID));
-                            Broadcast.broadcastJoinLeave(joinMessage);
-                        }
-                        Vars.conLog.Chat("<BROADCAST ALL> " + Vars.botName + ": " + joinMessage + " (" + steamUID + ")");
                     }
                     else
                     {
-                        if (!Vars.whitelist.Contains(steamUID) && Vars.enableWhitelist)
+                        if (!Vars.teleportRequests.ContainsKey(user.playerClient))
                         {
-                            Vars.whitelistKick(user, Vars.whitelistKickJoin);
+                            Vars.teleportRequests.Add(user.playerClient, new Dictionary<PlayerClient, TimerPlus>());
+                            Vars.latestRequests.Add(user.playerClient, null);
                         }
-                        else
+
+                        if (!Vars.blockedRequestsPer.ContainsKey(user.userID.ToString()))
+                            blockedRequestsPer.Add(user.userID.ToString(), new Dictionary<string, TimerPlus>());
+
+                        if (!AllPlayerClients.Contains(user.playerClient))
+                            AllPlayerClients.Add(user.playerClient);
+
+                        if (Vars.useSteamGroup && Vars.groupMembers.Contains(steamUID))
                         {
+                            Vars.conLog.Info("Player " + user.displayName + " (" + steamUID + ") has connected through steam group \"" + Vars.steamGroup + "\".");
+                            Broadcast.broadcastTo(user.networkPlayer, "The server is running Rust Essentials v" + Vars.currentVersion + ".");
                             if (Vars.motdList.Keys.Contains("Join"))
                             {
                                 foreach (string s in Vars.motdList["Join"])
@@ -1149,12 +3384,50 @@ namespace RustEssentials.Util
                             if (!Vars.inDirectV.Contains(user.userID.ToString()))
                                 Vars.inDirectV.Add(user.userID.ToString());
                             string joinMessage = "";
-                            if (Vars.enableJoin)
+                            if (Vars.enableJoin && user.playerClient.userName.Length > 0)
                             {
                                 joinMessage = Vars.joinMessage.Replace("$USER$", Vars.filterFullNames(user.displayName, steamUID));
                                 Broadcast.broadcastJoinLeave(joinMessage);
                             }
                             Vars.conLog.Chat("<BROADCAST ALL> " + Vars.botName + ": " + joinMessage + " (" + steamUID + ")");
+                        }
+                        else
+                        {
+                            if (!Vars.whitelist.Contains(steamUID) && Vars.enableWhitelist)
+                            {
+                                Vars.whitelistKick(user, Vars.whitelistKickJoin);
+                            }
+                            else
+                            {
+                                Broadcast.broadcastTo(user.networkPlayer, "The server is running Rust Essentials v" + Vars.currentVersion + ".");
+                                if (Vars.motdList.Keys.Contains("Join"))
+                                {
+                                    foreach (string s in Vars.motdList["Join"])
+                                    {
+                                        Broadcast.broadcastTo(user.networkPlayer, s);
+                                    }
+                                }
+                                switch (Vars.defaultChat)
+                                {
+                                    case "global":
+                                        if (!Vars.inGlobal.Contains(user.userID.ToString()))
+                                            Vars.inGlobal.Add(user.userID.ToString());
+                                        break;
+                                    case "direct":
+                                        if (!Vars.inDirect.Contains(user.userID.ToString()))
+                                            Vars.inDirect.Add(user.userID.ToString());
+                                        break;
+                                }
+                                if (!Vars.inDirectV.Contains(user.userID.ToString()))
+                                    Vars.inDirectV.Add(user.userID.ToString());
+                                string joinMessage = "";
+                                if (Vars.enableJoin && user.playerClient.userName.Length > 0)
+                                {
+                                    joinMessage = Vars.joinMessage.Replace("$USER$", Vars.filterFullNames(user.displayName, steamUID));
+                                    Broadcast.broadcastJoinLeave(joinMessage);
+                                }
+                                Vars.conLog.Chat("<BROADCAST ALL> " + Vars.botName + ": " + joinMessage + " (" + steamUID + ")");
+                            }
                         }
                     }
                 }
@@ -1165,30 +3438,108 @@ namespace RustEssentials.Util
             }
         }
 
+        public static void OnUserInitialize(NetUser user)
+        {
+            string userName = user.playerClient.userName;
+            if (userName.Length == 0)
+                userName = user.playerClient.userID.ToString();
+
+            RustProto.Avatar objB = user.LoadAvatar();
+            user.connector.ServerManagement.UpdateConnectingUserAvatar(user, ref user.avatar);
+            if (!object.ReferenceEquals(user.avatar, objB))
+            {
+                user.SaveAvatar();
+            }
+            if (user.connector.ServerManagement.SpawnPlayer(user.playerClient, false, user.avatar) != null)
+            {
+                user.did_join = true;
+            }
+            if (connectlog.joined)
+            {
+                conLog.Info(userName + " has joined the game world. Avatar loaded.");
+                if (vanishedList.Contains(user.userID.ToString()))
+                {
+                    addArmor(user.playerClient, "Invisible Helmet", true);
+                    addArmor(user.playerClient, "Invisible Vest", true);
+                    addArmor(user.playerClient, "Invisible Pants", true);
+                    addArmor(user.playerClient, "Invisible Boots", true);
+                }
+            }
+        }
+
         public static void OnUserDisconnected(NetUser user)
         {
             try
             {
                 PlayerClient playerClient = Array.Find(Vars.teleportRequests.ToArray(), (KeyValuePair<PlayerClient, Dictionary<PlayerClient, TimerPlus>> kv) => kv.Key.netPlayer == user.networkPlayer).Key;
-
+                
                 if (latestPM.ContainsKey(playerClient))
                     latestPM.Remove(playerClient);
 
+                if (latestRequests.ContainsKey(playerClient))
+                    latestRequests.Remove(playerClient);
+
+                if (latestFactionRequests.ContainsKey(playerClient))
+                    latestFactionRequests.Remove(playerClient);
+
+                if (killList.Contains(playerClient))
+                    killList.Remove(playerClient);
+
+                if (isTeleporting.Contains(playerClient))
+                    isTeleporting.Remove(playerClient);
+
+                if (isAccepting.Contains(playerClient))
+                    isAccepting.Remove(playerClient);
+
+                if (wasHit.Contains(playerClient))
+                    wasHit.Remove(playerClient);
+
+                if (inSafeZone.ContainsKey(playerClient))
+                    inSafeZone.Remove(playerClient);
+
+                if (inWarZone.ContainsKey(playerClient))
+                    inWarZone.Remove(playerClient);
+
+                if (firstPoints.ContainsKey(playerClient))
+                    firstPoints.Remove(playerClient);
+
+                if (secondPoints.ContainsKey(playerClient))
+                    secondPoints.Remove(playerClient);
+
+                if (blockedRequestsPer[playerClient.userID.ToString()].Count < 1)
+                    blockedRequestsPer.Remove(playerClient.userID.ToString());
+
+                if (AllPlayerClients.Contains(playerClient))
+                    AllPlayerClients.Remove(playerClient);
+
                 string leaveMessage = "";
-                if (Vars.enableLeave && !Vars.kickQueue.Contains(playerClient.userName))
+                if (Vars.enableLeave && !Vars.kickQueue.Contains(playerClient.userName) && playerClient.userName.Length > 0)
                 {
-                    leaveMessage = Vars.leaveMessage.Replace("$USER$", Vars.filterTags(playerClient.userName));
+                    leaveMessage = Vars.leaveMessage.Replace("$USER$", Vars.filterFullNames(playerClient.userName, playerClient.userID.ToString()));
                     Broadcast.broadcastJoinLeave(leaveMessage);
                     Vars.conLog.Chat("<BROADCAST ALL> " + Vars.botName + ": " + leaveMessage);
                 }
                 else
                     Vars.kickQueue.Remove(playerClient.userName);
 
-                Vars.teleportRequests.Remove(playerClient);
+                if (teleportRequests.ContainsKey(playerClient))
+                    teleportRequests.Remove(playerClient);
             }
             catch (Exception ex)
             {
                 //Vars.conLog.Error(ex.ToString());
+            }
+        }
+
+        public static void saveServer()
+        {
+            try
+            {
+                ConsoleSystem.Run("save.all");
+                Broadcast.broadcastAll("All data has been saved.");
+            }
+            catch (Exception ex)
+            {
             }
         }
 
@@ -1218,6 +3569,57 @@ namespace RustEssentials.Util
             }
         }
 
+        public static void listWarps(string rank, PlayerClient senderClient)
+        {
+            List<string> warps = new List<string>();
+            List<string> otherWarps = new List<string>();
+            if (rank == Vars.defaultRank)
+            {
+                foreach (string s in Vars.unassignedWarps)
+                {
+                    otherWarps.Add(s);
+                }
+            }
+            else
+            {
+                foreach (string s in Vars.warpsForRanks[rank])
+                {
+                    otherWarps.Add(s);
+                }
+                if (warpsForUIDs.ContainsKey(senderClient.userID.ToString()))
+                {
+                    foreach (string s in Vars.warpsForUIDs[senderClient.userID.ToString()])
+                    {
+                        otherWarps.Add(s);
+                    }
+                }
+            }
+
+            List<string> otherWarps2 = new List<string>();
+            while (otherWarps.Count > 0)
+            {
+                int curIndex = 0;
+                warps.Clear();
+                otherWarps2.Clear();
+                foreach (string s in otherWarps)
+                {
+                    curIndex++;
+                    if (curIndex < 9)
+                    {
+                        warps.Add(s);
+                        otherWarps2.Add(s);
+                    }
+                    else
+                        break;
+                }
+                foreach (string s in otherWarps2)
+                {
+                    otherWarps.Remove(s);
+                }
+                Broadcast.broadcastTo(senderClient.netPlayer, string.Join(", ", warps.ToArray()), true);
+            }
+        }
+
         public static void listKits(string rank, PlayerClient senderClient)
         {
             List<string> kits = new List<string>();
@@ -1234,6 +3636,13 @@ namespace RustEssentials.Util
                 foreach (string s in Vars.kitsForRanks[rank])
                 {
                     otherKits.Add(s);
+                }
+                if (kitsForUIDs.ContainsKey(senderClient.userID.ToString()))
+                {
+                    foreach (string s in Vars.kitsForUIDs[senderClient.userID.ToString()])
+                    {
+                        otherKits.Add(s);
+                    }
                 }
             }
 
@@ -1352,18 +3761,32 @@ namespace RustEssentials.Util
         {
             if (args.Count() > 1)
             {
-                if (args.Count() > 2)
+                int duration = 2;
+                bool changedDuration = false;
+                if (args[args.Count() - 1].EndsWith("s"))
+                {
+                    if (int.TryParse(args[args.Count() - 1].Substring(0, args[args.Count() - 1].Length - 1), out duration))
+                    {
+                        Mathf.Clamp(duration, 1, 7);
+                        changedDuration = true;
+                    }
+                }
+
+                if (args[1].Length < 3 && args.Count() > 2)
                 {
                     List<string> messageList = new List<string>();
                     int curIndex = 0;
                     foreach (string s in args)
                     {
                         if (curIndex > 1)
-                            messageList.Add(s);
+                        {
+                            if (!changedDuration || curIndex != args.Count() - 1)
+                                messageList.Add(s);
+                        }
                         curIndex++;
                     }
 
-                    Broadcast.noticeAll(args[1], string.Join(" ", messageList.ToArray()));
+                    Broadcast.noticeAll(args[1], string.Join(" ", messageList.ToArray()), duration);
                 }
                 else
                 {
@@ -1372,18 +3795,29 @@ namespace RustEssentials.Util
                     foreach (string s in args)
                     {
                         if (curIndex > 0)
-                            messageList.Add(s);
+                        {
+                            if (!changedDuration || curIndex != args.Count() - 1)
+                                messageList.Add(s);
+                        }
                         curIndex++;
                     }
 
-                    Broadcast.noticeAll("!", string.Join(" ", messageList.ToArray()));
+                    Broadcast.noticeAll("!", string.Join(" ", messageList.ToArray()), duration);
                 }
+            }
+        }
+
+        public static void kickAllServer()
+        {
+            foreach (PlayerClient targetClient in AllPlayerClients)
+            {
+                kickPlayer(targetClient.netUser, "All users were kicked.", false);
             }
         }
 
         public static void kickAll(PlayerClient senderClient)
         {
-            foreach (PlayerClient targetClient in PlayerClient.All)
+            foreach (PlayerClient targetClient in AllPlayerClients)
             {
                 if (targetClient != senderClient)
                     kickPlayer(targetClient.netUser, "All users were kicked.", false);
@@ -1420,24 +3854,52 @@ namespace RustEssentials.Util
                     }
                     else
                     {
-                        PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
-                        if (possibleTargets.Count() == 0)
-                            Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
-                        else if (possibleTargets.Count() > 1)
-                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
-                        else
+                        if (playerName.StartsWith("\"") && playerName.EndsWith("\""))
                         {
-                            PlayerClient targetClient = possibleTargets[0];
+                            playerName = playerName.Substring(1, playerName.Length - 2);
 
-                            if (teleportRequests[senderClient].ContainsKey(targetClient))
-                            {
-                                Broadcast.broadcastTo(senderClient.netPlayer, "Denied " + targetClient.userName + "'s teleport request.");
-                                Broadcast.broadcastTo(targetClient.netPlayer, senderClient.userName + " denied your teleport request.");
-                                teleportRequests[senderClient].Remove(targetClient);
-                            }
+                            PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(playerName));
+                            if (possibleTargets.Count() == 0)
+                                Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal \"" + playerName + "\".");
+                            else if (possibleTargets.Count() > 1)
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + playerName + "\".");
                             else
                             {
-                                Broadcast.broadcastTo(senderClient.netPlayer, "You do not have a teleport request from " + targetClient.userName + ".");
+                                PlayerClient targetClient = possibleTargets[0];
+
+                                if (teleportRequests[senderClient].ContainsKey(targetClient))
+                                {
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Denied " + targetClient.userName + "'s teleport request.");
+                                    Broadcast.broadcastTo(targetClient.netPlayer, senderClient.userName + " denied your teleport request.");
+                                    teleportRequests[senderClient].Remove(targetClient);
+                                }
+                                else
+                                {
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "You do not have a teleport request from " + targetClient.userName + ".");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                            if (possibleTargets.Count() == 0)
+                                Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
+                            else if (possibleTargets.Count() > 1)
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
+                            else
+                            {
+                                PlayerClient targetClient = possibleTargets[0];
+
+                                if (teleportRequests[senderClient].ContainsKey(targetClient))
+                                {
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Denied " + targetClient.userName + "'s teleport request.");
+                                    Broadcast.broadcastTo(targetClient.netPlayer, senderClient.userName + " denied your teleport request.");
+                                    teleportRequests[senderClient].Remove(targetClient);
+                                }
+                                else
+                                {
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "You do not have a teleport request from " + targetClient.userName + ".");
+                                }
                             }
                         }
                     }
@@ -1466,27 +3928,95 @@ namespace RustEssentials.Util
 
                 string playerName = string.Join(" ", playerNameList.ToArray());
 
-                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
-                if (possibleTargets.Count() == 0)
-                    Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
-                else if (possibleTargets.Count() > 1)
-                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
-                else
+                if (playerName.StartsWith("\"") && playerName.EndsWith("\""))
                 {
-                    PlayerClient targetClient = possibleTargets[0];
+                    playerName = playerName.Substring(1, playerName.Length - 2);
 
-                    if (teleportRequests[senderClient].ContainsKey(targetClient))
-                    {
-                        Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting " + targetClient.userName + " in 10 seconds...");
-                        Broadcast.broadcastTo(targetClient.netPlayer, "Teleporting to " + senderClient.userName + " in 10 seconds. Do not move...");
-                        Thread t = new Thread(() => teleporting(targetClient, senderClient));
-                        t.Start();
-                        isTeleporting.Add(targetClient);
-                        isAccepting.Add(senderClient);
-                    }
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(playerName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal \"" + playerName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + playerName + "\".");
                     else
                     {
-                        Broadcast.broadcastTo(senderClient.netPlayer, "You do not have a teleport request from " + targetClient.userName + ".");
+                        PlayerClient targetClient = possibleTargets[0];
+
+                        if (teleportRequests[senderClient].ContainsKey(targetClient))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting " + targetClient.userName + " in " + requestDelay + " seconds...");
+                            Broadcast.broadcastTo(targetClient.netPlayer, "Teleporting to " + senderClient.userName + " in " + requestDelay + " seconds. Do not move...");
+                            Thread t = new Thread(() => teleporting(targetClient, senderClient));
+                            t.Start();
+                            isTeleporting.Add(targetClient);
+                            isAccepting.Add(senderClient);
+                            if (requestCooldownType == 1 && !blockedRequestsPer[targetClient.userID.ToString()].ContainsKey(senderClient.userID.ToString()))
+                            {
+                                TimerPlus t1 = new TimerPlus();
+                                t1.AutoReset = false;
+                                t1.Interval = requestCooldown;
+                                t1.Elapsed += (sender, e) => unblockRequests(senderClient.userID.ToString(), targetClient.userID.ToString());
+                                t1.Start();
+                                blockedRequestsPer[targetClient.userID.ToString()].Add(senderClient.userID.ToString(), t1);
+                            }
+                            if (requestCooldownType == 2 && !blockedRequestsAll.ContainsKey(targetClient.userID.ToString()))
+                            {
+                                TimerPlus t1 = new TimerPlus();
+                                t1.AutoReset = false;
+                                t1.Interval = requestCooldown;
+                                t1.Elapsed += (sender, e) => unblockRequests(senderClient.userID.ToString(), targetClient.userID.ToString());
+                                t1.Start();
+                                blockedRequestsAll.Add(targetClient.userID.ToString(), t1);
+                            }
+                        }
+                        else
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You do not have a teleport request from " + targetClient.userName + ".");
+                        }
+                    }
+                }
+                else
+                {
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
+                    else
+                    {
+                        PlayerClient targetClient = possibleTargets[0];
+
+                        if (teleportRequests[senderClient].ContainsKey(targetClient))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting " + targetClient.userName + " in " + requestDelay + " seconds...");
+                            Broadcast.broadcastTo(targetClient.netPlayer, "Teleporting to " + senderClient.userName + " in " + requestDelay + " seconds. Do not move...");
+                            Thread t = new Thread(() => teleporting(targetClient, senderClient));
+                            t.Start();
+                            isTeleporting.Add(targetClient);
+                            isAccepting.Add(senderClient);
+
+                            if (requestCooldownType == 1 && !blockedRequestsPer[targetClient.userID.ToString()].ContainsKey(senderClient.userID.ToString()))
+                            {
+                                TimerPlus t1 = new TimerPlus();
+                                t1.AutoReset = false;
+                                t1.Interval = requestCooldown;
+                                t1.Elapsed += (sender, e) => unblockRequests(senderClient.userID.ToString(), targetClient.userID.ToString());
+                                t1.Start();
+                                blockedRequestsPer[targetClient.userID.ToString()].Add(senderClient.userID.ToString(), t1);
+                            }
+                            if (requestCooldownType == 2 && !blockedRequestsAll.ContainsKey(targetClient.userID.ToString()))
+                            {
+                                TimerPlus t1 = new TimerPlus();
+                                t1.AutoReset = false;
+                                t1.Interval = requestCooldown;
+                                t1.Elapsed += (sender, e) => unblockRequests(senderClient.userID.ToString(), targetClient.userID.ToString());
+                                t1.Start();
+                                blockedRequestsAll.Add(targetClient.userID.ToString(), t1);
+                            }
+                        }
+                        else
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You do not have a teleport request from " + targetClient.userName + ".");
+                        }
                     }
                 }
             }
@@ -1495,14 +4025,74 @@ namespace RustEssentials.Util
                 if (latestRequests[senderClient] != null)
                 {
                     PlayerClient targetClient = latestRequests[senderClient];
-                    Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting " + targetClient.userName + " in 10 seconds...");
-                    Broadcast.broadcastTo(targetClient.netPlayer, "Teleporting to " + senderClient.userName + " in 10 seconds. Do not move...");
+                    Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting " + targetClient.userName + " in " + requestDelay + " seconds...");
+                    Broadcast.broadcastTo(targetClient.netPlayer, "Teleporting to " + senderClient.userName + " in " + requestDelay + " seconds. Do not move...");
                     Thread t = new Thread(() => teleporting(targetClient, senderClient));
                     t.Start();
                     isTeleporting.Add(targetClient);
+                    if (requestCooldownType == 1 && !blockedRequestsPer[targetClient.userID.ToString()].ContainsKey(senderClient.userID.ToString()))
+                    {
+                        TimerPlus t1 = new TimerPlus();
+                        t1.AutoReset = false;
+                        t1.Interval = requestCooldown;
+                        t1.Elapsed += (sender, e) => unblockRequests(senderClient.userID.ToString(), targetClient.userID.ToString());
+                        t1.Start();
+                        blockedRequestsPer[targetClient.userID.ToString()].Add(senderClient.userID.ToString(), t1);
+                    }
+                    if (requestCooldownType == 2 && !blockedRequestsAll.ContainsKey(targetClient.userID.ToString()))
+                    {
+                        TimerPlus t1 = new TimerPlus();
+                        t1.AutoReset = false;
+                        t1.Interval = requestCooldown;
+                        t1.Elapsed += (sender, e) => unblockRequests(senderClient.userID.ToString(), targetClient.userID.ToString());
+                        t1.Start();
+                        blockedRequestsAll.Add(targetClient.userID.ToString(), t1);
+                    }
                 }
                 else
                     Broadcast.broadcastTo(senderClient.netPlayer, "You have no teleport requests to accept!");
+            }
+        }
+
+        public static void warping(PlayerClient senderClient, Vector3 destination)
+        {
+            bool b = true;
+            int timeElapsed = 0;
+            RustServerManagement serverManagement = RustServerManagement.Get();
+            Character senderChar;
+            Character.FindByUser(senderClient.userID, out senderChar);
+
+            Vector3 oldPos = senderChar.transform.position;
+            while (b)
+            {
+                if (wasHit.Contains(senderClient))
+                {
+                    isTeleporting.Remove(senderClient);
+                    wasHit.Remove(senderClient);
+                    Broadcast.broadcastTo(senderClient.netPlayer, "Warp was interrupted due to damage.");
+                    b = false;
+                    break;
+                }
+                if (timeElapsed >= warpDelay)
+                {
+                    if (Vector3.Distance(oldPos, destination) > 375)
+                        destination.y += 4;
+
+                    serverManagement.TeleportPlayerToWorld(senderClient.netPlayer, destination);
+                    isTeleporting.Remove(senderClient);
+                    b = false;
+                    break;
+                }
+                Vector3 newPos = senderChar.transform.position;
+                if (Vector3.Distance(oldPos, newPos) > 3)
+                {
+                    Broadcast.broadcastTo(senderClient.netPlayer, "You moved. Warp canceled.");
+                    isTeleporting.Remove(senderClient);
+                    b = false;
+                    break;
+                }
+                Thread.Sleep(1000);
+                timeElapsed++;
             }
         }
 
@@ -1518,6 +4108,7 @@ namespace RustEssentials.Util
             {
                 if (wasHit.Contains(targetClient))
                 {
+                    teleportRequests[senderClient][targetClient].Close();
                     teleportRequests[senderClient].Remove(targetClient);
                     latestRequests[senderClient] = null;
                     isTeleporting.Remove(targetClient);
@@ -1530,6 +4121,7 @@ namespace RustEssentials.Util
                 }
                 if (wasHit.Contains(senderClient))
                 {
+                    teleportRequests[senderClient][targetClient].Close();
                     teleportRequests[senderClient].Remove(targetClient);
                     latestRequests[senderClient] = null;
                     isTeleporting.Remove(targetClient);
@@ -1540,9 +4132,18 @@ namespace RustEssentials.Util
                     b = false;
                     break;
                 }
-                if (timeElapsed >= 10)
+                if (timeElapsed >= requestDelay)
                 {
-                    serverManagement.TeleportPlayerToPlayer(targetClient.netPlayer, senderClient.netPlayer);
+                    Character senderChar;
+                    Character.FindByUser(senderClient.userID, out senderChar);
+
+                    Vector3 destinationPos = senderChar.transform.position;
+
+                    if (Vector3.Distance(destinationPos, oldPos) > 375)
+                        destinationPos.y += 4;
+
+                    serverManagement.TeleportPlayerToWorld(targetClient.netPlayer, destinationPos);
+                    teleportRequests[senderClient][targetClient].Close();
                     teleportRequests[senderClient].Remove(targetClient);
                     latestRequests[senderClient] = null;
                     isTeleporting.Remove(targetClient);
@@ -1555,6 +4156,7 @@ namespace RustEssentials.Util
                 {
                     Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " moved. Teleportation canceled.");
                     Broadcast.broadcastTo(targetClient.netPlayer, "Teleportation canceled.");
+                    teleportRequests[senderClient][targetClient].Close();
                     teleportRequests[senderClient].Remove(targetClient);
                     latestRequests[senderClient] = null;
                     isTeleporting.Remove(targetClient);
@@ -1567,55 +4169,141 @@ namespace RustEssentials.Util
             }
         }
 
+        public void TeleportPlayerToPlayer(uLink.NetworkPlayer target, uLink.NetworkPlayer destination)
+        {
+        }
+
         public static void teleportRequest(PlayerClient senderClient, string[] args)
         {
             if (teleportRequestOn)
             {
-                if (args.Count() > 1)
+                bool b = true;
+                if (denyRequestWarzone && inWarZone.ContainsKey(senderClient))
+                    b = false;
+
+                if (b)
                 {
-                    List<string> playerNameList = new List<string>();
-                    int curIndex = 0;
-                    foreach (string s in args)
+                    if (args.Count() > 1)
                     {
-                        if (curIndex > 0)
+                        List<string> playerNameList = new List<string>();
+                        int curIndex = 0;
+                        foreach (string s in args)
                         {
-                            playerNameList.Add(s);
+                            if (curIndex > 0)
+                            {
+                                playerNameList.Add(s);
+                            }
+                            curIndex++;
                         }
-                        curIndex++;
-                    }
 
-                    string playerName = string.Join(" ", playerNameList.ToArray());
+                        string playerName = string.Join(" ", playerNameList.ToArray());
 
-                    PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
-                    if (possibleTargets.Count() == 0)
-                        Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
-                    else if (possibleTargets.Count() > 1)
-                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
-                    else
-                    {
-                        PlayerClient targetClient = possibleTargets[0];
-                        if (!teleportRequests[targetClient].ContainsKey(senderClient))
+                        if (playerName.StartsWith("\"") && playerName.EndsWith("\""))
                         {
-                            TimerPlus t = new TimerPlus();
-                            t.AutoReset = false;
-                            t.Interval = 30000;
-                            t.Elapsed += (sender, e) => requestTimeout(targetClient, senderClient);
-                            t.Start();
-                            teleportRequests[targetClient].Add(senderClient, t);
-                            latestRequests[targetClient] = senderClient;
-                            Broadcast.broadcastTo(senderClient.netPlayer, "Teleport request sent to " + targetClient.userName + ".");
-                            Broadcast.broadcastTo(targetClient.netPlayer, senderClient.userName + " requested to teleport to you. Type /tpaccept <name> or /tpdeny <name>.");
+                            playerName = playerName.Substring(1, playerName.Length - 2);
+
+                            PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(playerName));
+                            if (possibleTargets.Count() == 0)
+                                Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal \"" + playerName + "\".");
+                            else if (possibleTargets.Count() > 1)
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + playerName + "\".");
+                            else
+                            {
+                                PlayerClient targetClient = possibleTargets[0];
+                                if (requestCooldownType == 1 && blockedRequestsPer[senderClient.userID.ToString()].ContainsKey(targetClient.userID.ToString()))
+                                {
+                                    double timeLeft = Math.Round((blockedRequestsPer[senderClient.userID.ToString()][targetClient.userID.ToString()].TimeLeft / 1000));
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to that player for " + timeLeft + " second(s).");
+                                    return;
+                                }
+                                if (requestCooldownType == 2 && blockedRequestsAll.ContainsKey(senderClient.userID.ToString()))
+                                {
+                                    double timeLeft = Math.Round((blockedRequestsAll[senderClient.userID.ToString()].TimeLeft / 1000));
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to anyone for " + timeLeft + " second(s).");
+                                    return;
+                                }
+                                if (!teleportRequests[targetClient].ContainsKey(senderClient))
+                                {
+                                    TimerPlus t = new TimerPlus();
+                                    t.AutoReset = false;
+                                    t.Interval = 30000;
+                                    t.Elapsed += (sender, e) => requestTimeout(targetClient, senderClient);
+                                    t.Start();
+                                    teleportRequests[targetClient].Add(senderClient, t);
+                                    latestRequests[targetClient] = senderClient;
+
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Teleport request sent to " + targetClient.userName + ".");
+                                    Broadcast.broadcastTo(targetClient.netPlayer, senderClient.userName + " requested to teleport to you. Type /tpaccept <name> or /tpdeny <name>.");
+                                }
+                                else
+                                {
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "You already sent a teleport request to " + targetClient.userName + ".");
+                                }
+                            }
                         }
                         else
                         {
-                            Broadcast.broadcastTo(senderClient.netPlayer, "You already sent a teleport request to " + targetClient.userName + ".");
+                            PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                            if (possibleTargets.Count() == 0)
+                                Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
+                            else if (possibleTargets.Count() > 1)
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
+                            else
+                            {
+                                PlayerClient targetClient = possibleTargets[0];
+                                if (requestCooldownType == 1 && blockedRequestsPer[senderClient.userID.ToString()].ContainsKey(targetClient.userID.ToString()))
+                                {
+                                    double timeLeft = Math.Round((blockedRequestsPer[senderClient.userID.ToString()][targetClient.userID.ToString()].TimeLeft / 1000));
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to that player for " + timeLeft + " second(s).");
+                                    return;
+                                }
+                                if (requestCooldownType == 2 && blockedRequestsAll.ContainsKey(senderClient.userID.ToString()))
+                                {
+                                    double timeLeft = Math.Round((blockedRequestsAll[senderClient.userID.ToString()].TimeLeft / 1000));
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to anyone for " + timeLeft + " second(s).");
+                                    return;
+                                }
+                                if (!teleportRequests[targetClient].ContainsKey(senderClient))
+                                {
+                                    TimerPlus t = new TimerPlus();
+                                    t.AutoReset = false;
+                                    t.Interval = 30000;
+                                    t.Elapsed += (sender, e) => requestTimeout(targetClient, senderClient);
+                                    t.Start();
+                                    teleportRequests[targetClient].Add(senderClient, t);
+                                    latestRequests[targetClient] = senderClient;
+
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Teleport request sent to " + targetClient.userName + ".");
+                                    Broadcast.broadcastTo(targetClient.netPlayer, senderClient.userName + " requested to teleport to you. Type /tpaccept <name> or /tpdeny <name>.");
+                                }
+                                else
+                                {
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "You already sent a teleport request to " + targetClient.userName + ".");
+                                }
+                            }
                         }
                     }
+                }
+                else
+                {
+                    Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport while in a war zone!");
                 }
             }
             else
             {
-                Broadcast.broadcastTo(senderClient.netPlayer, "Teleport requesting is disabled.");
+                Broadcast.broadcastTo(senderClient.netPlayer, "Teleport requesting is disabled on this server.");
+            }
+        }
+
+        public static void unblockRequests(string toRemove, string removeFrom)
+        {
+            if (blockedRequestsAll.ContainsKey(removeFrom))
+            {
+                blockedRequestsAll.Remove(removeFrom);
+            }
+            if (blockedRequestsPer[removeFrom].ContainsKey(toRemove))
+            {
+                blockedRequestsPer[removeFrom].Remove(toRemove);
             }
         }
 
@@ -1658,7 +4346,7 @@ namespace RustEssentials.Util
             }
         }
 
-        public static void teleport(PlayerClient senderClient, string[] args)
+        public static void teleportHere(PlayerClient senderClient, string[] args)
         {
             if (args.Count() > 1)
             {
@@ -1674,22 +4362,219 @@ namespace RustEssentials.Util
                         curIndex++;
                     }
                     string playerName = string.Join(" ", playerNameList.ToArray());
-                    PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
-                    if (possibleTargets.Count() == 0)
-                        Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
-                    else if (possibleTargets.Count() > 1)
-                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
+                    if (playerName.StartsWith("\"") && playerName.EndsWith("\""))
+                    {
+                        playerName = playerName.Substring(1, playerName.Length - 2);
+
+                        PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(playerName));
+                        if (possibleTargets.Count() == 0)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal \"" + playerName + "\".");
+                        else if (possibleTargets.Count() > 1)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + playerName + "\".");
+                        else
+                        {
+                            PlayerClient targetClient = possibleTargets[0];
+                            Character senderChar;
+                            Character.FindByUser(senderClient.userID, out senderChar);
+                            Character targetChar;
+                            Character.FindByUser(targetClient.userID, out targetChar);
+                            Vector3 destination = senderChar.transform.position;
+
+                            if (Vector3.Distance(destination, targetChar.transform.position) > 375)
+                                destination.y += 4;
+                            serverManagement.TeleportPlayerToWorld(targetClient.netPlayer, destination);
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting " + targetClient.userName + " here...");
+                        }
+                    }
                     else
                     {
-                        PlayerClient targetClient = possibleTargets[0];
+                        PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                        if (possibleTargets.Count() == 0)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
+                        else if (possibleTargets.Count() > 1)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
+                        else
+                        {
+                            PlayerClient targetClient = possibleTargets[0];
+                            Character senderChar;
+                            Character.FindByUser(senderClient.userID, out senderChar);
+                            Character targetChar;
+                            Character.FindByUser(targetClient.userID, out targetChar);
+                            Vector3 destination = senderChar.transform.position;
 
-                        serverManagement.TeleportPlayerToPlayer(senderClient.netPlayer, targetClient.netPlayer);
-                        Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting to " + targetClient.userName + "...");
+                            if (Vector3.Distance(destination, targetChar.transform.position) > 375)
+                                destination.y += 4;
+                            serverManagement.TeleportPlayerToWorld(targetClient.netPlayer, destination);
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting " + targetClient.userName + " here...");
+                        }
                     }
                 }
-                if (args.Count() > 2)
+            }
+        }
+
+        public static void warpPlayer(PlayerClient senderClient, string[] args)
+        {
+            bool b = true;
+            if (denyRequestWarzone && inWarZone.ContainsKey(senderClient))
+                b = false;
+
+            if (b)
+            {
+                if (args.Count() > 1)
                 {
-                    List<string> playerNameList = new List<string>();
+                    RustServerManagement serverManagement = RustServerManagement.Get();
+
+                    List<string> warpNameList = new List<string>();
+                    int curIndex = 0;
+                    foreach (string s in args)
+                    {
+                        if (curIndex > 0)
+                            warpNameList.Add(s);
+                        curIndex++;
+                    }
+                    string warpName = string.Join(" ", warpNameList.ToArray());
+                    string warpNameToLower = warpName.ToLower();
+
+                    if (warps.ContainsKey(warpNameToLower))
+                    {
+                        if (warpsForRanks.ContainsKey(findRank(senderClient.userID.ToString())))
+                        {
+                            if (warpsForRanks[findRank(senderClient.userID.ToString())].Contains(warpNameToLower))
+                            {
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Warping in " + warpDelay + " seconds...");
+                                Thread t = new Thread(() => warping(senderClient, warps[warpNameToLower]));
+                                t.Start();
+                                isTeleporting.Add(senderClient);
+                            }
+                            else
+                            {
+                                Broadcast.noticeTo(senderClient.netPlayer, ":(", "You do not have permission to do this.");
+                            }
+                        }
+                        else
+                        {
+                            if (unassignedWarps.Contains(warpNameToLower))
+                            {
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Warping in " + warpDelay + " seconds...");
+                                Thread t = new Thread(() => warping(senderClient, warps[warpNameToLower]));
+                                t.Start();
+                                isTeleporting.Add(senderClient);
+                            }
+                            else
+                            {
+                                if (warpsForUIDs.ContainsKey(senderClient.userID.ToString()))
+                                {
+                                    if (warpsForUIDs[senderClient.userID.ToString()].Contains(warpNameToLower))
+                                    {
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Warping in " + warpDelay + " seconds...");
+                                        Thread t = new Thread(() => warping(senderClient, warps[warpNameToLower]));
+                                        t.Start();
+                                        isTeleporting.Add(senderClient);
+                                    }
+                                    else
+                                    {
+                                        Broadcast.noticeTo(senderClient.netPlayer, ":(", "You do not have permission to do this.");
+                                    }
+                                }
+                                else
+                                {
+                                    Broadcast.noticeTo(senderClient.netPlayer, ":(", "You do not have permission to do this.");
+                                }
+                            }
+                        }
+                    }
+                    else
+                        Broadcast.broadcastTo(senderClient.netPlayer, "No such warp named \"" + warpName + "\".");
+                }
+            }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport while in a war zone!");
+        }
+
+        public static void teleport(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                RustServerManagement serverManagement = RustServerManagement.Get();
+                List<string> playerNameList = new List<string>();
+                int quotedNames = 0;
+                bool searchingQuotes = false;
+                int curIndex = 0;
+                foreach (string s in args)
+                {
+                    if (curIndex > 0)
+                    {
+                        playerNameList.Add(s);
+
+                        if (s.StartsWith("\"") && !searchingQuotes)
+                            searchingQuotes = true;
+                        
+                        if (playerNameList.Count > 1 && searchingQuotes && s.EndsWith("\""))
+                        {
+                            quotedNames++;
+                        }
+                    }
+
+                    curIndex++;
+                }
+                string playerName = string.Join(" ", playerNameList.ToArray());
+
+                if (args.Count() == 2 || quotedNames == 1)
+                {
+                    if (playerName.StartsWith("\"") && playerName.EndsWith("\""))
+                    {
+                        playerName = playerName.Substring(1, playerName.Length - 2);
+
+                        PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(playerName));
+                        if (possibleTargets.Count() == 0)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal \"" + playerName + "\".");
+                        else if (possibleTargets.Count() > 1)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + playerName + "\".");
+                        else
+                        {
+                            PlayerClient targetClient = possibleTargets[0];
+                            Character senderChar;
+                            Character.FindByUser(senderClient.userID, out senderChar);
+                            Character targetChar;
+                            Character.FindByUser(targetClient.userID, out targetChar);
+                            Vector3 destination = targetChar.transform.position;
+
+                            if (Vector3.Distance(destination, senderChar.transform.position) > 375)
+                                destination.y += 4;
+
+                            serverManagement.TeleportPlayerToWorld(senderClient.netPlayer, destination);
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting to " + targetClient.userName + "...");
+                        }
+                    }
+                    else
+                    {
+                        PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                        if (possibleTargets.Count() == 0)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
+                        else if (possibleTargets.Count() > 1)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
+                        else
+                        {
+                            PlayerClient targetClient = possibleTargets[0];
+                            Character senderChar;
+                            Character.FindByUser(senderClient.userID, out senderChar);
+                            Character targetChar;
+                            Character.FindByUser(targetClient.userID, out targetChar);
+                            Vector3 destination = targetChar.transform.position;
+
+                            if (Vector3.Distance(destination, senderChar.transform.position) > 375)
+                                destination.y += 4;
+
+                            serverManagement.TeleportPlayerToWorld(senderClient.netPlayer, destination);
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting to " + targetClient.userName + "...");
+                        }
+                    }
+                }
+                else
+                {
+                    playerNameList.Clear();
+                    curIndex = 0;
+
                     int lastIndex = -1;
                     if (args[1].Contains("\""))
                     {
@@ -1714,8 +4599,8 @@ namespace RustEssentials.Util
                         playerNameList.Add(args[1]);
                         lastIndex = 1;
                     }
-                    string playerName = string.Join(" ", playerNameList.ToArray());
-                    PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                    playerName = string.Join(" ", playerNameList.ToArray());
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
                     if (possibleTargets.Count() == 0)
                         Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
                     else if (possibleTargets.Count() > 1)
@@ -1727,7 +4612,7 @@ namespace RustEssentials.Util
                         if (args[lastIndex + 1].Contains("\""))
                         {
                             bool hadQuote = false;
-                            int curIndex = 0;
+                            curIndex = 0;
                             foreach (string s in args)
                             {
                                 if (curIndex > lastIndex)
@@ -1751,7 +4636,7 @@ namespace RustEssentials.Util
                             playerNameList.Add(args[lastIndex + 1]);
                         }
                         playerName = string.Join(" ", playerNameList.ToArray());
-                        PlayerClient[] otherTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                        PlayerClient[] otherTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
                         if (otherTargets.Count() == 0)
                             Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
                         else if (otherTargets.Count() > 1)
@@ -1759,8 +4644,16 @@ namespace RustEssentials.Util
                         else
                         {
                             PlayerClient targetClient2 = otherTargets[0];
+                            Character senderChar;
+                            Character.FindByUser(senderClient.userID, out senderChar);
+                            Character targetChar;
+                            Character.FindByUser(targetClient.userID, out targetChar);
+                            Vector3 destination = targetChar.transform.position;
 
-                            serverManagement.TeleportPlayerToPlayer(targetClient.netPlayer, targetClient2.netPlayer);
+                            if (Vector3.Distance(destination, senderChar.transform.position) > 375)
+                                destination.y += 4;
+
+                            serverManagement.TeleportPlayerToWorld(targetClient.netPlayer, destination);
                             Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting \"" + targetClient.userName + "\" to \"" + targetClient2.userName + "\"...");
                         }
                     }
@@ -1800,28 +4693,61 @@ namespace RustEssentials.Util
                         curIndex++;
                     }
                     string playerName = string.Join(" ", playerNameList.ToArray());
-                    PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
-                    if (possibleTargets.Count() == 0)
-                        Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
-                    else if (possibleTargets.Count() > 1)
-                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
-                    else
+
+                    if (playerName.StartsWith("\"") && playerName.EndsWith("\""))
                     {
-                        PlayerClient targetClient = possibleTargets[0];
-                        if (!mutedUsers.Contains(targetClient.userID.ToString()))
-                        {
-                            Broadcast.broadcastAll("Player \"" + playerName + "\" has been muted on global chat for " + timeString + timeMode);
-                            mutedUsers.Add(targetClient.userID.ToString());
-                            TimerPlus tp = new TimerPlus();
-                            tp.AutoReset = false;
-                            tp.Interval = time;
-                            tp.Elapsed += (sender, e) => unmuteElapsed(sender, e, targetClient.userID.ToString());
-                            tp.Start();
-                            muteTimes.Add(targetClient.userID.ToString(), tp);
-                        }
+                        playerName = playerName.Substring(1, playerName.Length - 2);
+
+                        PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(playerName));
+                        if (possibleTargets.Count() == 0)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal \"" + playerName + "\".");
+                        else if (possibleTargets.Count() > 1)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + playerName + "\".");
                         else
                         {
-                            Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " is already muted for " + timeString + timeMode);
+                            PlayerClient targetClient = possibleTargets[0];
+                            if (!mutedUsers.Contains(targetClient.userID.ToString()))
+                            {
+                                Broadcast.broadcastAll("Player \"" + playerName + "\" has been muted on global chat for " + timeString + timeMode);
+                                mutedUsers.Add(targetClient.userID.ToString());
+                                TimerPlus tp = new TimerPlus();
+                                tp.AutoReset = false;
+                                tp.Interval = time;
+                                tp.Elapsed += (sender, e) => unmuteElapsed(sender, e, targetClient.userID.ToString());
+                                tp.Start();
+                                muteTimes.Add(targetClient.userID.ToString(), tp);
+                            }
+                            else
+                            {
+                                Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " is already muted for " + timeString + timeMode);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                        if (possibleTargets.Count() == 0)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
+                        else if (possibleTargets.Count() > 1)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
+                        else
+                        {
+                            PlayerClient targetClient = possibleTargets[0];
+                            if (!mutedUsers.Contains(targetClient.userID.ToString()))
+                            {
+                                Broadcast.broadcastAll("Player \"" + playerName + "\" has been muted on global chat for " + timeString + timeMode);
+                                mutedUsers.Add(targetClient.userID.ToString());
+                                TimerPlus tp = new TimerPlus();
+                                tp.AutoReset = false;
+                                tp.Interval = time;
+                                tp.Elapsed += (sender, e) => unmuteElapsed(sender, e, targetClient.userID.ToString());
+                                tp.Start();
+                                muteTimes.Add(targetClient.userID.ToString(), tp);
+                            }
+                            else
+                            {
+                                Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " is already muted for " + timeString + timeMode);
+                            }
                         }
                     }
                 }
@@ -1835,37 +4761,80 @@ namespace RustEssentials.Util
                             playerNameList.Add(s);
                         curIndex++;
                     }
+
                     string playerName = string.Join(" ", playerNameList.ToArray());
-                    PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
-                    if (possibleTargets.Count() == 0)
-                        Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
-                    else if (possibleTargets.Count() > 1)
-                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
-                    else
+
+                    if (playerName.StartsWith("\"") && playerName.EndsWith("\""))
                     {
-                        PlayerClient targetClient = possibleTargets[0];
-                        if (mode)
-                        {
-                            if (!mutedUsers.Contains(targetClient.userID.ToString()))
-                            {
-                                Broadcast.broadcastAll("Player \"" + playerName + "\" has been muted on global chat.");
-                                mutedUsers.Add(targetClient.userID.ToString());
-                            }
-                            else
-                            {
-                                Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " is already muted.");
-                            }
-                        }
+                        playerName = playerName.Substring(1, playerName.Length - 2);
+
+                        PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(playerName));
+                        if (possibleTargets.Count() == 0)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal \"" + playerName + "\".");
+                        else if (possibleTargets.Count() > 1)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + playerName + "\".");
                         else
                         {
-                            if (mutedUsers.Contains(targetClient.userID.ToString()))
+                            PlayerClient targetClient = possibleTargets[0];
+                            if (mode)
                             {
-                                Broadcast.broadcastAll("Player \"" + playerName + "\" has been unmuted on global chat.");
-                                mutedUsers.Remove(targetClient.userID.ToString());
+                                if (!mutedUsers.Contains(targetClient.userID.ToString()))
+                                {
+                                    Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been muted on global chat.");
+                                    mutedUsers.Add(targetClient.userID.ToString());
+                                }
+                                else
+                                {
+                                    Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " is already muted.");
+                                }
                             }
                             else
                             {
-                                Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " is not muted.");
+                                if (mutedUsers.Contains(targetClient.userID.ToString()))
+                                {
+                                    Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been unmuted on global chat.");
+                                    mutedUsers.Remove(targetClient.userID.ToString());
+                                }
+                                else
+                                {
+                                    Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " is not muted.");
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                        if (possibleTargets.Count() == 0)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
+                        else if (possibleTargets.Count() > 1)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
+                        else
+                        {
+                            PlayerClient targetClient = possibleTargets[0];
+                            if (mode)
+                            {
+                                if (!mutedUsers.Contains(targetClient.userID.ToString()))
+                                {
+                                    Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been muted on global chat.");
+                                    mutedUsers.Add(targetClient.userID.ToString());
+                                }
+                                else
+                                {
+                                    Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " is already muted.");
+                                }
+                            }
+                            else
+                            {
+                                if (mutedUsers.Contains(targetClient.userID.ToString()))
+                                {
+                                    Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been unmuted on global chat.");
+                                    mutedUsers.Remove(targetClient.userID.ToString());
+                                }
+                                else
+                                {
+                                    Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " is not muted.");
+                                }
                             }
                         }
                     }
@@ -1910,7 +4879,7 @@ namespace RustEssentials.Util
                     UID = args[2];
                 }
 
-                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userID.ToString() == UID);
+                PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == UID);
                 string targetName = "Unknown Player";
                 if (possibleTargets.Count() > 0)
                     targetName = possibleTargets[0].userName;
@@ -2015,7 +4984,7 @@ namespace RustEssentials.Util
                         {
                             if (useSteamGroup)
                             {
-                                PlayerClient[] targetUsers = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => !groupMembers.Contains(pc.userID.ToString()));
+                                PlayerClient[] targetUsers = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => !groupMembers.Contains(pc.userID.ToString()));
                                 foreach (PlayerClient targetClient in targetUsers)
                                 {
                                     whitelistKick(targetClient.netUser, whitelistKickCMD);
@@ -2023,7 +4992,7 @@ namespace RustEssentials.Util
                             }
                             else
                             {
-                                PlayerClient[] targetUsers = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => !whitelist.Contains(pc.userID.ToString()));
+                                PlayerClient[] targetUsers = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => !whitelist.Contains(pc.userID.ToString()));
                                 foreach (PlayerClient targetClient in targetUsers)
                                 {
                                     whitelistKick(targetClient.netUser, whitelistKickCMD);
@@ -2121,6 +5090,8 @@ namespace RustEssentials.Util
             {
                 string action = args[1];
                 string UID = senderClient.userID.ToString();
+                KeyValuePair<string, Dictionary<string, string>>[] possibleFactions = Array.FindAll(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(UID));
+
                 switch (action)
                 {
                     case "g":
@@ -2129,6 +5100,8 @@ namespace RustEssentials.Util
                             inGlobal.Add(UID);
                             if (inDirect.Contains(UID))
                                 inDirect.Remove(UID);
+                            if (inFaction.Contains(UID))
+                                inFaction.Remove(UID);
                             Broadcast.broadcastTo(senderClient.netPlayer, "You are now talking in global chat.");
                         }
                         else
@@ -2142,6 +5115,8 @@ namespace RustEssentials.Util
                             inGlobal.Add(UID);
                             if (inDirect.Contains(UID))
                                 inDirect.Remove(UID);
+                            if (inFaction.Contains(UID))
+                                inFaction.Remove(UID);
                             Broadcast.broadcastTo(senderClient.netPlayer, "You are now talking in global chat.");
                         }
                         else
@@ -2155,6 +5130,8 @@ namespace RustEssentials.Util
                             inDirect.Add(UID);
                             if (inGlobal.Contains(UID))
                                 inGlobal.Remove(UID);
+                            if (inFaction.Contains(UID))
+                                inFaction.Remove(UID);
                             Broadcast.broadcastTo(senderClient.netPlayer, "You are now talking in direct chat.");
                         }
                         else
@@ -2168,12 +5145,54 @@ namespace RustEssentials.Util
                             inDirect.Add(UID);
                             if (inGlobal.Contains(UID))
                                 inGlobal.Remove(UID);
+                            if (inFaction.Contains(UID))
+                                inFaction.Remove(UID);
                             Broadcast.broadcastTo(senderClient.netPlayer, "You are now talking in direct chat.");
                         }
                         else
                         {
                             Broadcast.broadcastTo(senderClient.netPlayer, "You are already talking in direct chat.");
                         }
+                        break;
+                    case "f":
+                        if (possibleFactions.Count() > 0)
+                        {
+                            if (!inFaction.Contains(UID))
+                            {
+                                inFaction.Add(UID);
+                                if (inGlobal.Contains(UID))
+                                    inGlobal.Remove(UID);
+                                if (inDirect.Contains(UID))
+                                    inDirect.Remove(UID);
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You are now talking in the faction chat of [" + possibleFactions[0].Key + "].");
+                            }
+                            else
+                            {
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You are already talking in the faction chat of [" + possibleFactions[0].Key + "].");
+                            }
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.");
+                        break;
+                    case "faction":
+                        if (possibleFactions.Count() > 0)
+                        {
+                            if (!inFaction.Contains(UID))
+                            {
+                                inFaction.Add(UID);
+                                if (inGlobal.Contains(UID))
+                                    inGlobal.Remove(UID);
+                                if (inDirect.Contains(UID))
+                                    inDirect.Remove(UID);
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You are now talking in the faction chat of " + possibleFactions[0].Key + ".");
+                            }
+                            else
+                            {
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You are already talking in the faction chat of " + possibleFactions[0].Key + ".");
+                            }
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.");
                         break;
                 }
             }
@@ -2192,22 +5211,62 @@ namespace RustEssentials.Util
 
         public static string filterFullNames(string playerName, string uid)
         {
-            foreach (KeyValuePair<string, string> kv in rankPrefixes)
+            if (!emptyPrefixes.Contains(uid))
             {
-                playerName = playerName.Replace("[" + kv.Key + "]", "");
-                playerName = playerName.Replace(kv.Value, "");
-            }
-
-            foreach (KeyValuePair<string, List<string>> kv in rankList)
-            {
-                if (kv.Value.Contains(uid))
+                foreach (KeyValuePair<string, List<string>> kv in rankList)
                 {
-                    playerName = "[" + kv.Key + "]" + " " + playerName;
-                    break;
+                    if (kv.Value.Contains(uid))
+                    {
+                        playerName = (!removePrefix ? "[" + kv.Key + "]" + " " : "") + playerName;
+                        break;
+                    }
                 }
             }
 
             return playerName;
+        }
+
+        public static void fakeJoinServer(string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                string fakeName = "";
+                if (args[1].Contains("\""))
+                {
+                    bool hadQuote = false;
+                    int lastIndex = -1;
+                    List<string> playerNameList = new List<string>();
+                    foreach (string s in args)
+                    {
+                        lastIndex++;
+                        if (s.StartsWith("\"")) hadQuote = true;
+                        if (hadQuote)
+                        {
+                            playerNameList.Add(s);
+                        }
+                        if (s.EndsWith("\""))
+                        {
+                            hadQuote = false;
+                            break;
+                        }
+                    }
+
+                    fakeName = string.Join(" ", playerNameList.ToArray()).Replace("\"", "");
+                }
+                else
+                {
+                    fakeName = args[1];
+                }
+
+                PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(fakeName));
+                string rank = "";
+
+                if (possibleClients.Count() == 1 && !removePrefix)
+                    rank = "[" + findRank(possibleClients[0].userID.ToString()) + "] ";
+
+                string joinMessage = Vars.joinMessage.Replace("$USER$", rank + fakeName);
+                Broadcast.broadcastAll(joinMessage);
+            }
         }
 
         public static void fakeJoin(PlayerClient senderClient, string[] args)
@@ -2242,13 +5301,34 @@ namespace RustEssentials.Util
                     fakeName = args[1];
                 }
 
-                string joinMessage = Vars.joinMessage.Replace("$USER$", fakeName);
+                PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(fakeName));
+                string rank = "";
+
+                if (possibleClients.Count() == 1 && !removePrefix)
+                    rank = "[" + findRank(possibleClients[0].userID.ToString()) + "] ";
+
+                string joinMessage = Vars.joinMessage.Replace("$USER$", rank + fakeName);
                 Broadcast.broadcastAll(joinMessage);
             }
             else
             {
-                string joinMessage = Vars.joinMessage.Replace("$USER$", senderClient.userName);
+                string rank = "[" + findRank(senderClient.userID.ToString()) + "] ";
+
+                string joinMessage = Vars.joinMessage.Replace("$USER$", (!removePrefix ? rank : "") + senderClient.userName);
                 Broadcast.broadcastAll(joinMessage);
+            }
+        }
+
+        public static void sendToFaction(PlayerClient senderClient, string message)
+        {
+            Character senderChar;
+            Character.FindByUser(senderClient.userID, out senderChar);
+
+            string[] factionMembers = Array.Find(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(senderClient.userID.ToString())).Value.Keys.ToArray();
+            PlayerClient[] factionClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => factionMembers.Contains(pc.userID.ToString()));
+            foreach (PlayerClient targetClient in factionClients)
+            {
+                Broadcast.broadcastCustomTo(targetClient.netPlayer, "<F> " + senderClient.userName, message);
             }
         }
 
@@ -2258,7 +5338,7 @@ namespace RustEssentials.Util
             Character.FindByUser(senderClient.userID, out senderChar);
 
             Vector3 senderPos = senderChar.transform.position;
-            foreach (PlayerClient targetClient in PlayerClient.All)
+            foreach (PlayerClient targetClient in AllPlayerClients)
             {
                 Character targetChar;
                 Character.FindByUser(targetClient.userID, out targetChar);
@@ -2279,6 +5359,43 @@ namespace RustEssentials.Util
             timer.Interval = refreshInterval;
             timer.Elapsed += ((sender, e) => grabGroupMembers());
             timer.Start();
+        }
+
+        public static string grabNameByUID(string UID)
+        {
+            PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == UID);
+
+            if (possibleClients.Count() > 0) // If the player is online, grab his name through the game
+            {
+                return possibleClients[0].userName;
+            }
+            else // If he is not, grab his name through steam
+            {
+                try
+                {
+                    string profileURL = "http://steamcommunity.com/profiles/" + UID + "/?xml=1\\";
+                    using (XmlTextReader reader = new XmlTextReader(profileURL))
+                    {
+                        string currentElement = "";
+                        while (reader.Read())
+                        {
+                            if (reader.NodeType == XmlNodeType.Element && reader.Name == "steamID")
+                            {
+                                currentElement = "steamID";
+                            }
+                            if (reader.NodeType == XmlNodeType.CDATA && currentElement == "steamID")
+                            {
+                                return reader.Value;
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error(ex.ToString());
+                }
+                return "an unknown player";
+            }
         }
 
         public static void grabGroupMembers()
@@ -2309,7 +5426,7 @@ namespace RustEssentials.Util
             }
             catch (Exception ex)
             {
-                Vars.conLog.Info(ex.ToString());
+                Vars.conLog.Error(ex.ToString());
             }
         }
 
@@ -2355,8 +5472,12 @@ namespace RustEssentials.Util
             sb.AppendLine("fallDamage=true");
             sb.AppendLine("# Set distance at which you can hear players in direct voice chat (Default 100)");
             sb.AppendLine("voiceDistance=100");
+            sb.AppendLine("# Enables repairing of structures");
+            sb.AppendLine("enableRepair=true");
+            sb.AppendLine("# Forces all players to be naked");
+            sb.AppendLine("forceNudity=false");
             sb.AppendLine("");
-            sb.AppendLine("[Channels]");
+            sb.AppendLine("[Chat]");
             sb.AppendLine("# Enables or disables direct chat. ATLEAST ONE MUST BE ENABLED!");
             sb.AppendLine("directChat=true");
             sb.AppendLine("# Enables or disables global chat. ATLEAST ONE MUST BE ENABLED!");
@@ -2367,6 +5488,22 @@ namespace RustEssentials.Util
             sb.AppendLine("defaultChat=direct");
             sb.AppendLine("# Sets the distance the radius of possible text communication when in direct chat");
             sb.AppendLine("directDistance=150");
+            sb.AppendLine("# Sets the characters a player can have in his name.");
+            sb.AppendLine("allowedChars=a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,1,2,3,4,5,6,7,8,9,0,`,-,=,',.,[,],(,),{,},~");
+            sb.AppendLine("# If false, players can have anything they want in their names with no restrictions.");
+            sb.AppendLine("restrictChars=true");
+            sb.AppendLine("# Minimum amount of characters a player must have in his name.");
+            sb.AppendLine("minimumNameCount=3");
+            sb.AppendLine("# Maximum amount of characters a player can have in his name.");
+            sb.AppendLine("maximumNameCount=15");
+            sb.AppendLine("# If a player that is joining has a name that is currently in use on the server and kickDuplicate is true, kick him. If false, append \"(#1,2,3,etc..)\" to his name.");
+            sb.AppendLine("kickDuplicate=false");
+            sb.AppendLine("# If kickDuplicate is true, lowerAuthority is true, and a joining user has the same name as a connected user, the user of lower authority will be kicked.");
+            sb.AppendLine("lowerAuthority=false");
+            sb.AppendLine("# Illegal words for use with censorship.");
+            sb.AppendLine("illegalWords=fuck,shit,cunt,bitch,pussy,slut,whore,ass");
+            sb.AppendLine("# If a player joins with a word in the illegalWords list and censorship is true, he will be kicked. Words in chat found in illegalWords will be replaced with *'s.");
+            sb.AppendLine("censorship=false");
             sb.AppendLine("");
             sb.AppendLine("[Messages]");
             sb.AppendLine("# Name that the plugin bot will use to PM and chat with (Default Essentials)");
@@ -2385,10 +5522,12 @@ namespace RustEssentials.Util
             sb.AppendLine("enableSuicide=true");
             sb.AppendLine("# Murder message that is displayed to all when a user is murdered by another user (Tags: $VICTIM$, $KILLER$, $WEAPON$, $PART$, $DISTANCE$)");
             sb.AppendLine("murderMessage=$KILLER$ [$WEAPON$ ($PART$)] $VICTIM$");
+            sb.AppendLine("# Murder message that is displayed to all when a user is murdered by another user with an unknown cause (Tags: $VICTIM$, $KILLER$)");
+            sb.AppendLine("murderMessageUnknown=$KILLER$ killed $VICTIM$.");
             sb.AppendLine("# Enables or disables the display of murder messages");
             sb.AppendLine("enableMurder=true");
             sb.AppendLine("# Murder message that is displayed to all when a user is killed by a mob (Tags: $VICTIM$, $KILLER$)");
-            sb.AppendLine("deathMessage=$VICTIM$ was killed by a $KILLER$.");
+            sb.AppendLine("deathMessage=$VICTIM$ was mauled by a $KILLER$.");
             sb.AppendLine("# Enables or disables the display of death messages");
             sb.AppendLine("enableDeath=true");
             sb.AppendLine("# Enables/Disables the display of \"Unknown Command\" when an unrecognized command is typed");
@@ -2409,6 +5548,18 @@ namespace RustEssentials.Util
             sb.AppendLine("[Movement]");
             sb.AppendLine("# Enables or Disables teleport requesting.");
             sb.AppendLine("teleportRequest=true");
+            sb.AppendLine("# Sets the delay for between the acceptance of a teleport request and the actual teleport. Default 10 seconds.");
+            sb.AppendLine("requestDelay=10");
+            sb.AppendLine("# Sets the delay for between the /warp and the actual warp. Default 10 seconds.");
+            sb.AppendLine("warpDelay=10");
+            sb.AppendLine("# Type of cooldown that will be used after a person uses a teleport request. 0 = No cooldown.");
+            sb.AppendLine("# 1 = If you send a request to a player and it is accepted, you cannot tpa to him until the cooldown finishes.");
+            sb.AppendLine("# 2 = If you send a request to any player and it is accepted, you cannot tpa at all until the cooldown finishes.");
+            sb.AppendLine("requestCooldownType=0");
+            sb.AppendLine("# Sets the cooldown (in (m)inutes or (s)econds) for teleport requests (if cooldown type is not 0). Default 15m.");
+            sb.AppendLine("requestCooldown=15m");
+            sb.AppendLine("# If true, players will not be able to warp or use tpa.");
+            sb.AppendLine("denyRequestWarzone=true");
             sb.AppendLine("");
             sb.AppendLine("[MySQL]");
             sb.AppendLine("# IP for the MySQL whitelist database.");
@@ -2427,6 +5578,49 @@ namespace RustEssentials.Util
             sb.AppendLine("inheritCommands=true");
             sb.AppendLine("# If true, users will inherit their assigned kits plus the ones useable by those of lower ranks.");
             sb.AppendLine("inheritKits=true");
+            sb.AppendLine("# If true, users will inherit their assigned warps plus the ones useable by those of lower ranks.");
+            sb.AppendLine("inheritWarps=true");
+            sb.AppendLine("");
+            sb.AppendLine("[Damage]");
+            sb.AppendLine("# If false, friendly fire between users of the same faction will be negated and disabled when not in a war zone.");
+            sb.AppendLine("friendlyFire=false");
+            sb.AppendLine("# If false, allied fire between users of allied factions will be reduced.");
+            sb.AppendLine("alliedFire=false");
+            sb.AppendLine("# Damage multiplier for when a user is attacked by a non-allied user outside his/her own faction. Default 1.");
+            sb.AppendLine("neutralDamage=1");
+            sb.AppendLine("# Damage multiplier for when a user is attacked by a non-allied user outside his/her own faction while in a war zone. Default 1");
+            sb.AppendLine("warDamage=1");
+            sb.AppendLine("# Damage multiplier for when a user is attacked by a user inside the same faction while in a war zone. Default 0.");
+            sb.AppendLine("warFriendlyDamage=0");
+            sb.AppendLine("# Damage multiplier for when a user is attacked by an allied user while in a war zone. Default 0.70.");
+            sb.AppendLine("warAllyDamage=0.70");
+
+            return sb;
+        }
+
+        public static StringBuilder warpsText()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine("# This is the warps file. Warp locations should be named and assigned here.");
+            sb.AppendLine("# Please note that the # symbol resembles a comment and should not be used when configuring.");
+            sb.AppendLine("# ");
+            sb.AppendLine("# Warps are 3 point vectors (x, y, and z) with an assigned name.");
+            sb.AppendLine("# By adding them here, you will be able to type /warp *name* to teleport to that vector.");
+            sb.AppendLine("# Warps are permission bound and can be attached to either rank prefixes or UIDs.");
+            sb.AppendLine("# Warps that are attached to a rank will be inherited by ranks of higher authority unless inheritWarps in the config is fals.");
+            sb.AppendLine("# Example of a warp bound to Owners:");
+            sb.AppendLine("#   [Village.O]");
+            sb.AppendLine("#   (4986.2, 410.6, 5001.6)");
+            sb.AppendLine("# ");
+            sb.AppendLine("# Example of a warp bound to default users:");
+            sb.AppendLine("#   [Spawn]");
+            sb.AppendLine("#   (4986.2, 410.6, 5001.6)");
+            sb.AppendLine("# ");
+            sb.AppendLine("# Example of a warp bound to a user:");
+            sb.AppendLine("#   [Skybase.76569811000000000]");
+            sb.AppendLine("#   (4986.2, 410.6, 5001.6)");
+            sb.AppendLine("");
 
             return sb;
         }
@@ -2443,6 +5637,11 @@ namespace RustEssentials.Util
             sb.AppendLine("# Example:");
             sb.AppendLine("#   <USER ID>:<PREFIX>");
             sb.AppendLine("#   76569811000000000:!!");
+            sb.AppendLine("# ");
+            sb.AppendLine("# If you want to remove a user's assigned rank prefix, simply add his UID without specifying any kind of prefix. DO NOT ADD A ':'.");
+            sb.AppendLine("# Example:");
+            sb.AppendLine("#   <USER ID>");
+            sb.AppendLine("#   76569811000000000");
             sb.AppendLine("");
 
             return sb;
@@ -2472,6 +5671,11 @@ namespace RustEssentials.Util
             sb.AppendLine("#   [SomeKit.O] <--- This kit is only usable by those with the Owner rank.");
             sb.AppendLine("#   Stone Hatchet:1");
             sb.AppendLine("#   [ModKit.M] <--- This kit can be used by Moderators and those more powerful than that (AKA Admins and Owners) IF inheritKits is true.");
+            sb.AppendLine("#   Stone Hatchet:1");
+            sb.AppendLine("#");
+            sb.AppendLine("# However, if you wanted to assign a kit for a specific user regardless of rank, just append \".<UID>\" after the kit name.");
+            sb.AppendLine("# Example:");
+            sb.AppendLine("#   [Awesomeness.76560000000000000] <--- This kit is usable by the person with that UID.");
             sb.AppendLine("#   Stone Hatchet:1");
             sb.AppendLine("#");
             sb.AppendLine("# Kits can also be designed to have cooldowns by adding \"cooldown=<#(s/m/h)>\" after the kit name.");
@@ -2553,6 +5757,8 @@ namespace RustEssentials.Util
             sb.AppendLine("# ");
             sb.AppendLine("# [Join] is the MOTD that is broadcasted directly to the user that joins upon connecting.");
             sb.AppendLine("# [Cycle.#(s/m/h)] is the MOTD that is broadcasted to all users every time the # elapses.");
+            sb.AppendLine("# [Once.#(s/m/h)] is the MOTD that is broadcasted to all users once after the # elapses.");
+            sb.AppendLine("# [Rules] is the MOTD that is broadcasted directly to the user that types /rules");
             sb.AppendLine("#");
             sb.AppendLine("# The #(s/m/h) in [Cycle.#(s/m/h)] resembles the interval in (s)econds, (m)inutes, or (h)ours.");
             sb.AppendLine("# Example:");
@@ -2560,7 +5766,11 @@ namespace RustEssentials.Util
             sb.AppendLine("#   This is the MOTD.");
             sb.AppendLine("# This MOTD will be broadcasted every 2 hours to all users.");
             sb.AppendLine("#");
-            sb.AppendLine("# Remeber that you can add and remove as many lines as you want for the two MOTDs.");
+            sb.AppendLine("# Remember that you can add and remove as many lines as you want for the two MOTDs.");
+            sb.AppendLine("# All MOTD's can run commands with {/command name}.");
+            sb.AppendLine("# Example:");
+            sb.AppendLine("#   [Once.10m]");
+            sb.AppendLine("#   {/save}");
             sb.AppendLine("");
             sb.AppendLine("[Join]");
             sb.AppendLine("JoinMessage1 # DELETE THESE LINES TO REMOVE JOIN MOTD");
@@ -2571,6 +5781,16 @@ namespace RustEssentials.Util
             sb.AppendLine("CycleMessage1 # DELETE THESE LINES TO REMOVE CYCLE MOTD");
             sb.AppendLine("CycleMessage2 # DELETE THESE LINES TO REMOVE CYCLE MOTD");
             sb.AppendLine("CycleMessage3 # DELETE THESE LINES TO REMOVE CYCLE MOTD");
+            sb.AppendLine("");
+            sb.AppendLine("[Cycle.20m]");
+            sb.AppendLine("CycleMessage1 # DELETE THESE LINES TO REMOVE CYCLE MOTD");
+            sb.AppendLine("CycleMessage2 # DELETE THESE LINES TO REMOVE CYCLE MOTD");
+            sb.AppendLine("CycleMessage3 # DELETE THESE LINES TO REMOVE CYCLE MOTD");
+            sb.AppendLine("");
+            sb.AppendLine("[Once.1h]");
+            sb.AppendLine("OnceMessage1 # DELETE THESE LINES TO REMOVE ONCE MOTD");
+            sb.AppendLine("OnceMessage2 # DELETE THESE LINES TO REMOVE ONCE MOTD");
+            sb.AppendLine("OnceMessage3 # DELETE THESE LINES TO REMOVE ONCE MOTD");
             sb.AppendLine("");
             sb.AppendLine("[Rules]");
             sb.AppendLine("RuleMessage1 # DELETE THESE LINES TO REMOVE CYCLE MOTD");
@@ -2605,6 +5825,7 @@ namespace RustEssentials.Util
             sb.AppendLine("[Owner]");
             sb.AppendLine("/i");
             sb.AppendLine("/give");
+            sb.AppendLine("/giveall");
             sb.AppendLine("/reload");
             sb.AppendLine("/timescale");
             sb.AppendLine("/kill");
@@ -2614,7 +5835,9 @@ namespace RustEssentials.Util
             sb.AppendLine("");
             sb.AppendLine("[Administrator]");
             sb.AppendLine("/airdrop");
+            sb.AppendLine("/random");
             sb.AppendLine("/ban");
+            sb.AppendLine("/bane");
             sb.AppendLine("/unban");
             sb.AppendLine("/kickall");
             sb.AppendLine("/pos");
@@ -2622,19 +5845,30 @@ namespace RustEssentials.Util
             sb.AppendLine("/saypop");
             sb.AppendLine("/time");
             sb.AppendLine("/tp");
+            sb.AppendLine("/tphere");
             sb.AppendLine("/god");
             sb.AppendLine("/ungod");
             sb.AppendLine("/whitelist");
             sb.AppendLine("/tppos");
             sb.AppendLine("/heal");
+            sb.AppendLine("/fall");
+            sb.AppendLine("/feed");
+            sb.AppendLine("/f safezone");
+            sb.AppendLine("/f warzone");
+            sb.AppendLine("/f build");
+            sb.AppendLine("/vanish");
+            sb.AppendLine("/clearinv");
             sb.AppendLine("");
             sb.AppendLine("[Moderator]");
             sb.AppendLine("/kick");
+            sb.AppendLine("/kicke");
             sb.AppendLine("/join");
             sb.AppendLine("/leave");
             sb.AppendLine("/mute");
             sb.AppendLine("/unmute");
             sb.AppendLine("/save");
+            sb.AppendLine("/hide");
+            sb.AppendLine("/owner");
             sb.AppendLine("");
             sb.AppendLine("[Member]");
             sb.AppendLine("");
@@ -2645,6 +5879,7 @@ namespace RustEssentials.Util
             sb.AppendLine("/help");
             sb.AppendLine("/pm");
             sb.AppendLine("/f");
+            sb.AppendLine("/r");
             sb.AppendLine("/online");
             sb.AppendLine("/players");
             sb.AppendLine("/chan");
@@ -2657,8 +5892,459 @@ namespace RustEssentials.Util
             sb.AppendLine("/rules");
             sb.AppendLine("/version");
             sb.AppendLine("/whitelist check");
+            sb.AppendLine("/warps");
+            sb.AppendLine("/warp");
 
             return sb;
+        }
+
+        public static void  loopNudity()
+        {
+            TimerPlus t = new TimerPlus();
+            t.AutoReset = true;
+            t.Interval = 1000;
+            t.Elapsed += ((sender, e) => sendNudity());
+            t.Start();
+        }
+
+        public static void sendNudity()
+        {
+            foreach (PlayerClient playerClient in AllPlayerClients)
+            {
+                if (forceNudity)
+                    ConsoleNetworker.SendClientCommand(playerClient.netPlayer, "censor.nudity false");
+            }
+        }
+
+        public static void loopRequestSaving()
+        {
+            TimerPlus t = new TimerPlus();
+            t.AutoReset = true;
+            t.Interval = 5000;
+            t.Elapsed += ((sender, e) => saveRequestsPer());
+            t.Start();
+            TimerPlus t1 = new TimerPlus();
+            t1.AutoReset = true;
+            t1.Interval = 5000;
+            t1.Elapsed += ((sender, e) => saveRequestsAll());
+            t1.Start();
+        }
+
+        public static void saveRequestsPer()
+        {
+            Dictionary<string, List<string>> blockedPeoplePer = new Dictionary<string, List<string>>();
+
+            foreach (KeyValuePair<string, Dictionary<string, TimerPlus>> kv in blockedRequestsPer)
+            {
+                string UID = kv.Key;
+                if (!blockedPeoplePer.ContainsKey(UID))
+                    blockedPeoplePer.Add(UID, new List<string>());
+                foreach (KeyValuePair<string, TimerPlus> kv2 in kv.Value)
+                {
+                    string otherUID = kv2.Key;
+                    blockedPeoplePer[UID].Add(otherUID);
+                    updateRequestData(UID, otherUID, requestCooldown, kv2.Value);
+                }
+            }
+            remOldRequests(blockedPeoplePer);
+        }
+
+        public static void saveRequestsAll()
+        {
+            List<string> blockedPeopleAll = new List<string>();
+
+            foreach (KeyValuePair<string, TimerPlus> kv in blockedRequestsAll)
+            {
+                string UID = kv.Key;
+                if (!blockedPeopleAll.Contains(UID))
+                    blockedPeopleAll.Add(UID);
+
+                updateRequestAllData(UID, requestCooldown, kv.Value);
+            }
+            remOldRequestsAll(blockedPeopleAll);
+        }
+
+        public static void readRequestData()
+        {
+            List<string> cooldownFileData = File.ReadAllLines(requestCooldownsFile).ToList();
+            foreach (string s in cooldownFileData)
+            {
+                string UID = s.Split('=')[0];
+                string requestsString = s.Split('=')[1];
+
+                foreach (string s2 in requestsString.Split(';'))
+                {
+                    string otherUID = s2.Split(':')[0];
+                    string cooldown = s2.Split(':')[1];
+
+                    TimerPlus t = new TimerPlus();
+                    t.AutoReset = false;
+                    t.Interval = Convert.ToInt32(cooldown);
+                    t.Elapsed += (sender, e) => unblockRequests(otherUID, UID);
+                    t.Start();
+                    if (!blockedRequestsPer.ContainsKey(UID))
+                        blockedRequestsPer.Add(UID, new Dictionary<string, TimerPlus>());
+
+                    blockedRequestsPer[UID].Add(otherUID, t);
+                }
+            }
+        }
+
+        public static void readRequestAllData()
+        {
+            List<string> cooldownFileData = File.ReadAllLines(requestCooldownsAllFile).ToList();
+            foreach (string s in cooldownFileData)
+            {
+                string UID = s.Split('=')[0];
+                string cooldown = s.Split('=')[1];
+
+                TimerPlus t = new TimerPlus();
+                t.AutoReset = false;
+                t.Interval = Convert.ToInt32(cooldown);
+                t.Elapsed += (sender, e) => unblockRequests("", UID);
+                t.Start();
+                if (!blockedRequestsAll.ContainsKey(UID))
+                    blockedRequestsAll.Add(UID, t);
+            }
+        }
+
+        public static void remOldRequests(Dictionary<string, List<string>> oldRequests)
+        {
+            try
+            {
+                List<string> cooldownFileData = File.ReadAllLines(requestCooldownsFile).ToList();
+                List<int> removeQueue1 = new List<int>();
+                Dictionary<string, int> removeQueue2 = new Dictionary<string, int>();
+                foreach (string str in cooldownFileData)
+                {
+                    string UID = str.Split('=')[0];
+                    if (!oldRequests.ContainsKey(UID)) // If all my cooldowns are completed but the file still has me cooling down
+                    {
+                        int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID));
+                        removeQueue1.Add(indexOfUID);
+                    }
+                    else // If I still have some cooldowns running
+                    {
+                        string currentRequests = Array.Find(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID)).Split('=')[1];
+                        foreach (string s in currentRequests.Split(';'))
+                        {
+                            string otherUID = s.Split(':')[0];
+                            string cooldown = s.Split(':')[1];
+
+                            if (!oldRequests[UID].Contains(otherUID)) // If a kit that is said to be cooling down in the file is no longer actually cooling down
+                            {
+                                string combinedStr = otherUID + ":" + cooldown;
+
+                                if (currentRequests.Split(';').Count() > 1 && !currentRequests.EndsWith(combinedStr))
+                                    currentRequests.Replace(combinedStr + ";", "");
+
+                                if (currentRequests.Split(';').Count() > 1 && currentRequests.EndsWith(combinedStr))
+                                    currentRequests.Replace(";" + combinedStr, "");
+
+                                if (currentRequests.Split(';').Count() == 1)
+                                    currentRequests.Replace(combinedStr, "");
+
+                                string fullString = UID + "=" + currentRequests;
+
+                                int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string st) => st.StartsWith(UID));
+                                removeQueue2.Add(fullString, indexOfUID);
+                            }
+                        }
+                    }
+                }
+                foreach (int i in removeQueue1)
+                {
+                    cooldownFileData.RemoveAt(i);
+                }
+                foreach (KeyValuePair<string, int> kv in removeQueue2)
+                {
+                    cooldownFileData[kv.Value] = kv.Key;
+                }
+                using (StreamWriter sw = new StreamWriter(requestCooldownsFile, false))
+                {
+                    foreach (string s in cooldownFileData)
+                    {
+                        sw.WriteLine(s);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error(ex.ToString());
+            }
+        }
+
+        public static void remOldRequestsAll(List<string> oldRequests)
+        {
+            try
+            {
+                List<string> cooldownFileData = File.ReadAllLines(requestCooldownsAllFile).ToList();
+                List<int> removeQueue1 = new List<int>();
+                Dictionary<string, int> removeQueue2 = new Dictionary<string, int>();
+                foreach (string str in cooldownFileData)
+                {
+                    string UID = str.Split('=')[0];
+                    if (!oldRequests.Contains(UID))
+                    {
+                        int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID));
+                        removeQueue1.Add(indexOfUID);
+                    }
+                }
+                foreach (int i in removeQueue1)
+                {
+                    cooldownFileData.RemoveAt(i);
+                }
+                using (StreamWriter sw = new StreamWriter(requestCooldownsAllFile, false))
+                {
+                    foreach (string s in cooldownFileData)
+                    {
+                        sw.WriteLine(s);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error(ex.ToString());
+            }
+        }
+
+        public static void updateRequestData(string UID, string otherUID, int cooldown, TimerPlus t)
+        {
+            List<string> cooldownFileData = File.ReadAllLines(requestCooldownsFile).ToList();
+            List<string> UIDs = new List<string>();
+            foreach (string str in cooldownFileData)
+            {
+                UIDs.Add(str.Split('=')[0]);
+            }
+            if (UIDs.Contains(UID))
+            {
+                string fullString = "";
+                string currentRequests = Array.Find(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID)).Split('=')[1];
+                if (currentRequests.Contains(otherUID))
+                {
+                    List<string> allRequests = currentRequests.Split(';').ToList();
+                    int index = Array.FindIndex(allRequests.ToArray(), (string s) => s.StartsWith(otherUID));
+
+                    allRequests[index] = otherUID + ":" + t.TimeLeft;
+
+                    fullString = UID + "=" + string.Join(";", allRequests.ToArray());
+                }
+                else
+                {
+                    fullString = UID + "=" + currentRequests;
+
+                    fullString += ";" + otherUID + ":" + cooldown;
+                }
+
+                int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID));
+                cooldownFileData[indexOfUID] = fullString;
+            }
+            else
+            {
+                cooldownFileData.Add(UID + "=" + otherUID + ":" + cooldown);
+            }
+            using (StreamWriter sw = new StreamWriter(requestCooldownsFile, false))
+            {
+                foreach (string s in cooldownFileData)
+                {
+                    sw.WriteLine(s);
+                }
+            }
+        }
+
+        public static void updateRequestAllData(string UID, int cooldown, TimerPlus t)
+        {
+            List<string> cooldownFileData = File.ReadAllLines(requestCooldownsAllFile).ToList();
+            List<string> UIDs = new List<string>();
+            foreach (string str in cooldownFileData)
+            {
+                UIDs.Add(str.Split('=')[0]);
+            }
+            if (UIDs.Contains(UID))
+            {
+                int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID));
+                cooldownFileData[indexOfUID] = UID + "=" + cooldown;
+            }
+            else
+            {
+                cooldownFileData.Add(UID + "=" + cooldown);
+            }
+            using (StreamWriter sw = new StreamWriter(requestCooldownsAllFile, false))
+            {
+                foreach (string s in cooldownFileData)
+                {
+                    sw.WriteLine(s);
+                }
+            }
+        }
+
+        public static void loopKitSaving()
+        {
+            TimerPlus t = new TimerPlus();
+            t.AutoReset = true;
+            t.Interval = 5000;
+            t.Elapsed += ((sender, e) => saveCooldowns());
+            t.Start();
+        }
+
+        public static void saveCooldowns()
+        {
+            Dictionary<string, List<string>> kits = new Dictionary<string, List<string>>();
+            foreach (KeyValuePair<string, Dictionary<TimerPlus, string>> kv in playerCooldowns)
+            {
+                string UID = kv.Key;
+                if (!kits.ContainsKey(UID))
+                    kits.Add(UID, new List<string>());
+                foreach (KeyValuePair<TimerPlus, string> kv2 in kv.Value)
+                {
+                    string kitName = kv2.Value;
+                    kits[UID].Add(kitName);
+                    string cooldown = kitCooldowns[kitName].ToString();
+                    updateCooldownData(UID, kitName, cooldown, kv2.Key);
+                }
+            }
+            remOldCooldowns(kits);
+        }
+
+        public static void readCooldownData()
+        {
+            List<string> cooldownFileData = File.ReadAllLines(cooldownsFile).ToList();
+            foreach (string s in cooldownFileData)
+            {
+                string UID = s.Split('=')[0];
+                string kitsString = s.Split('=')[1];
+
+                foreach (string s2 in kitsString.Split(';'))
+                {
+                    string kitName = s2.Split(':')[0].ToLower();
+                    string cooldown = s2.Split(':')[1];
+
+                    TimerPlus t = new TimerPlus();
+                    t.AutoReset = false;
+                    t.Interval = Convert.ToInt32(cooldown);
+                    t.Elapsed += (sender, e) => restoreKit(sender, e, kitName, UID);
+                    t.Start();
+
+                    if (!playerCooldowns.Keys.Contains(UID))
+                    {
+                        playerCooldowns.Add(UID, new Dictionary<TimerPlus, string>() { { t, kitName } });
+                    }
+                    else
+                    {
+                        playerCooldowns[UID].Add(t, kitName);
+                    }
+                }
+            }
+        }
+
+        public static void remOldCooldowns(Dictionary<string, List<string>> oldKits)
+        {
+            try
+            {
+                List<string> cooldownFileData = File.ReadAllLines(cooldownsFile).ToList();
+                List<int> removeQueue1 = new List<int>();
+                Dictionary<string, int> removeQueue2 = new Dictionary<string, int>();
+                foreach (string str in cooldownFileData)
+                {
+                    string UID = str.Split('=')[0];
+                    if (!oldKits.ContainsKey(UID)) // If all my cooldowns are completed but the file still has me cooling down
+                    {
+                        int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID));
+                        removeQueue1.Add(indexOfUID);
+                    }
+                    else // If I still have some cooldowns running
+                    {
+                        string currentKits = Array.Find(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID)).Split('=')[1];
+                        foreach (string s in currentKits.Split(';'))
+                        {
+                            string kitName = s.Split(':')[0];
+                            string cooldown = s.Split(':')[1];
+
+                            if (!oldKits[UID].Contains(kitName)) // If a kit that is said to be cooling down in the file is no longer actually cooling down
+                            {
+                                string combinedStr = kitName + ":" + cooldown;
+
+                                if (currentKits.Split(';').Count() > 1 && !currentKits.EndsWith(combinedStr))
+                                    currentKits.Replace(combinedStr + ";", "");
+
+                                if (currentKits.Split(';').Count() > 1 && currentKits.EndsWith(combinedStr))
+                                    currentKits.Replace(";" + combinedStr, "");
+
+                                if (currentKits.Split(';').Count() == 1)
+                                    currentKits.Replace(combinedStr, "");
+
+                                string fullString = UID + "=" + currentKits;
+
+                                int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string st) => st.StartsWith(UID));
+                                removeQueue2.Add(fullString, indexOfUID);
+                            }
+                        }
+                    }
+                }
+                foreach (int i in removeQueue1)
+                {
+                    cooldownFileData.RemoveAt(i);
+                }
+                foreach (KeyValuePair<string, int> kv in removeQueue2)
+                {
+                    cooldownFileData[kv.Value] = kv.Key;
+                }
+                using (StreamWriter sw = new StreamWriter(cooldownsFile, false))
+                {
+                    foreach (string s in cooldownFileData)
+                    {
+                        sw.WriteLine(s);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error(ex.ToString());
+            }
+        }
+
+        public static void updateCooldownData(string UID, string kitName, string cooldown, TimerPlus t)
+        {
+            List<string> cooldownFileData = File.ReadAllLines(cooldownsFile).ToList();
+            List<string> UIDs = new List<string>();
+            foreach (string str in cooldownFileData)
+            {
+                UIDs.Add(str.Split('=')[0]);
+            }
+            if (UIDs.Contains(UID)) // If I have any kits currenty cooling down
+            {
+                string fullString = "";
+                string currentKits = Array.Find(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID)).Split('=')[1];
+                if (currentKits.Contains(kitName)) // If the kit I am updating is currently cooling down, update the cooldown
+                {
+                    List<string> allKits = currentKits.Split(';').ToList();
+                    int index = Array.FindIndex(allKits.ToArray(), (string s) => s.StartsWith(kitName));
+
+                    allKits[index] = kitName + ":" + t.TimeLeft;
+
+                    fullString = UID + "=" + string.Join(";", allKits.ToArray());
+                }
+                else
+                {
+                    fullString = UID + "=" + currentKits;
+
+                    fullString += ";" + kitName + ":" + cooldown;
+                }
+
+                int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID));
+                cooldownFileData[indexOfUID] = fullString;
+            }
+            else
+            {
+                cooldownFileData.Add(UID + "=" + kitName + ":" + cooldown);
+            }
+            using (StreamWriter sw = new StreamWriter(cooldownsFile, false))
+            {
+                foreach (string s in cooldownFileData)
+                {
+                    sw.WriteLine(s);
+                }
+            }
         }
 
         public static void readFactionData()
@@ -2670,14 +6356,18 @@ namespace RustEssentials.Util
                 string membersString = s.Split('=')[1];
 
                 factions.Add(factionName, new Dictionary<string, string>());
+                factionsByNames.Add(factionName, new Dictionary<string, string>());
+                alliances.Add(factionName, new List<string>());
 
                 foreach (string s2 in membersString.Split(';'))
                 {
                     string nameAndUID = s2.Split(':')[0];
                     string rank = s2.Split(':')[1];
+                    string name = nameAndUID.Substring(1, nameAndUID.IndexOf(')') - 1);
                     string UID = nameAndUID.Substring(nameAndUID.LastIndexOf(')') + 1);
 
                     factions[factionName].Add(UID, rank);
+                    factionsByNames[factionName].Add(UID, name);
                 }
             }
         }
@@ -2871,6 +6561,10 @@ namespace RustEssentials.Util
             sb.AppendLine("# or");
             sb.AppendLine("# /kick SomeGuy Kick.");
             sb.AppendLine("#");
+            sb.AppendLine("# Quotes (\"\") symbolize input that DOES require quotes.");
+            sb.AppendLine("# Example (/uid \"name\" should be typed as):");
+            sb.AppendLine("# /uid \"Brian\"");
+            sb.AppendLine("#");
             sb.AppendLine("# Player names and item names are case sensitive. However, player names can be accepted as partials.");
             sb.AppendLine("");
             sb.AppendLine("/access {on} (Gives the sender access to all doors)");
@@ -2883,23 +6577,65 @@ namespace RustEssentials.Util
             sb.AppendLine("/chan {global} (Joins the global chat)");
             sb.AppendLine("/chan {d} (Joins the direct chat)");
             sb.AppendLine("/chan {direct} (Joins the direct chat)");
+            sb.AppendLine("/clearinv *name* (Clears the inventory of the specified player)");
+            sb.AppendLine("/clearinv \"name\" (Clears the inventory of the specified player by their exact name)");
+            sb.AppendLine("/fall {on} (Turns on fall damage)");
+            sb.AppendLine("/fall {off} (Turns off fall damage)");
             sb.AppendLine("/f {admin} *player name* (Gives faction admin to the specified faction member)");
+            sb.AppendLine("/f {ally} *faction name* (Allies the specified faction)");
+            sb.AppendLine("/f {build} {on} (Grants the sender build mode and allows them to build in zones)");
+            sb.AppendLine("/f {build} {off} (Revokes build mode from the sender)");
             sb.AppendLine("/f {create} *name* (Creates and joins a faction with specified name)");
             sb.AppendLine("/f {deadmin} *player name* (Revokes faction admin from the specified faction member)");
             sb.AppendLine("/f {disband} (Disbands the current faction if user is the owner of said faction)");
-            sb.AppendLine("/f {join} (Joins the faction from the last invitation received)");
+            sb.AppendLine("/f {info} (Shows the sender's faction information)");
+            sb.AppendLine("/f {info} *faction name* (Shows the faction information of a user or a faction)");
+            sb.AppendLine("/f {invite} *name* (Invites the player with the specified name to your faction)");
+            sb.AppendLine("/f {join} (Joins the faction of the last invitation received)");
             sb.AppendLine("/f {join} *name* (Joins the specified faction if invited)");
-            sb.AppendLine("/f {leave} (Leaves current faction)");
             sb.AppendLine("/f {kick} *name* (Kicks user with said name from faction)");
+            sb.AppendLine("/f {leave} (Leaves current faction)");
+            sb.AppendLine("/f {list} (Lists all factions on page 1)");
+            sb.AppendLine("/f {list} [#] (Lists all factions on page #)");
+            sb.AppendLine("/f {online} (Displays the statistics of members of the current faction)");
+            sb.AppendLine("/f {players} (Lists the players of the current faction)");
             sb.AppendLine("/f {ownership} *player name* (Transfers ownership of faction to specified faction member)");
+            sb.AppendLine("/f {safezone} {1} (Sets the first safe zone point)");
+            sb.AppendLine("/f {safezone} {2} (Sets the second safe zone point)");
+            sb.AppendLine("/f {safezone} {3} (Sets the third safe zone point)");
+            sb.AppendLine("/f {safezone} {4} (Sets the forth safe zone point)");
+            sb.AppendLine("/f {safezone} {set} (Establishes the safezone)");
+            sb.AppendLine("/f {safezone} {clear} (Deletes the current safezone)");
+            sb.AppendLine("/f {safezone} {clearall} (Deletes all safezones)");
+            sb.AppendLine("/f {unally} *faction name* (Unallies the specified allied faction)");
+            sb.AppendLine("/f {warzone} {1} (Sets the first safe zone point)");
+            sb.AppendLine("/f {warzone} {2} (Sets the second safe zone point)");
+            sb.AppendLine("/f {warzone} {3} (Sets the third safe zone point)");
+            sb.AppendLine("/f {warzone} {4} (Sets the forth safe zone point)");
+            sb.AppendLine("/f {warzone} {set} (Establishes the safezone)");
+            sb.AppendLine("/f {warzone} {clear} (Deletes the current safezone)");
+            sb.AppendLine("/f {warzone} {clearall} (Deletes all safezones)");
+            sb.AppendLine("/feed (Feeds the sender)");
+            sb.AppendLine("/feed *player name* (Feeds the designated player)");
+            sb.AppendLine("/feed \"player name\" (Feeds the designated player by the exact name)");
             sb.AppendLine("/give <player name> <item name> (Gives the item to that player)");
             sb.AppendLine("/give <player name> <item name> [amount] (Gives the amount of the item to that player)");
             sb.AppendLine("/give <player name> [item id] (Gives 1 of the item with the corresponding id to that player)");
             sb.AppendLine("/give <player name> [item id] [amount] (Gives the amount of the item with the corresponding id to that player)");
+            sb.AppendLine("/giveall <item name> (Gives the item to all players)");
+            sb.AppendLine("/giveall <item name> [amount] (Gives the item to all players)");
+            sb.AppendLine("/giveall [item id] (Gives the item to all players)");
+            sb.AppendLine("/giveall [item id] [amount] (Gives the item to all players)");
+            sb.AppendLine("/god (Gives god mode to the sender)");
             sb.AppendLine("/god *player name* (Gives the specified player god mode)");
+            sb.AppendLine("/god \"player name\" (Gives the specified player with the exact name god mode)");
+            sb.AppendLine("/heal (Heals the sender)");
             sb.AppendLine("/heal *player name* (Heals the designated player)");
+            sb.AppendLine("/heal \"player name\" (Heals the designated player by the exact name)");
             sb.AppendLine("/help (Returns available commands for your current rank)");
             sb.AppendLine("/help [command without /] (Returns the documentation and syntax for the specified command)");
+            sb.AppendLine("/hide {on} (Hides the sender from AI)");
+            sb.AppendLine("/hide {off} (Reveals the sender to AI)");
             sb.AppendLine("/history {1-50} (Returns the the last # lines of the chat history)");
             sb.AppendLine("/i <item name> (Gives the item to you)");
             sb.AppendLine("/i <item name> [amount] (Gives the amount of the item to you)");
@@ -2911,6 +6647,7 @@ namespace RustEssentials.Util
             sb.AppendLine("/kick <player name> [reason] (Kick player with reason)");
             sb.AppendLine("/kickall (Kicks all users, except for the command executor, out of the server)");
             sb.AppendLine("/kill *player name* (Kills the specified player)");
+            sb.AppendLine("/kill \"player name\" (Kills the specified player with that exact name)");
             sb.AppendLine("/kit [kit name] (Gives the user the specified kit if the user has the correct authority level)");
             sb.AppendLine("/kits (Lists the kits available to you)");
             sb.AppendLine("/leave (Emulates the joining of yourself)");
@@ -2918,12 +6655,21 @@ namespace RustEssentials.Util
             sb.AppendLine("/mute *player name* (Mutes the player on global chat)");
             sb.AppendLine("/mute *player name* <time[s/m/h]>(Mutes the player on global chat for a period of time (time example: 15s or 30m))");
             sb.AppendLine("/online (Returns the amount of players currently connected)");
+            sb.AppendLine("/owner {on} (Gives access to display the owner of a structure upon hit)");
+            sb.AppendLine("/owner {off} (Revokes access to display the owner of a structure upon hit)");
             sb.AppendLine("/players (Lists the names of all connected players)");
             sb.AppendLine("/pm <player name> *message* (Sends a private message to that player)");
             sb.AppendLine("/pos (Returns the player's position)");
-            sb.AppendLine("/reload {config/whitelist/ranks/commands/kits/motd/bans/all} (Reloads the specified file)");
+            sb.AppendLine("/r (Replies to the last sent or received PM)");
+            sb.AppendLine("/random <item name> (Gives 1 of the specified item to 1 random player)");
+            sb.AppendLine("/random <item name> [amount] (Gives an amount of the specified item to 1 random player)");
+            sb.AppendLine("/random <item name> [amount] [amount of winners] (Gives an amount of the specified item to random players)");
+            sb.AppendLine("/random [item id] (Gives 1 of the specified item to 1 random player)");
+            sb.AppendLine("/random [item id] [amount] (Gives an amount of the specified item to 1 random player)");
+            sb.AppendLine("/random [item id] [amount] [amount of winners] (Gives an amount of the specified item to random players)");
+            sb.AppendLine("/reload {config/whitelist/ranks/commands/kits/motd/bans/prefix/warps/all} (Reloads the specified file)");
             sb.AppendLine("/remove {on} (Gives access to delete entities (structures and AI entities) upon hit)");
-            sb.AppendLine("/remove {of} (Revokes access to delete entities (structures and AI entities) upon hit)");
+            sb.AppendLine("/remove {off} (Revokes access to delete entities (structures and AI entities) upon hit)");
             sb.AppendLine("/rules (Lists the server rules)");
             sb.AppendLine("/save (Saves all world data)");
             sb.AppendLine("/say *message* (Says a message through the plugin)");
@@ -2946,15 +6692,23 @@ namespace RustEssentials.Util
             sb.AppendLine("/tpaccept *player name* (Accepts the teleport request from that user)");
             sb.AppendLine("/tpdeny *player name* (Denies the teleport request from that user)");
             sb.AppendLine("/tpdeny {all} (Denies all current teleport requests)");
+            sb.AppendLine("/tphere *player name (Teleports the specified player to you)");
             sb.AppendLine("/tppos [x] [y] [z] (Teleports your character to the designated vector)");
             sb.AppendLine("/uid (Returns your steam UID)");
             sb.AppendLine("/uid *player name* (Returns that user's steam UID)");
+            sb.AppendLine("/uid \"player name\" (Returns the steam UID of the user with that exact name)");
             sb.AppendLine("/unban *player name* (Unbans the specified player)");
+            sb.AppendLine("/ungod (Revokes god mode from the sender)");
             sb.AppendLine("/ungod *player name* (Revokes god mode from the specified player)");
+            sb.AppendLine("/ungod \"player name\" (Revokes god mode from the specified player with that exact name)");
             sb.AppendLine("/unmute *player name* (Unmutes the player on global chat)");
             sb.AppendLine("/unshare {all} (Revokes ownership of your doors from everyone)");
             sb.AppendLine("/unshare *player name*(Revokes ownership of your doors from the designated user)");
+            sb.AppendLine("/vanish {on} (Makes the sender vanish. If the sender reconnects, the name becomes invisible)");
+            sb.AppendLine("/vanish {off} (Makes the sender appear. If the sender reconnects, the name becomes visible)");
             sb.AppendLine("/version (Returns the current running version of Rust Essentials)");
+            sb.AppendLine("/warp *warp name* (Teleports you to the specified warp)");
+            sb.AppendLine("/warps (Lists the warps available to you)");
             sb.AppendLine("/whitelist {add} [UID] (Adds the specified Steam UID to the whitelist)");
             sb.AppendLine("/whitelist {check} (Checks if you're currently on the whitelist)");
             sb.AppendLine("/whitelist {kick} (Kicks all players that are not whitelisted. This only work if whitelist is enabled)");
@@ -2963,6 +6717,55 @@ namespace RustEssentials.Util
             sb.AppendLine("/whitelist {rem} [UID] (Removes the specified Steam UID to the whitelist)");
 
             return sb;
+        }
+
+        public static void reloadFileServer(string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                string file = args[1];
+                switch (file)
+                {
+                    case "config":
+                        RustEssentialsBootstrap._load.loadConfig();
+                        break;
+                    case "whitelist":
+                        Whitelist.readWhitelist();
+                        break;
+                    case "ranks":
+                        RustEssentialsBootstrap._load.loadRanks();
+                        break;
+                    case "commands":
+                        RustEssentialsBootstrap._load.loadCommands();
+                        break;
+                    case "kits":
+                        RustEssentialsBootstrap._load.loadKits();
+                        break;
+                    case "motd":
+                        RustEssentialsBootstrap._load.loadMOTD();
+                        break;
+                    case "bans":
+                        RustEssentialsBootstrap._load.loadBans();
+                        break;
+                    case "prefix":
+                        RustEssentialsBootstrap._load.loadPrefixes();
+                        break;
+                    case "warps":
+                        RustEssentialsBootstrap._load.loadWarps();
+                        break;
+                    case "all":
+                        RustEssentialsBootstrap._load.loadConfig();
+                        Whitelist.readWhitelist();
+                        RustEssentialsBootstrap._load.loadRanks();
+                        RustEssentialsBootstrap._load.loadCommands();
+                        RustEssentialsBootstrap._load.loadKits();
+                        RustEssentialsBootstrap._load.loadMOTD();
+                        RustEssentialsBootstrap._load.loadBans();
+                        RustEssentialsBootstrap._load.loadPrefixes();
+                        RustEssentialsBootstrap._load.loadWarps();
+                        break;
+                }
+            }
         }
 
         public static void reloadFile(uLink.NetworkPlayer sender, string[] args)
@@ -3004,6 +6807,10 @@ namespace RustEssentials.Util
                         RustEssentialsBootstrap._load.loadPrefixes();
                         Broadcast.broadcastTo(sender, "Prefixes reloaded.");
                         break;
+                    case "warps":
+                        RustEssentialsBootstrap._load.loadWarps();
+                        Broadcast.broadcastTo(sender, "Warps reloaded.");
+                        break;
                     case "all":
                         RustEssentialsBootstrap._load.loadConfig();
                         Whitelist.readWhitelist();
@@ -3013,6 +6820,7 @@ namespace RustEssentials.Util
                         RustEssentialsBootstrap._load.loadMOTD();
                         RustEssentialsBootstrap._load.loadBans();
                         RustEssentialsBootstrap._load.loadPrefixes();
+                        RustEssentialsBootstrap._load.loadWarps();
                         Broadcast.broadcastTo(sender, "All files reloaded.");
                         break;
                     default:
@@ -3025,6 +6833,49 @@ namespace RustEssentials.Util
         public static string replaceQuotes(string s)
         {
             return s.Replace("\"", "\\\"");
+        }
+
+        public static void fakeLeaveServer(string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                string fakeName = "";
+                if (args[1].Contains("\""))
+                {
+                    bool hadQuote = false;
+                    int lastIndex = -1;
+                    List<string> playerNameList = new List<string>();
+                    foreach (string s in args)
+                    {
+                        lastIndex++;
+                        if (s.StartsWith("\"")) hadQuote = true;
+                        if (hadQuote)
+                        {
+                            playerNameList.Add(s);
+                        }
+                        if (s.EndsWith("\""))
+                        {
+                            hadQuote = false;
+                            break;
+                        }
+                    }
+
+                    fakeName = string.Join(" ", playerNameList.ToArray()).Replace("\"", "").Trim();
+                }
+                else
+                {
+                    fakeName = args[1];
+                }
+
+                PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(fakeName));
+                string rank = "";
+
+                if (possibleClients.Count() == 1 && !removePrefix)
+                    rank = "[" + findRank(possibleClients[0].userID.ToString()) + "] ";
+
+                string leaveMessage = Vars.leaveMessage.Replace("$USER$", rank + fakeName);
+                Broadcast.broadcastAll(leaveMessage);
+            }
         }
 
         public static void fakeLeave(PlayerClient senderClient, string[] args)
@@ -3059,13 +6910,39 @@ namespace RustEssentials.Util
                     fakeName = args[1];
                 }
 
-                string leaveMessage = Vars.leaveMessage.Replace("$USER$", fakeName);
+                PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(fakeName));
+                string rank = "";
+
+                if (possibleClients.Count() == 1 && !removePrefix)
+                    rank = "[" + findRank(possibleClients[0].userID.ToString()) + "] ";
+
+                string leaveMessage = Vars.leaveMessage.Replace("$USER$", rank + fakeName);
                 Broadcast.broadcastAll(leaveMessage);
             }
             else
             {
-                string leaveMessage = Vars.leaveMessage.Replace("$USER$", senderClient.userName);
+                string rank = "[" + findRank(senderClient.userID.ToString()) + "] ";
+
+                string leaveMessage = Vars.leaveMessage.Replace("$USER$", (!removePrefix ? rank : "") + senderClient.userName);
                 Broadcast.broadcastAll(leaveMessage);
+            }
+        }
+
+        public static void setScaleServer(string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                try
+                {
+                    if (!timeFrozen)
+                    {
+                        float time = Convert.ToSingle(args[1]);
+                        Time.setScale(time);
+                    }
+                }
+                catch (Exception ex)
+                {
+                }
             }
         }
 
@@ -3077,7 +6954,7 @@ namespace RustEssentials.Util
                 {
                     if (!timeFrozen)
                     {
-                        double time = Convert.ToDouble(args[1]);
+                        float time = Convert.ToSingle(args[1]);
                         Time.setScale(time);
                         Broadcast.broadcastTo(senderClient.netPlayer, "Time scale set to " + time.ToString() + ".");
                     }
@@ -3094,6 +6971,37 @@ namespace RustEssentials.Util
             else
             {
                 Broadcast.broadcastTo(senderClient.netPlayer, "The time scale is currently " + Math.Round(Time.getScale(), 2) + ".");
+            }
+        }
+
+        public static void setTimeServer(string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                try
+                {
+                    double time = Convert.ToDouble(args[1]);
+                    Time.setTime(time);
+                }
+                catch (Exception ex)
+                {
+                    if (args[1] == "freeze")
+                    {
+                        Time.freezeTime(true);
+                    }
+                    else if (args[1] == "unfreeze")
+                    {
+                        Time.freezeTime(false);
+                    }
+                    else if (args[1] == "day")
+                    {
+                        Time.setDay();
+                    }
+                    else if (args[1] == "night")
+                    {
+                        Time.setNight();
+                    }
+                }
             }
         }
 
@@ -3139,25 +7047,65 @@ namespace RustEssentials.Util
 
         public static void cycleMOTD()
         {
-            TimerPlus t = new TimerPlus();
-            t.AutoReset = true;
-            t.Interval = cycleInterval;
-            t.Elapsed += cycleMOTDElapsed;
-            t.Start();
+            foreach (KeyValuePair<string, Dictionary<string, List<string>>> kv in cycleMOTDList)
+            {
+                TimerPlus t = new TimerPlus();
+                t.AutoReset = true;
+                t.Interval = Convert.ToInt32(kv.Value.ElementAt(0).Key);
+                t.Elapsed += ((sender, e) => cycleMOTDElapsed(kv.Key));
+                t.Start();
+            }
         }
 
-        private static int timesCycled = 0;
-        private static void cycleMOTDElapsed(object sender, ElapsedEventArgs e)
+        public static void onceMOTD()
         {
-            timesCycled++;
-            if (timesCycled > 1)
+            foreach (KeyValuePair<string, Dictionary<string, List<string>>> kv in onceMOTDList)
             {
-                if (motdList.Keys.Contains("Cycle"))
+                TimerPlus t = new TimerPlus();
+                t.AutoReset = false;
+                t.Interval = Convert.ToInt32(kv.Value.ElementAt(0).Key);
+                t.Elapsed += ((sender, e) => onceMOTDElapsed(kv.Key));
+                t.Start();
+            }
+        }
+
+        private static Dictionary<string, int> timeCycled = new Dictionary<string, int>();
+        private static void cycleMOTDElapsed(string motdName)
+        {
+            if (!timeCycled.ContainsKey(motdName))
+                timeCycled.Add(motdName, 0);
+
+            timeCycled[motdName]++;
+            if (timeCycled[motdName] > 1)
+            {
+                if (cycleMOTDList.ContainsKey(motdName))
                 {
-                    foreach (string s in motdList["Cycle"])
+                    foreach (string s in cycleMOTDList[motdName].ElementAt(0).Value)
                     {
-                        Broadcast.broadcastAll(s);
+                        if (s.StartsWith("{/") && s.EndsWith("}"))
+                        {
+                            string command = s.Substring(1, s.Length - 2);
+                            Commands.executeCMDServer(command);
+                        }
+                        else
+                            Broadcast.broadcastAll(s);
                     }
+                }
+            }
+        }
+        private static void onceMOTDElapsed(string motdName)
+        {
+            if (onceMOTDList.ContainsKey(motdName))
+            {
+                foreach (string s in onceMOTDList[motdName].ElementAt(0).Value)
+                {
+                    if (s.StartsWith("{/") && s.EndsWith("}"))
+                    {
+                        string command = s.Substring(1, s.Length - 2);
+                        Commands.executeCMDServer(command);
+                    }
+                    else
+                        Broadcast.broadcastAll(s);
                 }
             }
         }
@@ -3199,39 +7147,337 @@ namespace RustEssentials.Util
 
                 string playerName = string.Join(" ", playerNameList.ToArray());
 
-                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
-                if (possibleTargets.Count() == 0)
-                    Broadcast.broadcastTo(sender, "No player names equal or contain \"" + playerName + "\".");
-                else if (possibleTargets.Count() > 1)
-                    Broadcast.broadcastTo(sender, "Too many player names contain \"" + playerName + "\".");
-                else
+                if (playerName.StartsWith("\"") && playerName.EndsWith("\""))
                 {
-                    PlayerClient targetClient = possibleTargets[0];
+                    playerName = playerName.Substring(1, playerName.Length - 2);
 
-                    TakeDamage component = targetClient.controllable.GetComponent<TakeDamage>();
-
-                    if (b)
-                    {
-                        if (!godList.Contains(targetClient.userID.ToString()))
-                            godList.Add(targetClient.userID.ToString());
-                    }
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(playerName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(sender, "No player names equal \"" + playerName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(sender, "Too many player names equal \"" + playerName + "\".");
                     else
                     {
-                        if (godList.Contains(targetClient.userID.ToString()))
-                            godList.Remove(targetClient.userID.ToString());
-                    }
+                        PlayerClient targetClient = possibleTargets[0];
 
-                    component.SetGodMode(b);
-                    if (targetClient.netPlayer != sender)
-                    {
-                        Broadcast.noticeTo(sender, "♫", (b ? "God mode granted to " + targetClient.userName + "." : "Revoked " + targetClient.userName + "'s god mode."));
-                        Broadcast.noticeTo(targetClient.netPlayer, "♫", (b ? "God mode granted by " + senderName + "." : "God mode revoked by " + senderName + "."));
-                    }
-                    else
-                    {
-                        Broadcast.noticeTo(sender, "♫", (b ? "God mode activated." : "God mode deactivated."));
+                        TakeDamage component = targetClient.controllable.GetComponent<TakeDamage>();
+
+                        if (b)
+                        {
+                            if (!godList.Contains(targetClient.userID.ToString()))
+                                godList.Add(targetClient.userID.ToString());
+                        }
+                        else
+                        {
+                            if (godList.Contains(targetClient.userID.ToString()))
+                                godList.Remove(targetClient.userID.ToString());
+                        }
+
+                        if (targetClient.netPlayer != sender)
+                        {
+                            Broadcast.noticeTo(sender, "♫", (b ? "God mode granted to " + targetClient.userName + "." : "Revoked " + targetClient.userName + "'s god mode."));
+                            Broadcast.noticeTo(targetClient.netPlayer, "♫", (b ? "God mode granted by " + senderName + "." : "God mode revoked by " + senderName + "."));
+                        }
+                        else
+                        {
+                            Broadcast.noticeTo(sender, "♫", (b ? "God mode activated." : "God mode deactivated."));
+                        }
                     }
                 }
+                else
+                {
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(sender, "No player names equal or contain \"" + playerName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(sender, "Too many player names contain \"" + playerName + "\".");
+                    else
+                    {
+                        PlayerClient targetClient = possibleTargets[0];
+
+                        TakeDamage component = targetClient.controllable.GetComponent<TakeDamage>();
+
+                        if (b)
+                        {
+                            if (!godList.Contains(targetClient.userID.ToString()))
+                                godList.Add(targetClient.userID.ToString());
+                        }
+                        else
+                        {
+                            if (godList.Contains(targetClient.userID.ToString()))
+                                godList.Remove(targetClient.userID.ToString());
+                        }
+
+                        if (targetClient.netPlayer != sender)
+                        {
+                            Broadcast.noticeTo(sender, "♫", (b ? "God mode granted to " + targetClient.userName + "." : "Revoked " + targetClient.userName + "'s god mode."));
+                            Broadcast.noticeTo(targetClient.netPlayer, "♫", (b ? "God mode granted by " + senderName + "." : "God mode revoked by " + senderName + "."));
+                        }
+                        else
+                        {
+                            Broadcast.noticeTo(sender, "♫", (b ? "God mode activated." : "God mode deactivated."));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                PlayerClient senderClient = Array.Find(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == sender);
+                TakeDamage component = senderClient.controllable.GetComponent<TakeDamage>();
+
+                if (b)
+                {
+                    if (!godList.Contains(senderClient.userID.ToString()))
+                        godList.Add(senderClient.userID.ToString());
+                }
+                else
+                {
+                    if (godList.Contains(senderClient.userID.ToString()))
+                        godList.Remove(senderClient.userID.ToString());
+                }
+
+                Broadcast.noticeTo(sender, "♫", (b ? "God mode activated." : "God mode deactivated."));
+            }
+        }
+
+        //public static void OverheadPlayerName_Open(RPOS.InfoLabel label, HumanController HC)
+        //{
+        //    PlayerClient instantiatedPlayerClient = HC.instantiatedPlayerClient;
+        //    if (instantiatedPlayerClient != null)
+        //    {
+        //        if (vanishedList.Contains(instantiatedPlayerClient.userID.ToString()))
+        //            label.text = "";
+        //        else
+        //            label.text = instantiatedPlayerClient.userName;
+        //    }
+        //    label.transform = HC.headBone;
+        //    label.color = Color.yellow;
+        //}
+
+        //public static bool OverheadPlayerName_Update(RPOS.InfoLabel label, HumanController HC)
+        //{
+        //    PlayerClient instantiatedPlayerClient = HC.instantiatedPlayerClient;
+        //    if (instantiatedPlayerClient != null)
+        //    {
+        //        if (vanishedList.Contains(instantiatedPlayerClient.userID.ToString()))
+        //            label.text = "";
+        //        else
+        //            label.text = instantiatedPlayerClient.userName;
+        //        label.offset = (Vector3)(label.transform.InverseTransformDirection(HC.transform.up) * 0.3f);
+        //        return true;
+        //    }
+        //    return false;
+        //}
+
+        public static void HostileScent(TakeDamage damage, HostileWildlifeAI HWAI)
+        {
+            PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.controllable.GetComponent<TakeDamage>() == damage);
+            bool b = false;
+            if (possibleClients.Count() > 0)
+            {
+                b = hiddenList.Contains(possibleClients[0].userID.ToString()) && HWAI._targetTD == possibleClients[0].controllable.GetComponent<TakeDamage>();
+            }
+
+            if (b && HWAI.HasTarget())
+                HWAI.LoseTarget();
+
+            if (!HWAI.IsScentBlind() && (((HWAI._state != 2) && (HWAI._state != 7)) && !HWAI.HasTarget()) && !b)
+            {
+                HWAI.ExitCurrentState();
+                HWAI.SetAttackTarget(damage);
+                HWAI.EnterState_Chase();
+            }
+        }
+
+        public static void HostileHurt(DamageEvent damage, HostileWildlifeAI HWAI)
+        {
+            bool b = false;
+            if (damage.attacker.idMain is Character)
+            {
+                if (isPlayer(damage.attacker.idMain))
+                {
+                    b = hiddenList.Contains(damage.attacker.client.userID.ToString()) && HWAI._targetTD == damage.attacker.client.controllable.GetComponent<TakeDamage>();
+                }
+            }
+
+            if (b && HWAI.HasTarget())
+                HWAI.LoseTarget();
+
+            if (!HWAI.HasTarget() && (damage.attacker.character != null) && !b)
+            {
+                HWAI.SetAttackTarget(damage.attacker.character.gameObject.GetComponent<TakeDamage>());
+                HWAI.ExitCurrentState();
+                HWAI.EnterState_Chase();
+            }
+        }
+
+        public static void BasicHearFootstep(Vector3 origin, BasicWildLifeAI BWAI)
+        {
+            bool b = false;
+            foreach (PlayerClient pc in AllPlayerClients)
+            {
+                Character outChar;
+                Character.FindByUser(pc.userID, out outChar);
+
+                if (Vector3.Distance(outChar.transform.position, origin) < 1)
+                {
+                    b = hiddenList.Contains(pc.userID.ToString());
+                }
+            }
+            if (((BWAI._state != 2) && (BWAI._state != 7)) && BWAI.afraidOfFootsteps && !b)
+            {
+                BWAI.ExitCurrentState();
+                BWAI.EnterState_Flee(origin);
+            }
+        }
+
+        public static void BasicHurt(DamageEvent damage, BasicWildLifeAI BWAI)
+        {
+            bool b = false;
+            if (damage.attacker.idMain is Character)
+            {
+                if (isPlayer(damage.attacker.idMain))
+                {
+                    b = hiddenList.Contains(damage.attacker.client.userID.ToString());
+                }
+            }
+
+            if (((BWAI._state != 2) && (BWAI._state != 7)) && (damage.attacker.character != null) & !b)
+            {
+                BWAI.ExitCurrentState();
+                BWAI.EnterState_Flee(BWAI.transform.position + new Vector3(UnityEngine.Random.Range((float)-1f, (float)1f), 0f, UnityEngine.Random.Range((float)-1f, (float)1f)));
+            }
+        }
+
+        public static void clearPlayer(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                List<string> playerNameList = new List<string>();
+                int curIndex = 0;
+                foreach (string s in args)
+                {
+                    if (curIndex > 0)
+                    {
+                        playerNameList.Add(s);
+                    }
+                    curIndex++;
+                }
+
+                string playerName = string.Join(" ", playerNameList.ToArray());
+
+                if (playerName.StartsWith("\"") && playerName.EndsWith("\""))
+                {
+                    playerName = playerName.Substring(1, playerName.Length - 2);
+
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(playerName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal \"" + playerName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + playerName + "\".");
+                    else
+                    {
+                        PlayerClient targetClient = possibleTargets[0];
+                        clearInventory(targetClient);
+                    }
+                }
+                else
+                {
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
+                    else
+                    {
+                        PlayerClient targetClient = possibleTargets[0];
+                        clearInventory(targetClient);
+                    }
+                }
+            }
+        }
+
+        public static void feedPlayer(uLink.NetworkPlayer sender, string senderName, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                List<string> playerNameList = new List<string>();
+                int curIndex = 0;
+                foreach (string s in args)
+                {
+                    if (curIndex > 0)
+                    {
+                        playerNameList.Add(s);
+                    }
+                    curIndex++;
+                }
+
+                string playerName = string.Join(" ", playerNameList.ToArray());
+
+                if (playerName.StartsWith("\"") && playerName.EndsWith("\""))
+                {
+                    playerName = playerName.Substring(1, playerName.Length - 2);
+
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(playerName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(sender, "No player names equal \"" + playerName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(sender, "Too many player names equal \"" + playerName + "\".");
+                    else
+                    {
+                        PlayerClient targetClient = possibleTargets[0];
+                        Inventory inventory = targetClient.controllable.GetComponent<Inventory>();
+                        Metabolism metabolism = inventory.GetComponent<Metabolism>();
+
+                        metabolism.AddCalories(metabolism.GetRemainingCaloricSpace());
+
+                        if (targetClient.netPlayer != sender)
+                        {
+                            Broadcast.noticeTo(sender, "♫", ("You fed " + targetClient.userName + "."));
+                            Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were fed by " + senderName + "."));
+                        }
+                        else
+                        {
+                            Broadcast.noticeTo(sender, "♫", "You were fed.");
+                        }
+                    }
+                }
+                else
+                {
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(sender, "No player names equal or contain \"" + playerName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(sender, "Too many player names contain \"" + playerName + "\".");
+                    else
+                    {
+                        PlayerClient targetClient = possibleTargets[0];
+                        Inventory inventory = targetClient.controllable.GetComponent<Inventory>();
+                        Metabolism metabolism = inventory.GetComponent<Metabolism>();
+
+                        metabolism.AddCalories(metabolism.GetRemainingCaloricSpace());
+
+                        if (targetClient.netPlayer != sender)
+                        {
+                            Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were fed by " + senderName + "."));
+                        }
+                        else
+                        {
+                            Broadcast.noticeTo(sender, "♫", "You were fed.");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                PlayerClient senderClient = Array.Find(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == sender);
+
+                Inventory inventory = senderClient.controllable.GetComponent<Inventory>();
+                Metabolism metabolism = inventory.GetComponent<Metabolism>();
+
+                metabolism.AddCalories(metabolism.GetRemainingCaloricSpace());
+
+                Broadcast.noticeTo(sender, "♫", "You were fed.");
             }
         }
 
@@ -3252,30 +7498,89 @@ namespace RustEssentials.Util
 
                 string playerName = string.Join(" ", playerNameList.ToArray());
 
-                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
-                if (possibleTargets.Count() == 0)
-                    Broadcast.broadcastTo(sender, "No player names equal or contain \"" + playerName + "\".");
-                else if (possibleTargets.Count() > 1)
-                    Broadcast.broadcastTo(sender, "Too many player names contain \"" + playerName + "\".");
-                else
+                if (playerName.StartsWith("\"") && playerName.EndsWith("\""))
                 {
-                    PlayerClient targetClient = possibleTargets[0];
+                    playerName = playerName.Substring(1, playerName.Length - 2);
 
-                    TakeDamage component = targetClient.controllable.GetComponent<TakeDamage>();
-                    Character targetChar;
-                    Character.FindByUser(targetClient.userID, out targetChar);
-
-                    component.Heal(targetChar.idMain, 100f);
-
-                    if (targetClient.netPlayer != sender)
-                    {
-                        Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were healed by " + senderName + "."));
-                    }
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(playerName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(sender, "No player names equal \"" + playerName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(sender, "Too many player names equal \"" + playerName + "\".");
                     else
                     {
-                        Broadcast.noticeTo(sender, "♫", "You were healed.");
+                        PlayerClient targetClient = possibleTargets[0];
+
+                        TakeDamage component = targetClient.controllable.GetComponent<TakeDamage>();
+                        Character targetChar;
+                        Character.FindByUser(targetClient.userID, out targetChar);
+
+                        component.Heal(targetChar.idMain, 100f);
+
+                        Inventory inventory = targetClient.controllable.GetComponent<Inventory>();
+                        Metabolism metabolism = inventory.GetComponent<Metabolism>();
+
+                        metabolism.AddAntiRad(metabolism.GetRadLevel());
+
+                        if (targetClient.netPlayer != sender)
+                        {
+                            Broadcast.noticeTo(sender, "♫", "You healed " + senderName + ".");
+                            Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were healed by " + senderName + "."));
+                        }
+                        else
+                        {
+                            Broadcast.noticeTo(sender, "♫", "You were healed.");
+                        }
                     }
                 }
+                else
+                {
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(sender, "No player names equal or contain \"" + playerName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(sender, "Too many player names contain \"" + playerName + "\".");
+                    else
+                    {
+                        PlayerClient targetClient = possibleTargets[0];
+
+                        TakeDamage component = targetClient.controllable.GetComponent<TakeDamage>();
+                        Character targetChar;
+                        Character.FindByUser(targetClient.userID, out targetChar);
+
+                        component.Heal(targetChar.idMain, 100f);
+
+                        Inventory inventory = targetClient.controllable.GetComponent<Inventory>();
+                        Metabolism metabolism = inventory.GetComponent<Metabolism>();
+
+                        metabolism.AddAntiRad(metabolism.GetRadLevel());
+
+                        if (targetClient.netPlayer != sender)
+                        {
+                            Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were healed by " + senderName + "."));
+                        }
+                        else
+                        {
+                            Broadcast.noticeTo(sender, "♫", "You were healed.");
+                        }
+                    }
+                }
+            }
+            else
+            {
+                PlayerClient senderClient = Array.Find(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == sender);
+                TakeDamage component = senderClient.controllable.GetComponent<TakeDamage>();
+                Character targetChar;
+                Character.FindByUser(senderClient.userID, out targetChar);
+
+                component.Heal(targetChar.idMain, 100f);
+
+                Inventory inventory = senderClient.controllable.GetComponent<Inventory>();
+                Metabolism metabolism = inventory.GetComponent<Metabolism>();
+
+                metabolism.AddAntiRad(metabolism.GetRadLevel());
+
+                Broadcast.noticeTo(sender, "♫", "You were healed.");
             }
         }
 
@@ -3305,12 +7610,12 @@ namespace RustEssentials.Util
                 switch (mode)
                 {
                     case "on":
-                        Broadcast.broadcastAll("Fall damage has been disabled for everyone.");
-                        fallDamage = true;
-                        break;
-                    case "off":
                         Broadcast.broadcastAll("Fall damage has been enabled for everyone.");
                         fallDamage = false;
+                        break;
+                    case "off":
+                        Broadcast.broadcastAll("Fall damage has been disabled for everyone.");
+                        fallDamage = true;
                         break;
                 }
             }
@@ -3333,34 +7638,83 @@ namespace RustEssentials.Util
 
                 string playerName = string.Join(" ", playerNameList.ToArray());
 
-                PlayerClient senderClient = Array.Find(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.netPlayer == sender);
-                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
-                if (possibleTargets.Count() == 0)
-                    Broadcast.broadcastTo(sender, "No player names equal or contain \"" + playerName + "\".");
-                else if (possibleTargets.Count() > 1)
-                    Broadcast.broadcastTo(sender, "Too many player names contain \"" + playerName + "\".");
+                if (playerName.StartsWith("\"") && playerName.EndsWith("\""))
+                {
+                    playerName = playerName.Substring(1, playerName.Length - 2);
+
+                    PlayerClient senderClient = Array.Find(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == sender);
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(playerName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(sender, "No player names equal \"" + playerName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(sender, "Too many player names equal \"" + playerName + "\".");
+                    else
+                    {
+                        try
+                        {
+                            PlayerClient targetClient = possibleTargets[0];
+                            Character targetChar;
+                            Character.FindByUser(targetClient.userID, out targetChar);
+
+                            if (ofLowerRank(targetClient.userID.ToString(), senderClient.userID.ToString(), false))
+                            {
+                                IDBase idBase = (IDBase)targetChar;
+                                Broadcast.noticeTo(targetClient.netPlayer, "№", "You fell victim to /kill.");
+                                Broadcast.noticeTo(senderClient.netPlayer, "№", targetClient.userName + " fell victim to /kill.");
+                                killList.Add(targetClient);
+
+                                TakeDamage component = targetClient.controllable.GetComponent<TakeDamage>();
+                                component.SetGodMode(false);
+                                if (godList.Contains(targetClient.userID.ToString()))
+                                    godList.Remove(targetClient.userID.ToString());
+                                int result = (int)TakeDamage.Kill(idBase, idBase);
+                            }
+                            else
+                            {
+                                Broadcast.noticeTo(sender, "№", "You are not allowed to /kill those of higher authority.");
+                                Broadcast.noticeTo(targetClient.netPlayer, "№", senderClient.userName + " tried to /kill you.");
+                            }
+                        }
+                        catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
+                    }
+                }
                 else
                 {
-                    try
+                    PlayerClient senderClient = Array.Find(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == sender);
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(sender, "No player names equal or contain \"" + playerName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(sender, "Too many player names contain \"" + playerName + "\".");
+                    else
                     {
-                        PlayerClient targetClient = possibleTargets[0];
-                        Character targetChar;
-                        Character.FindByUser(targetClient.userID, out targetChar);
+                        try
+                        {
+                            PlayerClient targetClient = possibleTargets[0];
+                            Character targetChar;
+                            Character.FindByUser(targetClient.userID, out targetChar);
 
-                        if (ofLowerRank(targetClient.userID.ToString(), senderClient.userID.ToString(), false))
-                        {
-                            IDBase idBase = (IDBase)targetChar;
-                            Broadcast.noticeTo(targetClient.netPlayer, "№", "You fell victim to /kill.");
-                            killList.Add(targetClient);
-                            int result = (int)TakeDamage.Kill(idBase, idBase);
+                            if (ofLowerRank(targetClient.userID.ToString(), senderClient.userID.ToString(), false))
+                            {
+                                IDBase idBase = (IDBase)targetChar;
+                                Broadcast.noticeTo(targetClient.netPlayer, "№", "You fell victim to /kill.");
+                                Broadcast.noticeTo(senderClient.netPlayer, "№", targetClient.userName + " fell victim to /kill.");
+                                killList.Add(targetClient);
+
+                                TakeDamage component = targetClient.controllable.GetComponent<TakeDamage>();
+                                component.SetGodMode(false);
+                                if (godList.Contains(targetClient.userID.ToString()))
+                                    godList.Remove(targetClient.userID.ToString());
+                                int result = (int)TakeDamage.Kill(idBase, idBase);
+                            }
+                            else
+                            {
+                                Broadcast.noticeTo(sender, "№", "You are not allowed to /kill those of higher authority.");
+                                Broadcast.noticeTo(targetClient.netPlayer, "№", senderClient.userName + " tried to /kill you.");
+                            }
                         }
-                        else
-                        {
-                            Broadcast.noticeTo(sender, "№", "You are not allowed to /kill those of higher authority.");
-                            Broadcast.noticeTo(targetClient.netPlayer, "№", senderClient.userName + " tried to /kill you.");
-                        }
+                        catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
                     }
-                    catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
                 }
             }
         }
@@ -3397,15 +7751,33 @@ namespace RustEssentials.Util
 
                 string playerName = string.Join(" ", playerNameList.ToArray());
 
-                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
-                if (possibleTargets.Count() == 0)
-                    Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
-                else if (possibleTargets.Count() > 1)
-                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
+                if (playerName.StartsWith("\"") && playerName.EndsWith("\""))
+                {
+                    playerName = playerName.Substring(1, playerName.Length - 2);
+
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(playerName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal \"" + playerName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + playerName + "\".");
+                    else
+                    {
+                        PlayerClient targetClient = possibleTargets[0];
+                        Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + "'s UID is " + targetClient.userID.ToString() + ".");
+                    }
+                }
                 else
                 {
-                    PlayerClient targetClient = possibleTargets[0];
-                    Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + "'s UID is " + targetClient.userID.ToString() + ".");
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + playerName + "\".");
+                    else
+                    {
+                        PlayerClient targetClient = possibleTargets[0];
+                        Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + "'s UID is " + targetClient.userID.ToString() + ".");
+                    }
                 }
             }
             else
@@ -3481,15 +7853,6 @@ namespace RustEssentials.Util
                     saveBans();
 
                     Broadcast.noticeTo(playerClient.netPlayer, "☻", "Player " + targetName + " has been unbanned.");
-
-                    File.WriteAllText(Path.Combine(Vars.rootDir, "cfg\\bans.cfg"), String.Empty);
-                    using (StreamWriter sw = new StreamWriter(Path.Combine(Vars.rootDir, "cfg\\bans.cfg")))
-                    {
-                        foreach (KeyValuePair<string, string> kv in currentBans)
-                        {
-                            sw.WriteLine("banid " + kv.Value);
-                        }
-                    }
                 }
                 else if (currentBans.Values.Contains(targetName))
                 {
@@ -3509,15 +7872,6 @@ namespace RustEssentials.Util
                             saveBans();
 
                             Broadcast.noticeTo(playerClient.netPlayer, "☻", "Player " + playerName + " (" + UID + ") has been unbanned.");
-
-                            File.WriteAllText(Path.Combine(Vars.rootDir, "cfg\\bans.cfg"), String.Empty);
-                            using (StreamWriter sw = new StreamWriter(Path.Combine(Vars.rootDir, "cfg\\bans.cfg")))
-                            {
-                                foreach (KeyValuePair<string, string> kv in currentBans)
-                                {
-                                    sw.WriteLine("banid " + kv.Value);
-                                }
-                            }
                         }
                     }
                     catch (Exception ex)
@@ -3532,42 +7886,59 @@ namespace RustEssentials.Util
             }
         }
 
-        public static void banPlayer(PlayerClient senderClient, string[] args)
+        public static void banPlayer(PlayerClient senderClient, string[] args, bool exactName)
         {
             if (args.Count() > 1)
             {
                 bool hadQuote = false;
                 string targetName = "";
                 int lastIndex = 0;
-                if (args[1].Contains("\""))
+                if (!exactName)
                 {
-                    foreach (string s in args)
+                    if (args[1].Contains("\""))
                     {
-                        lastIndex++;
-                        if (s.StartsWith("\"")) hadQuote = true;
-                        if (hadQuote)
+                        foreach (string s in args)
                         {
-                            targetName += s + " ";
+                            lastIndex++;
+                            if (s.StartsWith("\"")) hadQuote = true;
+                            if (hadQuote)
+                            {
+                                targetName += s + " ";
+                            }
+                            if (s.EndsWith("\""))
+                            {
+                                hadQuote = false;
+                                break;
+                            }
                         }
-                        if (s.EndsWith("\""))
-                        {
-                            hadQuote = false;
-                            break;
-                        }
-                    }
 
-                    targetName = targetName.Replace("\"", "").Trim();
+                        targetName = targetName.Replace("\"", "").Trim();
+                    }
+                    else
+                    {
+                        targetName = args[1];
+                        lastIndex = 1;
+                    }
                 }
                 else
                 {
-                    targetName = args[1];
-                    lastIndex = 1;
+                    List<string> playerNameList = new List<string>();
+                    foreach (string s in args)
+                    {
+                        if (lastIndex > 0)
+                        {
+                            playerNameList.Add(s);
+                        }
+                        lastIndex++;
+                    }
+
+                    targetName = string.Join(" ", playerNameList.ToArray());
                 }
 
                 try
                 {
                     string UID = Convert.ToInt64(targetName).ToString();
-                    PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userID.ToString() == UID);
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == UID);
                     PlayerClient possibleTarget = null;
                     if (possibleTargets.Count() > 0)
                     {
@@ -3675,7 +8046,253 @@ namespace RustEssentials.Util
                 }
                 catch (Exception ex)
                 {
-                    PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
+                    if (exactName)
+                    {
+                        if (targetName.Split(' ').Count() > 1)
+                            targetName = targetName.Substring(1, targetName.Length - 2);
+
+                        PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(targetName));
+                        if (possibleTargets.Count() == 0)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal \"" + targetName + "\".");
+                        else if (possibleTargets.Count() > 1)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + targetName + "\".");
+                        else
+                        {
+                            NetUser target = possibleTargets[0].netUser;
+                            try
+                            {
+                                if (target != null)
+                                {
+                                    string reason = "";
+                                    List<string> reasonList = new List<string>();
+                                    if (args.Count() - 1 > lastIndex)
+                                    {
+                                        int curIndex = 0;
+                                        foreach (string s in args)
+                                        {
+                                            if (curIndex > lastIndex)
+                                            {
+                                                reasonList.Add(s);
+                                            }
+                                            curIndex++;
+                                        }
+
+                                        reason = string.Join(" ", reasonList.ToArray());
+                                    }
+                                    else
+                                    {
+                                        reason = "Banned by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                                    }
+
+                                    if (ofLowerRank(target.userID.ToString(), senderClient.userID.ToString(), false))
+                                    {
+                                        RustEssentialsBootstrap._load.loadBans();
+                                        if (!currentBans.Keys.Contains(target.displayName))
+                                        {
+                                            Broadcast.broadcastTo(target.networkPlayer, "You were banned! Reason: " + reason);
+                                            target.Kick(NetError.Facepunch_Kick_Ban, false);
+                                            Broadcast.broadcastAll("Player " + target.displayName + " was banned. Reason: " + reason);
+                                            currentBans.Add(target.displayName, target.userID.ToString());
+                                            currentBanReasons.Add(target.userID.ToString(), reason);
+                                            saveBans();
+                                        }
+                                        else
+                                        {
+                                            Broadcast.noticeTo(senderClient.netPlayer, "!", "Player " + target.displayName + " is already banned!");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to /ban those of higher authority.");
+                                        Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to /ban you.");
+                                    }
+                                }
+                            }
+                            catch (Exception ex2)
+                            {
+
+                            }
+                        }
+                    }
+                    else
+                    {
+                        PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
+                        if (possibleTargets.Count() == 0)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + targetName + "\".");
+                        else if (possibleTargets.Count() > 1)
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + targetName + "\".");
+                        else
+                        {
+                            NetUser target = possibleTargets[0].netUser;
+                            try
+                            {
+                                if (target != null)
+                                {
+                                    string reason = "";
+                                    List<string> reasonList = new List<string>();
+                                    if (args.Count() - 1 > lastIndex)
+                                    {
+                                        int curIndex = 0;
+                                        foreach (string s in args)
+                                        {
+                                            if (curIndex > lastIndex)
+                                            {
+                                                reasonList.Add(s);
+                                            }
+                                            curIndex++;
+                                        }
+
+                                        reason = string.Join(" ", reasonList.ToArray());
+                                    }
+                                    else
+                                    {
+                                        reason = "Banned by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                                    }
+
+                                    if (ofLowerRank(target.userID.ToString(), senderClient.userID.ToString(), false))
+                                    {
+                                        RustEssentialsBootstrap._load.loadBans();
+                                        if (!currentBans.Keys.Contains(target.displayName))
+                                        {
+                                            Broadcast.broadcastTo(target.networkPlayer, "You were banned! Reason: " + reason);
+                                            target.Kick(NetError.Facepunch_Kick_Ban, false);
+                                            Broadcast.broadcastAll("Player " + target.displayName + " was banned. Reason: " + reason);
+                                            currentBans.Add(target.displayName, target.userID.ToString());
+                                            currentBanReasons.Add(target.userID.ToString(), reason);
+                                            saveBans();
+                                        }
+                                        else
+                                        {
+                                            Broadcast.noticeTo(senderClient.netPlayer, "!", "Player " + target.displayName + " is already banned!");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to /ban those of higher authority.");
+                                        Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to /ban you.");
+                                    }
+                                }
+                            }
+                            catch (Exception ex2)
+                            {
+
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void kickPlayer(PlayerClient senderClient, string[] args, bool exactName)
+        {
+            if (args.Count() > 1)
+            {
+                bool hadQuote = false;
+                string targetName = "";
+                int lastIndex = 0;
+                if (!exactName)
+                {
+                    if (args[1].Contains("\""))
+                    {
+                        foreach (string s in args)
+                        {
+                            lastIndex++;
+                            if (s.StartsWith("\"")) hadQuote = true;
+                            if (hadQuote)
+                            {
+                                targetName += s + " ";
+                            }
+                            if (s.EndsWith("\""))
+                            {
+                                hadQuote = false;
+                                break;
+                            }
+                        }
+
+                        targetName = targetName.Replace("\"", "").Trim();
+                    }
+                    else
+                    {
+                        targetName = args[1];
+                        lastIndex = 1;
+                    }
+                }
+                else
+                {
+                    List<string> playerNameList = new List<string>();
+                    foreach (string s in args)
+                    {
+                        if (lastIndex > 0)
+                        {
+                            playerNameList.Add(s);
+                        }
+                        lastIndex++;
+                    }
+
+                    targetName = string.Join(" ", playerNameList.ToArray());
+                }
+
+                if (exactName)
+                {
+                    if (targetName.Split(' ').Count() > 1)
+                        targetName = targetName.Substring(1, targetName.Length - 2);
+
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Equals(targetName));
+                    if (possibleTargets.Count() == 0)
+                        Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal \"" + targetName + "\".");
+                    else if (possibleTargets.Count() > 1)
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names equal \"" + targetName + "\".");
+                    else
+                    {
+                        NetUser target = possibleTargets[0].netUser;
+                        try
+                        {
+                            if (target != null)
+                            {
+                                string reason = "";
+                                List<string> reasonList = new List<string>();
+                                if (args.Count() - 1 > lastIndex)
+                                {
+                                    int curIndex = 0;
+                                    foreach (string s in args)
+                                    {
+                                        if (curIndex > lastIndex)
+                                        {
+                                            reasonList.Add(s);
+                                        }
+                                        curIndex++;
+                                    }
+
+                                    reason = string.Join(" ", reasonList.ToArray());
+                                }
+                                else
+                                {
+                                    reason = "Kicked by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                                }
+
+                                if (ofLowerRank(target.userID.ToString(), senderClient.userID.ToString(), false))
+                                {
+                                    kickQueue.Add(target.displayName);
+                                    Broadcast.broadcastTo(target.networkPlayer, "You were kicked! Reason: " + reason);
+                                    target.Kick(NetError.Facepunch_Kick_Ban, false);
+                                    Broadcast.broadcastAll("Player " + target.displayName + " was kicked. Reason: " + reason);
+                                }
+                                else
+                                {
+                                    Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to /kick those of higher authority.");
+                                    Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to /kick you.");
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+
+                        }
+                    }
+                }
+                else
+                {
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
                     if (possibleTargets.Count() == 0)
                         Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + targetName + "\".");
                     else if (possibleTargets.Count() > 1)
@@ -3705,34 +8322,24 @@ namespace RustEssentials.Util
                                 }
                                 else
                                 {
-                                    reason = "Banned by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                                    reason = "Kicked by a(n) " + findRank(senderClient.userID.ToString()) + ".";
                                 }
 
                                 if (ofLowerRank(target.userID.ToString(), senderClient.userID.ToString(), false))
                                 {
-                                    RustEssentialsBootstrap._load.loadBans();
-                                    if (!currentBans.Keys.Contains(target.displayName))
-                                    {
-                                        Broadcast.broadcastTo(target.networkPlayer, "You were banned! Reason: " + reason);
-                                        target.Kick(NetError.Facepunch_Kick_Ban, false);
-                                        Broadcast.broadcastAll("Player " + target.displayName + " was banned. Reason: " + reason);
-                                        currentBans.Add(target.displayName, target.userID.ToString());
-                                        currentBanReasons.Add(target.userID.ToString(), reason);
-                                        saveBans();
-                                    }
-                                    else
-                                    {
-                                        Broadcast.noticeTo(senderClient.netPlayer, "!", "Player " + target.displayName + " is already banned!");
-                                    }
+                                    kickQueue.Add(target.displayName);
+                                    Broadcast.broadcastTo(target.networkPlayer, "You were kicked! Reason: " + reason);
+                                    target.Kick(NetError.Facepunch_Kick_Ban, false);
+                                    Broadcast.broadcastAll("Player " + target.displayName + " was kicked. Reason: " + reason);
                                 }
                                 else
                                 {
-                                    Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to /ban those of higher authority.");
-                                    Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to /ban you.");
+                                    Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to /kick those of higher authority.");
+                                    Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to /kick you.");
                                 }
                             }
                         }
-                        catch (Exception ex2)
+                        catch (Exception ex)
                         {
 
                         }
@@ -3741,91 +8348,14 @@ namespace RustEssentials.Util
             }
         }
 
-        public static void kickPlayer(PlayerClient senderClient, string[] args, bool isBan)
+        public static void otherKick(NetUser target, string reason)
         {
-            if (args.Count() > 1)
+            if (target != null)
             {
-                bool hadQuote = false;
-                string targetName = "";
-                int lastIndex = 0;
-                if (args[1].Contains("\""))
-                {
-                    foreach (string s in args)
-                    {
-                        lastIndex++;
-                        if (s.StartsWith("\"")) hadQuote = true;
-                        if (hadQuote)
-                        {
-                            targetName += s + " ";
-                        }
-                        if (s.EndsWith("\""))
-                        {
-                            hadQuote = false;
-                            break;
-                        }
-                    }
-
-                    targetName = targetName.Replace("\"", "").Trim();
-                }
-                else
-                {
-                    targetName = args[1];
-                    lastIndex = 1;
-                }
-
-                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
-                if (possibleTargets.Count() == 0)
-                    Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + targetName + "\".");
-                else if (possibleTargets.Count() > 1)
-                    Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + targetName + "\".");
-                else
-                {
-                    NetUser target = possibleTargets[0].netUser;
-                    try
-                    {
-                        if (target != null)
-                        {
-                            string reason = "";
-                            List<string> reasonList = new List<string>();
-                            if (args.Count() - 1 > lastIndex)
-                            {
-                                int curIndex = 0;
-                                foreach (string s in args)
-                                {
-                                    if (curIndex > lastIndex)
-                                    {
-                                        reasonList.Add(s);
-                                    }
-                                    curIndex++;
-                                }
-
-                                reason = string.Join(" ", reasonList.ToArray());
-                            }
-                            else
-                            {
-                                reason = "Kicked by a(n) " + findRank(senderClient.userID.ToString()) + ".";
-                            }
-
-                            if (ofLowerRank(target.userID.ToString(), senderClient.userID.ToString(), false))
-                            {
-                                kickQueue.Add(target.displayName);
-                                Broadcast.broadcastTo(target.networkPlayer, (isBan ? "You were banned! Reason: " : "You were kicked! Reason: ") + reason);
-                                target.Kick(NetError.Facepunch_Kick_Ban, false);
-                                if (!isBan)
-                                    Broadcast.broadcastAll("Player " + target.displayName + " was kicked. Reason: " + reason);
-                            }
-                            else
-                            {
-                                Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to /kick those of higher authority.");
-                                Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to /kick you.");
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-
-                    }
-                }
+                kickQueue.Add(target.displayName);
+                Broadcast.broadcastTo(target.networkPlayer, "You were kicked! Reason: " + reason);
+                Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was kicked for: " + reason);
+                target.Kick(NetError.Facepunch_Kick_Ban, false);
             }
         }
 
@@ -3873,9 +8403,7 @@ namespace RustEssentials.Util
                 target2Level = findRankPriority(rankOrUID2);
             }
 
-            if (target1Level < target2Level)
-                return true;
-            return false;
+            return (target1Level < target2Level);
         }
 
         public static void getPlayerPos(PlayerClient senderClient)
@@ -3888,11 +8416,18 @@ namespace RustEssentials.Util
             Broadcast.broadcastTo(senderClient.netPlayer, combineOutput);
         }
 
+        public static void airdropServer(string[] args)
+        {
+            if (Vars.announceDrops)
+                Broadcast.broadcastAll("Incoming airdrop!");
+            SupplyDropZone.CallAirDrop();
+        }
+
         public static void airdrop(uLink.NetworkPlayer sender, string[] args)
         {
             if (args.Count() > 1)
             {
-                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(args[1]));
+                PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(args[1]));
                 if (possibleTargets.Count() == 0)
                     Broadcast.broadcastTo(sender, "No player names equal or contain \"" + args[1] + "\".");
                 else if (possibleTargets.Count() > 1)
@@ -3922,8 +8457,8 @@ namespace RustEssentials.Util
         {
             try
             {
-                Time.setTime(Convert.ToDouble(Config.startTime));
-                Time.setScale(Convert.ToDouble(Config.timeScale));
+                Time.setTime(Convert.ToSingle(Config.startTime));
+                Time.setScale(Convert.ToSingle(Config.timeScale));
                 Time.freezeTime(Convert.ToBoolean(Config.freezeTime));
                 
                 conLog.Info("Overriding time...");
@@ -3938,9 +8473,18 @@ namespace RustEssentials.Util
             }
         }
 
-        public static void restoreKit(object sender, ElapsedEventArgs e, PlayerClient playerClient, string kitName)
+        public static void restoreKit(object sender, ElapsedEventArgs e, string kitName, string UID)
         {
-            playerCooldowns.Remove(playerClient.userID.ToString());
+            if (playerCooldowns.ContainsKey(UID))
+            {
+                if (playerCooldowns[UID].Count() > 1)
+                {
+                    TimerPlus tp = Array.Find(playerCooldowns[UID].ToArray(), (KeyValuePair<TimerPlus, string> kv) => kv.Value == kitName).Key;
+                    playerCooldowns[UID].Remove(tp);
+                }
+                else if (playerCooldowns[UID].Count() == 1)
+                    playerCooldowns.Remove(UID);
+            }
         }
 
         public static void showPlayers(PlayerClient senderClient)
@@ -3948,27 +8492,28 @@ namespace RustEssentials.Util
             Broadcast.broadcastTo(senderClient.netPlayer, "All online players:", true);
             List<string> names = new List<string>();
             List<string> names2 = new List<string>();
-            foreach (PlayerClient pc in PlayerClient.All.ToArray())
+            foreach (PlayerClient pc in AllPlayerClients.ToArray())
             {
-                names.Add(pc.userName);
+                if (pc.userName.Length > 0)
+                    names.Add(pc.userName);
             }
 
             List<string> otherNames = new List<string>();
             while (names.Count > 0)
             {
-                int curIndex = 0;
                 names2.Clear();
                 otherNames.Clear();
                 foreach (string s in names)
                 {
-                    curIndex++;
-                    if (curIndex < 9)
+                    names2.Add(s);
+                    otherNames.Add(s);
+
+                    if ((string.Join(", ", names2.ToArray())).Length > 70)
                     {
-                        names2.Add(s);
-                        otherNames.Add(s);
-                    }
-                    else
+                        names2.Remove(s);
+                        otherNames.Remove(s);
                         break;
+                    }
                 }
                 foreach (string s in otherNames)
                 {
@@ -3987,6 +8532,14 @@ namespace RustEssentials.Util
                     Broadcast.broadcastTo(senderClient.netPlayer, s);
                 }
             }
+        }
+
+        public static void showWarps(PlayerClient senderClient)
+        {
+            string rank = Vars.findRank(senderClient.userID.ToString());
+
+            Broadcast.broadcastTo(senderClient.netPlayer, "Available warps:", true);
+            Vars.listWarps(rank, senderClient);
         }
 
         public static void showKits(PlayerClient senderClient)
@@ -4029,7 +8582,7 @@ namespace RustEssentials.Util
                                         TimerPlus t = new TimerPlus();
                                         t.AutoReset = false;
                                         t.Interval = kitCooldowns[kitNameToLower];
-                                        t.Elapsed += (sender, e) => restoreKit(sender, e, senderClient, kitNameToLower);
+                                        t.Elapsed += (sender, e) => restoreKit(sender, e, kitNameToLower, senderClient.userID.ToString());
                                         t.Start();
 
                                         if (!playerCooldowns.Keys.Contains(senderClient.userID.ToString()))
@@ -4046,14 +8599,65 @@ namespace RustEssentials.Util
                                         {
                                             // Return how long I have to wait
                                             double timeLeft = Math.Round((kv.Key.TimeLeft / 1000));
-                                            Broadcast.noticeTo(senderClient.netPlayer, "✯", "You must wait " + (timeLeft > 999999999 ? "forever" : timeLeft.ToString()) + " seconds before using this.");
+                                            Broadcast.noticeTo(senderClient.netPlayer, "✯", "You must wait " + (timeLeft > 999999999 ? "forever" : timeLeft.ToString() + " seconds") + " seconds before using this.");
                                         }
                                     }
                                 }
                             }
                             else // If I am not allowed to use this kit
                             {
-                                Broadcast.noticeTo(senderClient.netPlayer, ":(", "You do not have permission to do this.");
+                                if (kitsForUIDs.ContainsKey(senderClient.userID.ToString()))
+                                {
+                                    if (kitsForUIDs[senderClient.userID.ToString()].Contains(kitNameToLower))
+                                    {
+                                        bool b = true;
+                                        if (playerCooldowns.Keys.Contains(senderClient.userID.ToString()))
+                                        {
+                                            if (playerCooldowns[senderClient.userID.ToString()].Values.Contains(kitNameToLower))
+                                                b = false;
+                                        }
+
+                                        if (b) // If I am not on cool down for this kit
+                                        {
+                                            kitItems = kits[kitNameToLower];
+                                            Broadcast.noticeTo(senderClient.netPlayer, "☻", "You were given the " + kitName + " kit.");
+
+                                            if (kitCooldowns.Keys.Contains(kitNameToLower)) // If a cooldown is set for this kit, set my cool down
+                                            {
+                                                TimerPlus t = new TimerPlus();
+                                                t.AutoReset = false;
+                                                t.Interval = kitCooldowns[kitNameToLower];
+                                                t.Elapsed += (sender, e) => restoreKit(sender, e, kitNameToLower, senderClient.userID.ToString());
+                                                t.Start();
+
+                                                if (!playerCooldowns.Keys.Contains(senderClient.userID.ToString()))
+                                                    playerCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
+                                                else
+                                                    playerCooldowns[senderClient.userID.ToString()].Add(t, kitNameToLower);
+                                            }
+                                        }
+                                        else // If I am on cool down
+                                        {
+                                            foreach (KeyValuePair<TimerPlus, string> kv in playerCooldowns[senderClient.userID.ToString()])
+                                            {
+                                                if (kv.Value == kitNameToLower)
+                                                {
+                                                    // Return how long I have to wait
+                                                    double timeLeft = Math.Round((kv.Key.TimeLeft / 1000));
+                                                    Broadcast.noticeTo(senderClient.netPlayer, "✯", "You must wait " + (timeLeft > 999999999 ? "forever" : timeLeft.ToString() + " seconds") + " before using this.");
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Broadcast.noticeTo(senderClient.netPlayer, ":(", "You do not have permission to do this.");
+                                    }
+                                }
+                                else
+                                {
+                                    Broadcast.noticeTo(senderClient.netPlayer, ":(", "You do not have permission to do this.");
+                                }
                             }
                         }
                         else // If I do not have any kits assigned to my rank
@@ -4077,7 +8681,7 @@ namespace RustEssentials.Util
                                         TimerPlus t = new TimerPlus();
                                         t.AutoReset = false;
                                         t.Interval = kitCooldowns[kitNameToLower];
-                                        t.Elapsed += (sender, e) => restoreKit(sender, e, senderClient, kitNameToLower);
+                                        t.Elapsed += (sender, e) => restoreKit(sender, e, kitNameToLower, senderClient.userID.ToString());
                                         t.Start();
 
                                         if (!playerCooldowns.Keys.Contains(senderClient.userID.ToString()))
@@ -4094,14 +8698,65 @@ namespace RustEssentials.Util
                                         {
                                             // Return how long I have to wait
                                             double timeLeft = Math.Round((kv.Key.TimeLeft / 1000));
-                                            Broadcast.noticeTo(senderClient.netPlayer, "✯", "You must wait " + (timeLeft > 999999999 ? "forever" : timeLeft.ToString()) + " seconds before using this.");
+                                            Broadcast.noticeTo(senderClient.netPlayer, "✯", "You must wait " + (timeLeft > 999999999 ? "forever" : timeLeft.ToString() + " seconds") + " seconds before using this.");
                                         }
                                     }
                                 }
                             }
-                            else // If the kit is truly assigned to a rank, but not mine
+                            else // If the kit is truly assigned to rank, just not mine
                             {
-                                Broadcast.noticeTo(senderClient.netPlayer, ":(", "You do not have permission to do this.");
+                                if (kitsForUIDs.ContainsKey(senderClient.userID.ToString()))
+                                {
+                                    if (kitsForUIDs[senderClient.userID.ToString()].Contains(kitNameToLower))
+                                    {
+                                        bool b = true;
+                                        if (playerCooldowns.Keys.Contains(senderClient.userID.ToString()))
+                                        {
+                                            if (playerCooldowns[senderClient.userID.ToString()].Values.Contains(kitNameToLower))
+                                                b = false;
+                                        }
+
+                                        if (b) // If I am not on cool down for this kit
+                                        {
+                                            kitItems = kits[kitNameToLower];
+                                            Broadcast.noticeTo(senderClient.netPlayer, "☻", "You were given the " + kitName + " kit.");
+
+                                            if (kitCooldowns.Keys.Contains(kitNameToLower)) // If a cooldown is set for this kit, set my cool down
+                                            {
+                                                TimerPlus t = new TimerPlus();
+                                                t.AutoReset = false;
+                                                t.Interval = kitCooldowns[kitNameToLower];
+                                                t.Elapsed += (sender, e) => restoreKit(sender, e, kitNameToLower, senderClient.userID.ToString());
+                                                t.Start();
+
+                                                if (!playerCooldowns.Keys.Contains(senderClient.userID.ToString()))
+                                                    playerCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
+                                                else
+                                                    playerCooldowns[senderClient.userID.ToString()].Add(t, kitNameToLower);
+                                            }
+                                        }
+                                        else // If I am on cool down
+                                        {
+                                            foreach (KeyValuePair<TimerPlus, string> kv in playerCooldowns[senderClient.userID.ToString()])
+                                            {
+                                                if (kv.Value == kitNameToLower)
+                                                {
+                                                    // Return how long I have to wait
+                                                    double timeLeft = Math.Round((kv.Key.TimeLeft / 1000));
+                                                    Broadcast.noticeTo(senderClient.netPlayer, "✯", "You must wait " + (timeLeft > 999999999 ? "forever" : timeLeft.ToString() + " seconds") + " before using this.");
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        Broadcast.noticeTo(senderClient.netPlayer, ":(", "You do not have permission to do this.");
+                                    }
+                                }
+                                else
+                                {
+                                    Broadcast.noticeTo(senderClient.netPlayer, ":(", "You do not have permission to do this.");
+                                }
                             }
                         }
                     }
@@ -4129,31 +8784,42 @@ namespace RustEssentials.Util
             {
                 if (args.Count() > 1)
                 {
-                    if (args[1].Contains("\""))
+                    if (message.Contains("\""))
                     {
-                        bool hadQuote = false;
                         string targetName = "";
                         int lastIndex = 0;
-                        List<string> splitName = new List<string>();
-                        foreach (string s in args)
+                            List<string> nameList = new List<string>();
+
+                        if (args[1].Contains("\""))
                         {
-                            if (s.StartsWith("\"")) hadQuote = true;
-                            if (hadQuote)
+                            bool hadQuote = false;
+                            foreach (string s in args)
                             {
-                                targetName += s + " ";
-                                splitName.Add(s);
+                                if (s.StartsWith("\"")) hadQuote = true;
+                                if (hadQuote)
+                                {
+                                    nameList.Add(s);
+                                }
+                                lastIndex++;
+                                if (s.EndsWith("\""))
+                                {
+                                    hadQuote = false;
+                                    break;
+                                }
                             }
-                            lastIndex++;
-                            if (s.EndsWith("\""))
-                            {
-                                hadQuote = false;
-                                break;
-                            }
+
+                            targetName = string.Join(" ", nameList.ToArray());
+                        }
+                        else
+                        {
+                            targetName = args[1];
+                            nameList.Add(targetName);
                         }
 
-                        targetName = targetName.Replace("\"", "").Trim();
+                        if (targetName.StartsWith("\"") && targetName.EndsWith("\""))
+                            targetName = targetName.Substring(1, targetName.Length - 2);
 
-                        PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
+                        PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(targetName));
                         if (possibleTargets.Count() == 0)
                             Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + targetName + "\".");
                         else if (possibleTargets.Count() > 1)
@@ -4164,17 +8830,18 @@ namespace RustEssentials.Util
                             List<string> newArgs = new List<string>();
                             foreach (string s in args)
                             {
-                                if (!splitName.Contains(s))
+                                if (!nameList.Contains(s))
                                 {
                                     newArgs.Add(s);
                                 }
                             }
-                            createItem(senderClient, targetClient, args, message, true);
+
+                            createItem(senderClient, targetClient, newArgs.ToArray(), message, true);
                         }
                     }
                     else
                     {
-                        PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(args[1]));
+                        PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(args[1]));
                         if (possibleTargets.Count() == 0)
                             Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + args[1] + "\".");
                         else if (possibleTargets.Count() > 1)
@@ -4190,7 +8857,7 @@ namespace RustEssentials.Util
                                     newArgs.Add(s);
                                 }
                             }
-                            createItem(senderClient, targetClient, args, message, true);
+                            createItem(senderClient, targetClient, newArgs.ToArray(), message, true);
                         }
                     }
                 }
@@ -4235,19 +8902,18 @@ namespace RustEssentials.Util
                                 try
                                 {
                                     amount = Convert.ToInt16(args[lastIndex + 1]);
+                                    if (amount < 1)
+                                        amount = 1;
                                 }
                                 catch (Exception ex) { Broadcast.broadcastTo(senderClient.netPlayer, "Amount must be an integer!"); }
                             }
 
-                            if (amount > 0)
+                            addItem(targetClient, itemName, amount);
+                            if (b)
                             {
-                                ConsoleSystem.Run("inv.giveplayer \"" + targetClient.userName + "\" \"" + itemName + "\" " + amount);
-                                if (b)
-                                {
-                                    if (senderClient != targetClient)
-                                        Broadcast.broadcastTo(senderClient.netPlayer, "You gave " + targetClient.userName + " " + amount + " " + itemName);
-                                    Broadcast.noticeTo(targetClient.netPlayer, "☻", "You were given " + amount + " " + itemName + " by " + senderClient.userName);
-                                }
+                                if (senderClient != targetClient)
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "You gave " + targetClient.userName + " " + amount + " " + itemName);
+                                Broadcast.noticeTo(targetClient.netPlayer, "☻", "You were given " + amount + " " + itemName + " by " + senderClient.userName);
                             }
                         }
                     }
@@ -4275,13 +8941,15 @@ namespace RustEssentials.Util
                                 try
                                 {
                                     amount = Convert.ToInt16(args[2]);
+                                    if (amount < 1)
+                                        amount = 1;
                                 }
                                 catch (Exception ex) { Broadcast.broadcastTo(senderClient.netPlayer, "Amount must be an integer!"); }
                             }
 
-                            if (Vars.itemIDs.Values.Contains(itemName) && amount > 0)
+                            if (Vars.itemIDs.Values.Contains(itemName))
                             {
-                                ConsoleSystem.Run("inv.giveplayer \"" + targetClient.userName + "\" \"" + itemName + "\" " + amount);
+                                addItem(targetClient, itemName, amount);
                                 if (b)
                                 {
                                     if (senderClient != targetClient)
@@ -4295,6 +8963,476 @@ namespace RustEssentials.Util
             } catch (Exception ex)
             {
                 Broadcast.broadcastTo(senderClient.netPlayer, ex.ToString());
+            }
+        }
+
+        public static void giveAllServer(string[] args)
+        {
+            try
+            {
+                if (args.Count() > 1)
+                {
+                    if (args[1].Contains("\""))
+                    {
+                        bool hadQuote = false;
+                        string itemName = "";
+                        int lastIndex = -1;
+                        List<string> playerNameList = new List<string>();
+                        foreach (string s in args)
+                        {
+                            lastIndex++;
+                            if (s.StartsWith("\"")) hadQuote = true;
+                            if (hadQuote)
+                                playerNameList.Add(s);
+                            if (s.EndsWith("\""))
+                            {
+                                hadQuote = false;
+                                break;
+                            }
+                        }
+                        itemName = string.Join(" ", playerNameList.ToArray()).Replace("\"", "").Trim();
+                        if (Vars.itemIDs.Values.Contains(itemName))
+                        {
+                            int amount = 1;
+                            if (args.Count() - 1 > lastIndex)
+                            {
+                                try
+                                {
+                                    amount = Convert.ToInt16(args[lastIndex + 1]);
+                                    if (amount < 1)
+                                        amount = 1;
+                                }
+                                catch (Exception ex) { }
+                            }
+
+                            foreach (PlayerClient targetClient in AllPlayerClients)
+                            {
+                                addItem(targetClient, itemName, amount);
+                            }
+                            Broadcast.noticeAll("☻", "All players were given " + amount + " " + itemName);
+                        }
+                    }
+                    else
+                    {
+                        if (args.Count() > 1)
+                        {
+                            int itemID = 0;
+                            string itemName = "";
+                            try
+                            {
+                                itemID = Convert.ToInt16(args[1]);
+                                itemName = Vars.itemIDs[itemID];
+                            }
+                            catch (Exception ex)
+                            {
+                                itemName = args[1];
+                            }
+
+                            int amount = 1;
+                            if (args.Count() > 2)
+                            {
+                                try
+                                {
+                                    amount = Convert.ToInt16(args[2]);
+                                    if (amount < 1)
+                                        amount = 1;
+                                }
+                                catch (Exception ex) { }
+                            }
+
+                            if (Vars.itemIDs.Values.Contains(itemName))
+                            {
+                                foreach (PlayerClient targetClient in AllPlayerClients)
+                                {
+                                    addItem(targetClient, itemName, amount);
+                                }
+                                Broadcast.noticeAll("☻", "All players were given " + amount + " " + itemName);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        public static void giveAll(PlayerClient senderClient, string[] args)
+        {
+            try
+            {
+                if (args.Count() > 1)
+                {
+                    if (args[1].Contains("\""))
+                    {
+                        bool hadQuote = false;
+                        string itemName = "";
+                        int lastIndex = -1;
+                        List<string> playerNameList = new List<string>();
+                        foreach (string s in args)
+                        {
+                            lastIndex++;
+                            if (s.StartsWith("\"")) hadQuote = true;
+                            if (hadQuote)
+                                playerNameList.Add(s);
+                            if (s.EndsWith("\""))
+                            {
+                                hadQuote = false;
+                                break;
+                            }
+                        }
+                        itemName = string.Join(" ", playerNameList.ToArray()).Replace("\"", "").Trim();
+                        if (!Vars.itemIDs.Values.Contains(itemName))
+                            Broadcast.broadcastTo(senderClient.netPlayer, "No such item name \"" + itemName + "\".");
+                        else
+                        {
+                            int amount = 1;
+                            if (args.Count() - 1 > lastIndex)
+                            {
+                                try
+                                {
+                                    amount = Convert.ToInt16(args[lastIndex + 1]);
+                                    if (amount < 1)
+                                        amount = 1;
+                                }
+                                catch (Exception ex) { Broadcast.broadcastTo(senderClient.netPlayer, "Amount must be an integer!"); }
+                            }
+
+                            foreach (PlayerClient targetClient in AllPlayerClients)
+                            {
+                                addItem(targetClient, itemName, amount);
+                            }
+                            Broadcast.noticeAll("☻", "All players were given " + amount + " " + itemName);
+                        }
+                    }
+                    else
+                    {
+                        if (args.Count() > 1)
+                        {
+                            int itemID = 0;
+                            string itemName = "";
+                            try
+                            {
+                                itemID = Convert.ToInt16(args[1]);
+                                itemName = Vars.itemIDs[itemID];
+                            }
+                            catch (Exception ex)
+                            {
+                                itemName = args[1];
+                                if (!Vars.itemIDs.Values.Contains(itemName))
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "No such item name \"" + itemName + "\".");
+                            }
+
+                            int amount = 1;
+                            if (args.Count() > 2)
+                            {
+                                try
+                                {
+                                    amount = Convert.ToInt16(args[2]);
+                                    if (amount < 1)
+                                        amount = 1;
+                                }
+                                catch (Exception ex) { Broadcast.broadcastTo(senderClient.netPlayer, "Amount must be an integer!"); }
+                            }
+
+                            if (Vars.itemIDs.Values.Contains(itemName))
+                            {
+                                foreach (PlayerClient targetClient in AllPlayerClients)
+                                {
+                                    addItem(targetClient, itemName, amount);
+                                }
+                                Broadcast.noticeAll("☻", "All players were given " + amount + " " + itemName);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Broadcast.broadcastTo(senderClient.netPlayer, ex.ToString());
+            }
+        }
+
+        public static void giveRandomServer(string[] args)
+        {
+            try
+            {
+                if (args.Count() > 1)
+                {
+                    if (args[1].Contains("\""))
+                    {
+                        bool hadQuote = false;
+                        string itemName = "";
+                        int lastIndex = -1;
+                        List<string> playerNameList = new List<string>();
+                        foreach (string s in args)
+                        {
+                            lastIndex++;
+                            if (s.StartsWith("\"")) hadQuote = true;
+                            if (hadQuote)
+                                playerNameList.Add(s);
+                            if (s.EndsWith("\""))
+                            {
+                                hadQuote = false;
+                                break;
+                            }
+                        }
+                        itemName = string.Join(" ", playerNameList.ToArray()).Replace("\"", "").Trim();
+                        if (Vars.itemIDs.Values.Contains(itemName))
+                        {
+                            int amount = 1;
+                            int playerAmount = 1;
+                            if (args.Count() - 2 > lastIndex)
+                            {
+                                try
+                                {
+                                    amount = Convert.ToInt16(args[lastIndex + 1]);
+                                    if (amount < 1)
+                                        amount = 1;
+                                }
+                                catch (Exception ex) { }
+
+                                try
+                                {
+                                    playerAmount = Convert.ToInt16(args[lastIndex + 2]);
+                                    if (playerAmount < 1)
+                                        playerAmount = 1;
+                                }
+                                catch (Exception ex)
+                                {
+                                }
+                            }
+
+                            if (args.Count() - 1 > lastIndex && args.Count() - 2 == lastIndex)
+                            {
+                                try
+                                {
+                                    amount = Convert.ToInt16(args[lastIndex + 1]);
+                                }
+                                catch (Exception ex) { }
+                            }
+
+                            Thread t = new Thread(() => giveawayItem(itemName, amount, playerAmount));
+                            t.Start();
+                        }
+                    }
+                    else
+                    {
+                        if (args.Count() > 1)
+                        {
+                            int itemID = 0;
+                            string itemName = "";
+                            try
+                            {
+                                itemID = Convert.ToInt16(args[1]);
+                                itemName = Vars.itemIDs[itemID];
+                            }
+                            catch (Exception ex)
+                            {
+                                itemName = args[1];
+                            }
+
+                            int amount = 1;
+                            if (args.Count() > 2)
+                            {
+                                try
+                                {
+                                    amount = Convert.ToInt16(args[2]);
+                                    if (amount < 1)
+                                        amount = 1;
+                                }
+                                catch (Exception ex) {  }
+                            }
+
+                            int playerAmount = 1;
+                            if (args.Count() > 3)
+                            {
+                                try
+                                {
+                                    playerAmount = Convert.ToInt16(args[3]);
+                                    if (playerAmount < 1)
+                                        playerAmount = 1;
+                                }
+                                catch (Exception ex) {  }
+                            }
+
+                            if (Vars.itemIDs.Values.Contains(itemName))
+                            {
+                                Thread t = new Thread(() => giveawayItem(itemName, amount, playerAmount));
+                                t.Start();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
+        public static void giveRandom(PlayerClient senderClient, string[] args)
+        {
+            try
+            {
+                if (args.Count() > 1)
+                {
+                    if (args[1].Contains("\""))
+                    {
+                        bool hadQuote = false;
+                        string itemName = "";
+                        int lastIndex = -1;
+                        List<string> playerNameList = new List<string>();
+                        foreach (string s in args)
+                        {
+                            lastIndex++;
+                            if (s.StartsWith("\"")) hadQuote = true;
+                            if (hadQuote)
+                                playerNameList.Add(s);
+                            if (s.EndsWith("\""))
+                            {
+                                hadQuote = false;
+                                break;
+                            }
+                        }
+                        itemName = string.Join(" ", playerNameList.ToArray()).Replace("\"", "").Trim();
+                        if (!Vars.itemIDs.Values.Contains(itemName))
+                            Broadcast.broadcastTo(senderClient.netPlayer, "No such item name \"" + itemName + "\".");
+                        else
+                        {
+                            int amount = 1;
+                            int playerAmount = 1;
+                            if (args.Count() - 2 > lastIndex)
+                            {
+                                try
+                                {
+                                    amount = Convert.ToInt16(args[lastIndex + 1]);
+                                    if (amount < 1)
+                                        amount = 1;
+                                }
+                                catch (Exception ex) { Broadcast.broadcastTo(senderClient.netPlayer, "Amount must be an integer!"); }
+
+                                try
+                                {
+                                    playerAmount = Convert.ToInt16(args[lastIndex + 2]);
+                                    if (playerAmount < 1)
+                                        playerAmount = 1;
+                                }
+                                catch (Exception ex)
+                                {
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Player amount must be an integer or \"all\"!");
+                                }
+                            }
+
+                            if (args.Count() - 1 > lastIndex && args.Count() - 2 == lastIndex)
+                            {
+                                try
+                                {
+                                    amount = Convert.ToInt16(args[lastIndex + 1]);
+                                }
+                                catch (Exception ex) { Broadcast.broadcastTo(senderClient.netPlayer, "Amount must be an integer!"); }
+                            }
+
+                            Thread t = new Thread(() => giveawayItem(itemName, amount, playerAmount));
+                            t.Start();
+                        }
+                    }
+                    else
+                    {
+                        if (args.Count() > 1)
+                        {
+                            int itemID = 0;
+                            string itemName = "";
+                            try
+                            {
+                                itemID = Convert.ToInt16(args[1]);
+                                itemName = Vars.itemIDs[itemID];
+                            }
+                            catch (Exception ex)
+                            {
+                                itemName = args[1];
+                                if (!Vars.itemIDs.Values.Contains(itemName))
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "No such item name \"" + itemName + "\".");
+                            }
+
+                            int amount = 1;
+                            if (args.Count() > 2)
+                            {
+                                try
+                                {
+                                    amount = Convert.ToInt16(args[2]);
+                                    if (amount < 1)
+                                        amount = 1;
+                                }
+                                catch (Exception ex) { Broadcast.broadcastTo(senderClient.netPlayer, "Amount must be an integer!"); }
+                            }
+
+                            int playerAmount = 1;
+                            if (args.Count() > 3)
+                            {
+                                try
+                                {
+                                    playerAmount = Convert.ToInt16(args[3]);
+                                    if (playerAmount < 1)
+                                        playerAmount = 1;
+                                }
+                                catch (Exception ex) { Broadcast.broadcastTo(senderClient.netPlayer, "Player amount must be an integer!"); }
+                            }
+
+                            if (Vars.itemIDs.Values.Contains(itemName))
+                            {
+                                Thread t = new Thread(() => giveawayItem(itemName, amount, playerAmount));
+                                t.Start();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Broadcast.broadcastTo(senderClient.netPlayer, ex.ToString());
+            }
+        }
+
+        public static void giveawayItem(string itemName, int amount, int playerAmount)
+        {
+            List<PlayerClient> winners = new List<PlayerClient>();
+            List<string> winnerNames = new List<string>();
+            List<PlayerClient> possibleWinners = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => !vanishedList.Contains(pc.userID.ToString())).ToList();
+            string winnerList = "";
+            System.Random rnd = new System.Random();
+            for (int i = 0; i < playerAmount; i++)
+            {
+                PlayerClient randomClient = possibleWinners[rnd.Next(0, possibleWinners.Count)];
+                winners.Add(randomClient);
+                winnerNames.Add(randomClient.userName);
+            }
+
+            if (winnerNames.Count == 2)
+                winnerList = string.Join(" and ", winnerNames.ToArray());
+            else if (winnerNames.Count > 2)
+            {
+                string lastName = winnerNames.Last();
+                winnerNames.Remove(lastName);
+
+                winnerList = string.Join(", ", winnerNames.ToArray());
+                winnerList += ", and " + lastName;
+            }
+            else if (winnerNames.Count == 1)
+                winnerList = winnerNames.First();
+
+            Broadcast.noticeAll("?", "Starting item giveaway! Who will win?...", 4);
+            Thread.Sleep(4500);
+            Broadcast.noticeAll("?", "3", 1);
+            Thread.Sleep(1500);
+            Broadcast.noticeAll("?", "2", 1);
+            Thread.Sleep(1500);
+            Broadcast.noticeAll("?", "1", 1);
+            Thread.Sleep(1500);
+            Broadcast.noticeAll("!", "Congratulations to " + winnerList + " on winning " + amount + " " + itemName + "!", 4);
+
+            foreach (PlayerClient targetClient in winners)
+            {
+                addItem(targetClient, itemName, amount);
             }
         }
     }

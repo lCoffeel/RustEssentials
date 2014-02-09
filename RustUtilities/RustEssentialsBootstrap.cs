@@ -1,7 +1,7 @@
 ﻿/**
  * @file: RustEssentialsBootstrap.cs
  * @author: Team Cerionn (https://github.com/Team-Cerionn)
- * @version: 1.0.0.0
+
  * @description: Bootstrap class for Rust Essentials
  */
 using System;
@@ -71,14 +71,26 @@ namespace RustEssentials
             Vars.conLog.deleteLogs();
             Vars.conLog.deleteChatLogs();
             _load.loadRanks();
+            _load.loadBans();
+            _load.loadPrefixes();
             Whitelist.Start();
             _load.loadCommands();
             _load.loadKits();
             _load.loadMOTD();
+            _load.loadWarps();
             Vars.loadItems();
             Vars.cycleMOTD();
-            Vars.readDoorData();
+            Vars.onceMOTD();
+            Vars.readDoorData(); 
             Vars.readFactionData();
+            Vars.readCooldownData();
+            Vars.readZoneData();
+            Vars.readRequestData();
+            Vars.readRequestAllData();
+            Vars.loopKitSaving();
+            Vars.zoneTimer();
+            Vars.loopRequestSaving();
+            Vars.loopNudity();
 
             Vars.conLog.Info("====");
         }

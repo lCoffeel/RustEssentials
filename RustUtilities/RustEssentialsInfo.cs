@@ -1,7 +1,6 @@
 ﻿/**
  * @file: RustEssentialsInfo.cs
  * @author: Team Cerionn (https://github.com/Team-Cerionn)
- * @version: 1.0.0.0
  * @description: Information class for Rust Essentials
  */
 using LeatherLoader.ModList;

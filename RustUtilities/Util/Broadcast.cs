@@ -1,7 +1,7 @@
 ﻿/**
  * @file: Broadcast.cs
  * @author: Team Cerionn (https://github.com/Team-Cerionn)
- * @version: 1.0.0.0
+
  * @description: Broadcast class for Rust Essentials
  */
 using System;
@@ -33,13 +33,13 @@ namespace RustEssentials.Util
 
         public static void broadcastTo(uLink.NetworkPlayer player, string message, bool b)
         {
-            PlayerClient playerClient = Array.Find(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.netPlayer == player);
+            PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == player);
             ConsoleNetworker.SendClientCommand(player, "chat.add \"[PM] " + Vars.botName + "\" \"" + Vars.replaceQuotes(message) + "\"");
         }
 
         public static void broadcastTo(uLink.NetworkPlayer player, string message)
         {
-            PlayerClient playerClient = Array.Find(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.netPlayer == player);
+            PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == player);
             Vars.conLog.Chat("<TO " + playerClient.userName + "> " + Vars.botName + ": " + message);
             ConsoleNetworker.SendClientCommand(player, "chat.add \"[PM] " + Vars.botName + "\" \"" + Vars.replaceQuotes(message) + "\"");
         }
@@ -55,16 +55,16 @@ namespace RustEssentials.Util
             ConsoleNetworker.Broadcast("chat.add \"" + Vars.botName + "\" \"" + Vars.replaceQuotes(message) + "\"");
         }
 
-        public static void noticeTo(uLink.NetworkPlayer sender, string icon, string message, float duration = 4f)
+        public static void noticeTo(uLink.NetworkPlayer sender, string icon, string message, int duration = 2)
         {
             Vars.conLog.Chat("<NOTICE> " + Vars.botName + ": " + message);
-            ConsoleNetworker.SendClientCommand(sender, "notice.popup \"" + duration + "\" \"" + icon + "\" \"" + Vars.replaceQuotes(message) + "\"");
+            ConsoleNetworker.SendClientCommand(sender, "notice.popup " + duration + " \"" + icon + "\" \"" + Vars.replaceQuotes(message) + "\"");
         }
 
-        public static void noticeAll(string icon, string message)
+        public static void noticeAll(string icon, string message, int duration = 2)
         {
             Vars.conLog.Chat("<NOTICE ALL> " + Vars.botName + ": " + message);
-            ConsoleNetworker.Broadcast("notice.popup \"4f\" \"" + icon + "\" \"" + Vars.replaceQuotes(message) + "\"");
+            ConsoleNetworker.Broadcast("notice.popup " + duration + " \"" + icon + "\" \"" + Vars.replaceQuotes(message) + "\"");
         }
 
         public static void sideNoticeTo(uLink.NetworkPlayer player, string message)
@@ -124,7 +124,7 @@ namespace RustEssentials.Util
 
         public static void sendPM(string sender, string[] args)
         {
-            PlayerClient senderClient = Array.Find(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName == sender);
+            PlayerClient senderClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName == sender);
             if (args.Length > 2)
             {
                 bool hadQuote = false;
@@ -172,7 +172,7 @@ namespace RustEssentials.Util
                     message = string.Join(" ", messageList.ToArray());
                     if (playerName != null && message != null)
                     {
-                        PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
+                        PlayerClient[] possibleTargets = Array.FindAll(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(playerName));
                         if (possibleTargets.Count() == 0)
                             Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain \"" + playerName + "\".");
                         else if (possibleTargets.Count() > 1)
@@ -211,12 +211,12 @@ namespace RustEssentials.Util
 
         public static void sendPlayers(uLink.NetworkPlayer sender)
         {
-            broadcastTo(sender, PlayerClient.All.Count + "/" + NetCull.maxConnections + " players currently connected.");
+            broadcastTo(sender, Vars.AllPlayerClients.Count + "/" + NetCull.maxConnections + " players currently connected.");
         }
 
         public static void help(uLink.NetworkPlayer sender, string[] args)
         {
-            PlayerClient playerClient = Array.Find(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.netPlayer == sender);
+            PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == sender);
             if (args.Length == 1)
             {
                 string rank = Vars.findRank(playerClient.userID.ToString());
@@ -231,11 +231,20 @@ namespace RustEssentials.Util
 
                 switch (command)
                 {
+                    case "vanish":
+                        broadcastTo(sender, "/vanish: Toggles the vanish tool. Syntax: /vanish {on/off}");
+                        break;
+                    case "hide":
+                        broadcastTo(sender, "/hide: Toggles the hider tool. Syntax: /hide {on/off}");
+                        break;
+                    case "owner":
+                        broadcastTo(sender, "/owner: Toggles the ownership tool. Syntax: /owner {on/off}");
+                        break;
                     case "remove":
                         broadcastTo(sender, "/remove: Toggles the remover tool. Syntax: /remove {on/off}");
                         break;
                     case "f":
-                        broadcastTo(sender, "/f: Manages faction actions. Syntax: /f {create/disband/invite/join/leave/kick/admin/deadmin/ownership}");
+                        broadcastTo(sender, "/f: Manages faction actions. Syntax: /f {help}");
                         break;
                     case "r":
                         broadcastTo(sender, "/r: Replies to your last sent or received PM. Syntax: /r *message*");
@@ -246,11 +255,17 @@ namespace RustEssentials.Util
                     case "players":
                         broadcastTo(sender, "/players: Lists all connected players. Syntax: /players");
                         break;
+                    case "warps":
+                        broadcastTo(sender, "/warps: Lists warps available to you. Syntax: /warps");
+                        break;
                     case "kits":
                         broadcastTo(sender, "/kits: Lists kits available to you. Syntax: /kits");
                         break;
+                    case "feed":
+                        broadcastTo(sender, "/feed: Feeds the specified player or self. Syntax: /feed [player name]");
+                        break;
                     case "heal":
-                        broadcastTo(sender, "/heal: Heals the specified player. Syntax: /heal [player name]");
+                        broadcastTo(sender, "/heal: Heals the specified player or self. Syntax: /heal [player name]");
                         break;
                     case "access":
                         broadcastTo(sender, "/access: Gives the sender access to all doors. Syntax: /access {on/off}");
@@ -266,6 +281,9 @@ namespace RustEssentials.Util
                         break;
                     case "tppos":
                         broadcastTo(sender, "/tppos: Teleports a user to the said vector. Syntax: /tppos [x] [y] [z]");
+                        break;
+                    case "tphere":
+                        broadcastTo(sender, "/tphere: Teleports a user to you. Syntax: /tphere *name*");
                         break;
                     case "tpaccept":
                         broadcastTo(sender, "/tpa: Accepts a user's teleport request. Syntax: /tpaccept [name]");
@@ -295,7 +313,7 @@ namespace RustEssentials.Util
                         broadcastTo(sender, "/say: Says a message through the plugin. Syntax: /say [message]");
                         break;
                     case "chan":
-                        broadcastTo(sender, "/chan: Switches text communication channels ([g]lobal and [d]irect). Syntax: /chan {g/global/d/direct}");
+                        broadcastTo(sender, "/chan: Switches text communication channels. Syntax: /chan {g/global/d/direct/f/faction}");
                         break;
                     case "kickall":
                         broadcastTo(sender, "/kickall: Kicks all players from the server except the command executor. Syntax: /kickall");
@@ -306,11 +324,23 @@ namespace RustEssentials.Util
                     case "reload":
                         broadcastTo(sender, "/reload: Reloads the specified config file. Syntax: /reload {config/whitelist/ranks/commands/kits/motd/bans/all}");
                         break;
+                    case "unban":
+                        broadcastTo(sender, "/unban: Unbans the specified player. Syntax: /unban \"full name or UID\"");
+                        break;
                     case "ban":
-                        broadcastTo(sender, "/ban: Bans the specified player. Syntax: /ban \"player\" [reason]");
+                        broadcastTo(sender, "/ban: Bans the specified player. Syntax: /ban \"player or UID\" [reason]");
+                        break;
+                    case "bane":
+                        broadcastTo(sender, "/bane: Bans the specified player by the exact name. Syntax: /bane \"player\" [reason]");
                         break;
                     case "kick":
                         broadcastTo(sender, "/kick: Kicks the specified player. Syntax: /kick \"player\" [reason]");
+                        break;
+                    case "kicke":
+                        broadcastTo(sender, "/kicke: Kicks the specified player by the exact name. Syntax: /kicke \"player\" [reason]");
+                        break;
+                    case "timescale":
+                        broadcastTo(sender, "/timescale: Sets or gets the server time scale. Syntax: /timescale [#.##]");
                         break;
                     case "time":
                         broadcastTo(sender, "/time: Sets or gets the server time. Syntax: /time [0-24/day/night/(un)freeze]");
@@ -329,6 +359,15 @@ namespace RustEssentials.Util
                         break;
                     case "give":
                         broadcastTo(sender, "/give: Gives a player an item. Syntax: /give \"player\" \"item name\" [amount]");
+                        break;
+                    case "giveall":
+                        broadcastTo(sender, "/giveall: Gives the amount of that item to all players. Syntax: /giveall \"item\" [amount]");
+                        break;
+                    case "random":
+                        broadcastTo(sender, "/random: Starts the random giveaway for the specified item, amount, and winners. Syntax: /random \"item\" [amount] [winners]");
+                        break;
+                    case "warp":
+                        broadcastTo(sender, "/warp: Teleports you the the named location. Syntax: /warp *warp name*");
                         break;
                     case "kit":
                         broadcastTo(sender, "/kit: Gives the specified kit. Syntax: /kit <kit>");
@@ -352,10 +391,10 @@ namespace RustEssentials.Util
                         broadcastTo(sender, "/uid: Displays your Steam UID. Syntax: /uid");
                         break;
                     case "god":
-                        broadcastTo(sender, "/god: Makes a player invulnerable to damage. Syntax: /god *name*");
+                        broadcastTo(sender, "/god: Makes a player or self invulnerable to damage. Syntax: /god [name]");
                         break;
                     case "ungod":
-                        broadcastTo(sender, "/ungod: Makes a player vulnerable to damage. Syntax: /ungod *name*");
+                        broadcastTo(sender, "/ungod: Makes a player or self vulnerable to damage. Syntax: /ungod [name]");
                         break;
                     case "fall":
                         broadcastTo(sender, "/fall: Toggles server-wide fall damage Syntax: /fall [on/off]");

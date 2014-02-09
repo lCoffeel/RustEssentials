@@ -1,7 +1,7 @@
 ﻿/**
  * @file: Commands.cs
  * @author: Team Cerionn (https://github.com/Team-Cerionn)
- * @version: 1.0.0.0
+
  * @description: Commands class for Rust Essentials
  */
 using System;
@@ -20,34 +20,95 @@ namespace RustEssentials.Util
             string playerName = arg.argUser.user.Displayname;
             string message = arg.GetString(0, "text").Trim();
             uLink.NetworkPlayer player = arg.argUser.networkPlayer;
-            PlayerClient playerClient = Array.Find(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.netPlayer == player);
+            PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == player);
             Character playerChar;
             Character.FindByUser(playerClient.userID, out playerChar);
 
+            executeCMD(playerName, message, player, playerClient, playerChar);
+        }
+
+        public static void executeCMDServer(string message)
+        {
             string[] commandArgs = message.Split(' ');
             string command = commandArgs[0];
 
-            string sendMSG = "";
-            int curIndex = 0;
-            foreach (string s in commandArgs)
+            switch (command)
             {
-                if (curIndex > 1)
-                {
-                    sendMSG += s + " ";
-                }
-                curIndex++;
+                case "/save":
+                    Vars.saveServer();
+                    break;
+                case "/saypop":
+                    Vars.saypop(commandArgs);
+                    break;
+                case "/stop":
+                    Vars.stopServer();
+                    break;
+                case "/kickall":
+                    Vars.kickAllServer();
+                    break;
+                case "/reload":
+                    Vars.reloadFileServer(commandArgs);
+                    break;
+                case "/timescale":
+                    Vars.setScaleServer(commandArgs);
+                    break;
+                case "/time":
+                    Vars.setTimeServer(commandArgs);
+                    break;
+                case "/join":
+                    Vars.fakeJoinServer(commandArgs);
+                    break;
+                case "/leave":
+                    Vars.fakeLeaveServer(commandArgs);
+                    break;
+                case "/giveall":
+                    Vars.giveAllServer(commandArgs);
+                    break;
+                case "/random":
+                    Vars.giveRandomServer(commandArgs);
+                    break;
+                case "/airdrop":
+                    Vars.airdropServer(commandArgs);
+                    break;
             }
+        }
+
+        public static void executeCMD(string playerName, string message, uLink.NetworkPlayer player, PlayerClient playerClient, Character playerChar)
+        {
+            string[] commandArgs = message.Split(' ');
+            string command = commandArgs[0];
 
             if (Vars.totalCommands.Contains(command))
             {
-                if (Vars.enabledCommands[Vars.findRank(playerClient.userID.ToString())].Contains(command))
+                if (Vars.enabledCommands[Vars.findRank(playerClient.userID.ToString())].Contains(command) || (playerChar.netUser.CanAdmin() && commandArgs[0] == "/reload"))
                 {
-                    if (commandArgs.Count() == 2 && commandArgs[0] + commandArgs[1] == "/whitelistcheck")
+                    if (message.StartsWith("/whitelist check"))
                         Vars.whitelistCheck(playerClient);
+                    else if (message.StartsWith("/f safezone"))
+                        Vars.manageZones(playerClient, commandArgs, true);
+                    else if (message.StartsWith("/f warzone"))
+                        Vars.manageZones(playerClient, commandArgs, false);
+                    else if (message.StartsWith("/f build"))
+                        Vars.handleFactions(playerClient, commandArgs);
                     else
                     {
                         switch (command)
                         {
+                            case "/clearInv":
+                                Vars.clearPlayer(playerClient, commandArgs);
+                                break;
+                            case "/vanish":
+                                Vars.vanishTool(playerClient, commandArgs);
+                                break;
+                            case "/hide":
+                                Vars.hideTool(playerClient, commandArgs);
+                                break;
+                            case "/dist":
+                                Vars.showDistance(playerClient, commandArgs);
+                                break;
+                            case "/owner":
+                                Vars.showOwner(playerClient, commandArgs);
+                                break;
                             case "/remove":
                                 Vars.removerTool(playerClient, commandArgs);
                                 break;
@@ -63,8 +124,14 @@ namespace RustEssentials.Util
                             case "/players":
                                 Vars.showPlayers(playerClient);
                                 break;
+                            case "/warps":
+                                Vars.showWarps(playerClient);
+                                break;
                             case "/kits":
                                 Vars.showKits(playerClient);
+                                break;
+                            case "/feed":
+                                Vars.feedPlayer(player, playerName, commandArgs);
                                 break;
                             case "/heal":
                                 Vars.healPlayer(player, playerName, commandArgs);
@@ -73,7 +140,7 @@ namespace RustEssentials.Util
                                 Vars.giveAccess(playerClient, commandArgs);
                                 break;
                             case "/version":
-                                Broadcast.broadcastTo(player, "The server is running Rust Essentials v" + Vars.currentVersion + " for Rust v" + Vars.rustCurrentVer + ".");
+                                Broadcast.broadcastTo(player, "The server is running Rust Essentials v" + Vars.currentVersion + ".");
                                 break;
                             case "/save":
                                 Vars.save(playerClient);
@@ -83,6 +150,9 @@ namespace RustEssentials.Util
                                 break;
                             case "/tppos":
                                 Vars.teleportPos(playerClient, commandArgs);
+                                break;
+                            case "/tphere":
+                                Vars.teleportHere(playerClient, commandArgs);
                                 break;
                             case "/tpaccept":
                                 Vars.teleportAccept(playerClient, commandArgs);
@@ -127,10 +197,16 @@ namespace RustEssentials.Util
                                 Vars.unbanPlayer(playerClient, commandArgs);
                                 break;
                             case "/ban":
-                                Vars.banPlayer(playerClient, commandArgs);
+                                Vars.banPlayer(playerClient, commandArgs, false);
+                                break;
+                            case "/bane":
+                                Vars.banPlayer(playerClient, commandArgs, true);
                                 break;
                             case "/kick":
                                 Vars.kickPlayer(playerClient, commandArgs, false);
+                                break;
+                            case "/kicke":
+                                Vars.kickPlayer(playerClient, commandArgs, true);
                                 break;
                             case "/timescale":
                                 Vars.setScale(playerClient, commandArgs);
@@ -152,6 +228,15 @@ namespace RustEssentials.Util
                                 break;
                             case "/give":
                                 Vars.createItem(playerClient, commandArgs, message);
+                                break;
+                            case "/giveall":
+                                Vars.giveAll(playerClient, commandArgs);
+                                break;
+                            case "/random":
+                                Vars.giveRandom(playerClient, commandArgs);
+                                break;
+                            case "/warp":
+                                Vars.warpPlayer(playerClient, commandArgs);
                                 break;
                             case "/kit":
                                 Vars.giveKit(playerClient, commandArgs, message);

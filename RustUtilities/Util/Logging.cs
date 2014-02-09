@@ -1,7 +1,7 @@
 ﻿/**
  * @file: Logging.cs
  * @author: Team Cerionn (https://github.com/Team-Cerionn)
- * @version: 1.0.0.0
+
  * @description: Logging class for Rust Essentials
  */
 using System;

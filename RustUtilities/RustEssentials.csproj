@@ -43,7 +43,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>lib\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="Assembly-CSharp-firstpass">
+    <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>lib\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
     <Reference Include="Facepunch.HitBox, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -52,6 +53,9 @@
     </Reference>
     <Reference Include="Facepunch.ID">
       <HintPath>lib\Facepunch.ID.dll</HintPath>
+    </Reference>
+    <Reference Include="Facepunch.MeshBatch">
+      <HintPath>lib\Facepunch.MeshBatch.dll</HintPath>
     </Reference>
     <Reference Include="Facepunch.Sky">
       <HintPath>lib\Facepunch.Sky.dll</HintPath>
@@ -102,6 +106,7 @@
     </Compile>
     <Compile Include="Util\Vars.cs" />
     <Compile Include="Util\Whitelist.cs" />
+    <Compile Include="Zone.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">

@@ -1,7 +1,7 @@
 ﻿/**
  * @file: Share.cs
  * @author: Team Cerionn (https://github.com/Team-Cerionn)
- * @version: 1.0.0.0
+
  * @description: Share class for Rust Essentials
  */
 using System;
@@ -26,7 +26,7 @@ namespace RustEssentials.Util
         {
             if (args.Count() > 1)
             {
-                PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(args[1]));
+                PlayerClient[] possibleTargets = Array.FindAll(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(args[1]));
                 if (possibleTargets.Count() == 0)
                     Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain '" + args[1] + "'.");
                 else if (possibleTargets.Count() > 1)
@@ -86,7 +86,7 @@ namespace RustEssentials.Util
                 }
                 else
                 {
-                    PlayerClient[] possibleTargets = Array.FindAll(PlayerClient.All.ToArray(), (PlayerClient pc) => pc.userName.Contains(args[1]));
+                    PlayerClient[] possibleTargets = Array.FindAll(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(args[1]));
                     if (possibleTargets.Count() == 0)
                         Broadcast.broadcastTo(senderClient.netPlayer, "No player names equal or contain '" + args[1] + "'.");
                     else if (possibleTargets.Count() > 1)
