@@ -193,6 +193,7 @@ namespace RustEssentials.Util
         public static List<string> restrictCrafting = new List<string>();
         public static List<string> restrictResearch = new List<string>();
         public static List<string> restrictBlueprints = new List<string>();
+        public static List<string> lastWinners = new List<string>();
         public static List<PlayerClient> AllPlayerClients = new List<PlayerClient>();
         public static Dictionary<string, Zone> safeZones = new Dictionary<string, Zone>();
         public static Dictionary<string, Zone> warZones = new Dictionary<string, Zone>();
@@ -524,7 +525,6 @@ namespace RustEssentials.Util
                                             factionsByNames[possibleFactions[0].Key].Remove(possibleUIDs[0]);
                                             if (latestFactionRequests.ContainsKey(senderClient))
                                                 latestFactionRequests.Remove(senderClient);
-                                            factionInvites[senderClient.userID.ToString()].Remove(possibleFactions[0].Key);
                                         }
                                     }
                                     else if (possibleTargets.Count() > 1)
@@ -545,7 +545,6 @@ namespace RustEssentials.Util
                                             factionsByNames[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
                                             if (latestFactionRequests.ContainsKey(senderClient))
                                                 latestFactionRequests.Remove(senderClient);
-                                            factionInvites[senderClient.userID.ToString()].Remove(possibleFactions[0].Key);
                                         }
                                         else
                                             Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is not in your faction.");
@@ -584,7 +583,6 @@ namespace RustEssentials.Util
                                             factionsByNames[possibleFactions[0].Key].Remove(possibleUIDs[0]);
                                             if (latestFactionRequests.ContainsKey(senderClient))
                                                 latestFactionRequests.Remove(senderClient);
-                                            factionInvites[senderClient.userID.ToString()].Remove(possibleFactions[0].Key);
                                         }
                                     }
                                     else if (possibleTargets.Count() > 1)
@@ -605,7 +603,6 @@ namespace RustEssentials.Util
                                             factionsByNames[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
                                             if (latestFactionRequests.ContainsKey(senderClient))
                                                 latestFactionRequests.Remove(senderClient);
-                                            factionInvites[senderClient.userID.ToString()].Remove(possibleFactions[0].Key);
                                         }
                                         else
                                             Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is not in your faction.");
@@ -658,7 +655,7 @@ namespace RustEssentials.Util
                                                 {
                                                     factionInvites.Add(targetClient.userID.ToString(), new List<string>() { { possibleFactions[0].Key } });
 
-                                                    Broadcast.broadcastTo(senderClient.netPlayer, "You invited \"" + targetClient.userName + "\" to the faction .");
+                                                    Broadcast.broadcastTo(senderClient.netPlayer, "You invited \"" + targetClient.userName + "\" to the faction.");
                                                     Broadcast.broadcastTo(targetClient.netPlayer, "You were invited to the faction \"" + possibleFactions[0].Key + "\".");
                                                     if (!latestFactionRequests.ContainsKey(targetClient))
                                                         latestFactionRequests.Add(targetClient, senderClient);
@@ -671,7 +668,7 @@ namespace RustEssentials.Util
                                                     {
                                                         factionInvites[targetClient.userID.ToString()].Add(possibleFactions[0].Key);
 
-                                                        Broadcast.broadcastTo(senderClient.netPlayer, "You invited \"" + targetClient.userName + "\" to the faction .");
+                                                        Broadcast.broadcastTo(senderClient.netPlayer, "You invited \"" + targetClient.userName + "\" to the faction.");
                                                         Broadcast.broadcastTo(targetClient.netPlayer, "You were invited to the faction \"" + possibleFactions[0].Key + "\".");
                                                         if (!latestFactionRequests.ContainsKey(targetClient))
                                                             latestFactionRequests.Add(targetClient, senderClient);
@@ -710,7 +707,7 @@ namespace RustEssentials.Util
                                                 {
                                                     factionInvites.Add(targetClient.userID.ToString(), new List<string>() { { possibleFactions[0].Key } });
 
-                                                    Broadcast.broadcastTo(senderClient.netPlayer, "You invited " + targetClient.userName + " to the faction .");
+                                                    Broadcast.broadcastTo(senderClient.netPlayer, "You invited " + targetClient.userName + " to the faction.");
                                                     Broadcast.broadcastTo(targetClient.netPlayer, "You were invited to the faction [" + possibleFactions[0].Key + "].");
                                                     if (!latestFactionRequests.ContainsKey(targetClient))
                                                         latestFactionRequests.Add(targetClient, senderClient);
@@ -723,7 +720,7 @@ namespace RustEssentials.Util
                                                     {
                                                         factionInvites[targetClient.userID.ToString()].Add(possibleFactions[0].Key);
 
-                                                        Broadcast.broadcastTo(senderClient.netPlayer, "You invited " + targetClient.userName + " to the faction .");
+                                                        Broadcast.broadcastTo(senderClient.netPlayer, "You invited " + targetClient.userName + " to the faction.");
                                                         Broadcast.broadcastTo(targetClient.netPlayer, "You were invited to the faction [" + possibleFactions[0].Key + "].");
                                                         if (!latestFactionRequests.ContainsKey(targetClient))
                                                             latestFactionRequests.Add(targetClient, senderClient);
@@ -731,14 +728,14 @@ namespace RustEssentials.Util
                                                             latestFactionRequests[targetClient] = senderClient;
                                                     }
                                                     else
-                                                        Broadcast.broadcastCustomTo(targetClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " has already been invited.");
+                                                        Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " has already been invited.");
                                                 }
                                             }
                                             else
-                                                Broadcast.broadcastCustomTo(targetClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is already in the faction [" + targetFactions[0] + "].");
+                                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is already in the faction [" + targetFactions[0] + "].");
                                         }
                                         else
-                                            Broadcast.broadcastCustomTo(targetClient.netPlayer, "[F] " + possibleFactions[0].Key, "You have reached your member capacity.");
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You have reached your member capacity.");
                                     }
                                 }
                             }
@@ -780,6 +777,7 @@ namespace RustEssentials.Util
                                         Broadcast.broadcastTo(senderClient.netPlayer, "Too many invitations from factions that names contain \"" + targetFaction + "\".");
                                     else
                                     {
+                                        factionInvites[senderClient.userID.ToString()].Remove(inviterFactions[0]);
                                         factions[inviterFactions[0]].Add(senderClient.userID.ToString(), "normal");
                                         factionsByNames[inviterFactions[0]].Add(senderClient.userID.ToString(), senderClient.userName);
                                         PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => factions[inviterFactions[0]].ContainsKey(pc.userID.ToString()));
@@ -794,18 +792,26 @@ namespace RustEssentials.Util
                                 {
                                     try
                                     {
-                                        KeyValuePair<string, Dictionary<string, string>> inviterFaction = Array.Find(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(latestFactionRequests[senderClient].userID.ToString()));
-                                        inviterFaction.Value.Add(senderClient.userID.ToString(), "normal");
-                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => inviterFaction.Value.ContainsKey(pc.userID.ToString()));
-                                        foreach (PlayerClient pc in targetClients)
+                                        if (latestFactionRequests.ContainsKey(senderClient))
                                         {
-                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + inviterFaction.Key, senderClient.userName + " has joined the faction.");
+                                            KeyValuePair<string, Dictionary<string, string>> inviterFaction = Array.Find(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(latestFactionRequests[senderClient].userID.ToString()));
+                                            KeyValuePair<string, Dictionary<string, string>> inviterFactionByName = Array.Find(factionsByNames.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(latestFactionRequests[senderClient].userID.ToString()));
+                                            factionInvites[senderClient.userID.ToString()].Remove(inviterFaction.Key);
+                                            inviterFaction.Value.Add(senderClient.userID.ToString(), "normal");
+                                            inviterFactionByName.Value.Add(senderClient.userID.ToString(), senderClient.userName);
+                                            PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => inviterFaction.Value.ContainsKey(pc.userID.ToString()));
+                                            foreach (PlayerClient pc in targetClients)
+                                            {
+                                                Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + inviterFaction.Key, senderClient.userName + " has joined the faction.");
+                                            }
+                                            addFactionData(inviterFaction.Key, senderClient.userName, senderClient.userID.ToString(), "normal");
                                         }
-                                        addFactionData(inviterFaction.Key, senderClient.userName, senderClient.userID.ToString(), "normal");
+                                        else
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "No invitations from any factions.");
                                     }
                                     catch (Exception ex)
                                     {
-                                        Vars.conLog.Info(ex.ToString());
+                                        Vars.conLog.Error(ex.ToString());
                                     }
                                 }
                             }
@@ -816,36 +822,42 @@ namespace RustEssentials.Util
                             Broadcast.broadcastTo(senderClient.netPlayer, "You must leave your current faction first.");
                         break;
                     case "leave":
-                        if (possibleFactions.Count() > 0)
+                        try
                         {
-                            string rank = possibleFactions[0].Value[senderClient.userID.ToString()];
-
-                            if (rank != "owner")
+                            if (possibleFactions.Count() > 0)
                             {
-                                PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
-                                foreach (PlayerClient pc in targetClients)
+                                string rank = possibleFactions[0].Value[senderClient.userID.ToString()];
+
+                                if (rank != "owner")
                                 {
-                                    Broadcast.broadcastCustomTo(pc.netPlayer, possibleFactions[0].Key, senderClient.userName + " has left the faction.");
+                                    PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                    foreach (PlayerClient pc in targetClients)
+                                    {
+                                        Broadcast.broadcastCustomTo(pc.netPlayer, possibleFactions[0].Key, senderClient.userName + " has left the faction.");
+                                    }
+                                    try
+                                    {
+                                        remFactionData(possibleFactions[0].Key, senderClient.userName, possibleFactions[0].Value[senderClient.userID.ToString()]);
+                                        factions[possibleFactions[0].Key].Remove(senderClient.userID.ToString());
+                                        factionsByNames[possibleFactions[0].Key].Remove(senderClient.userID.ToString());
+                                        if (latestFactionRequests.ContainsKey(senderClient))
+                                            latestFactionRequests.Remove(senderClient);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Vars.conLog.Error(ex.ToString());
+                                    }
                                 }
-                                try
-                                {
-                                    remFactionData(possibleFactions[0].Key, senderClient.userName, possibleFactions[0].Value[senderClient.userID.ToString()]);
-                                    factions[possibleFactions[0].Key].Remove(senderClient.userID.ToString());
-                                    factionsByNames[possibleFactions[0].Key].Remove(senderClient.userID.ToString());
-                                    if (latestFactionRequests.ContainsKey(senderClient))
-                                        latestFactionRequests.Remove(senderClient);
-                                    factionInvites[senderClient.userID.ToString()].Remove(possibleFactions[0].Key);
-                                }
-                                catch (Exception ex)
-                                {
-                                    Vars.conLog.Error(ex.ToString());
-                                }
+                                else
+                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You cannot leave your faction without disbanding or passing ownership.");
                             }
                             else
-                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You cannot leave your faction without disbanding or passing ownership.");
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.");
                         }
-                        else
-                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.");
+                        catch (Exception ex)
+                        {
+                            Vars.conLog.Error(ex.ToString());
+                        }
                         break;
                     case "admin":
                         if (possibleFactions.Count() > 0)
@@ -1115,35 +1127,40 @@ namespace RustEssentials.Util
                             if (continueOn)
                             {
                                 List<string> otherFactionNames = new List<string>();
-                                Broadcast.broadcastTo(senderClient.netPlayer, "All factions [" + pageNumber + "/" + lastPage + "]:", true);
-                                while (factionNames[pageNumber.ToString()].Count > 0)
+                                if (factionNames.Count > 0)
                                 {
-                                    factionNames2.Clear();
-                                    otherFactionNames.Clear();
-                                    foreach (string s in factionNames[pageNumber.ToString()])
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "All factions [" + pageNumber + "/" + lastPage + "]:", true);
+                                    while (factionNames[pageNumber.ToString()].Count > 0)
                                     {
-                                        factionNames2.Add(s);
-                                        otherFactionNames.Add(s);
-
-                                        if ((string.Join(", ", factionNames2.ToArray())).Length > 70)
+                                        factionNames2.Clear();
+                                        otherFactionNames.Clear();
+                                        foreach (string s in factionNames[pageNumber.ToString()])
                                         {
-                                            factionNames2.Remove(s);
-                                            otherFactionNames.Remove(s);
-                                            break;
-                                        }
-                                    }
-                                    foreach (string s in otherFactionNames)
-                                    {
-                                        factionNames[pageNumber.ToString()].Remove(s);
-                                    }
+                                            factionNames2.Add(s);
+                                            otherFactionNames.Add(s);
 
-                                    Broadcast.broadcastTo(senderClient.netPlayer, string.Join(", ", factionNames2.ToArray()), true);
+                                            if ((string.Join(", ", factionNames2.ToArray())).Length > 70)
+                                            {
+                                                factionNames2.Remove(s);
+                                                otherFactionNames.Remove(s);
+                                                break;
+                                            }
+                                        }
+                                        foreach (string s in otherFactionNames)
+                                        {
+                                            factionNames[pageNumber.ToString()].Remove(s);
+                                        }
+
+                                        Broadcast.broadcastTo(senderClient.netPlayer, string.Join(", ", factionNames2.ToArray()), true);
+                                    }
                                 }
+                                else
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "There are no factions!", true);
                             }
                         }
                         catch (Exception ex)
                         {
-                            Vars.conLog.Info(ex.ToString());
+                            //Vars.conLog.Info(ex.ToString());
                         }
                         break;
                     case "ally":
@@ -2528,24 +2545,19 @@ namespace RustEssentials.Util
             }
         }
 
+        public static bool inventoryFull(PlayerClient playerClient)
+        {
+            Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
+            return inventory.noVacantSlots;
+        }
+
         public static void clearInventory(PlayerClient playerClient)
         {
             Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
 
             for (int i = 0; i < inventory.slotCount - 1; i++)
             {
-                IInventoryItem item;
-                if (inventory.GetItem(i, out item))
-                {
-                    try
-                    {
-                        if (item.datablock.name != null && i != 36 && i != 37 && i != 38 && i != 39)
-                        {
-                            inventory.RemoveItem(i);
-                        }
-                    }
-                    catch { }
-                }
+                inventory.RemoveItem(i);
             }
         }
 
@@ -3003,19 +3015,7 @@ namespace RustEssentials.Util
                                 if (inZone(damage.victim.idMain.transform.position))
                                 {
                                     damage.amount = 0f;
-
-                                    if (takeDamage.dead)
-                                    {
-                                        damage.status = LifeStatus.IsDead;
-                                    }
-                                    else if (takeDamage.health > damage.amount)
-                                    {
-                                        damage.status = LifeStatus.IsAlive;
-                                    }
-                                    else
-                                    {
-                                        damage.status = LifeStatus.WasKilled;
-                                    }
+                                    damage.status = LifeStatus.IsAlive;
                                 }
 
                                 if (ownershipList.Contains(damage.attacker.userID.ToString()))
@@ -3242,13 +3242,15 @@ namespace RustEssentials.Util
             return false;
         }
 
-        public static RustProto.User BuildUser(SteamConnector sc)
+        public static RustProto.User.Builder SetNameOnJoin(string value, RustProto.User.Builder builder)
         {
+            Google.ProtocolBuffers.ThrowHelper.ThrowIfNull(value, "value");
+            builder.PrepareBuilder();
+            builder.result.hasDisplayname = true;
+
+            string userName = value;
             try
             {
-                RustProto.User.Builder builder = new RustProto.User.Builder();
-                string userName = sc.Login.SteamLogin.UserName;
-
                 foreach (KeyValuePair<string, string> kv in rankPrefixes)
                 {
                     userName = userName.Replace("[" + kv.Key + "]", "");
@@ -3280,23 +3282,12 @@ namespace RustEssentials.Util
                         nameOccupied = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName == userName + " (" + instanceNum + ")").Count() > 0;
                     }
                     string newName = userName + " (" + instanceNum + ")";
-
-                    builder.SetDisplayname(newName);
                 }
-                else
-                    builder.SetDisplayname(userName);
-
-                builder.SetUserid(sc.Login.SteamLogin.SteamID);
-                builder.SetUsergroup(RustProto.User.Types.UserGroup.REGULAR);
-                return builder.Build();
             }
             catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
-            RustProto.User.Builder builder2 = new RustProto.User.Builder();
-            string userName2 = sc.Login.SteamLogin.UserName;
-            builder2.SetDisplayname(userName2);
-            builder2.SetUserid(sc.Login.SteamLogin.SteamID);
-            builder2.SetUsergroup(RustProto.User.Types.UserGroup.REGULAR);
-            return builder2.Build();
+
+            builder.result.displayname_ = userName;
+            return builder;
         }
 
         public static void OnUserConnected(NetUser user)
@@ -3490,12 +3481,9 @@ namespace RustEssentials.Util
                 {
                     user.SaveAvatar();
                 }
-                if (user.connector.ServerManagement.SpawnPlayer(user.playerClient, false, user.avatar) != null)
+                if (RSM.SpawnPlayer(user.playerClient, false, user.avatar) != null)
                 {
                     user.did_join = true;
-                }
-                if (connectlog.joined)
-                {
                     conLog.Info(userName + " has joined the game world. Avatar loaded.");
                     if (vanishedList.Contains(user.userID.ToString()))
                     {
@@ -3513,7 +3501,7 @@ namespace RustEssentials.Util
         {
             try
             {
-                PlayerClient playerClient = Array.Find(Vars.teleportRequests.ToArray(), (KeyValuePair<PlayerClient, Dictionary<PlayerClient, TimerPlus>> kv) => kv.Key.netPlayer == user.networkPlayer).Key;
+                PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == user.networkPlayer);
                 
                 if (latestPM.ContainsKey(playerClient))
                     latestPM.Remove(playerClient);
@@ -3551,21 +3539,21 @@ namespace RustEssentials.Util
                 if (blockedRequestsPer[playerClient.userID.ToString()].Count < 1)
                     blockedRequestsPer.Remove(playerClient.userID.ToString());
 
-                if (AllPlayerClients.Contains(playerClient))
-                    AllPlayerClients.Remove(playerClient);
+                if (teleportRequests.ContainsKey(playerClient))
+                    teleportRequests.Remove(playerClient);
 
                 string leaveMessage = "";
-                if (Vars.enableLeave && !Vars.kickQueue.Contains(playerClient.userName) && playerClient.userName.Length > 0)
+                if (Vars.enableLeave && !Vars.kickQueue.Contains(playerClient.userID.ToString()) && playerClient.userName.Length > 0)
                 {
                     leaveMessage = Vars.leaveMessage.Replace("$USER$", Vars.filterFullNames(playerClient.userName, playerClient.userID.ToString()));
                     Broadcast.broadcastJoinLeave(leaveMessage);
                     Vars.conLog.Chat("<BROADCAST ALL> " + Vars.botName + ": " + leaveMessage);
                 }
                 else
-                    Vars.kickQueue.Remove(playerClient.userName);
+                    Vars.kickQueue.Remove(playerClient.userID.ToString());
 
-                if (teleportRequests.ContainsKey(playerClient))
-                    teleportRequests.Remove(playerClient);
+                if (AllPlayerClients.Contains(playerClient))
+                    AllPlayerClients.Remove(playerClient);
             }
             catch (Exception ex)
             {
@@ -3809,7 +3797,7 @@ namespace RustEssentials.Util
                 {
                     if (int.TryParse(args[args.Count() - 1].Substring(0, args[args.Count() - 1].Length - 1), out duration))
                     {
-                        Mathf.Clamp(duration, 1, 7);
+                        duration = Mathf.Clamp(duration, 1, 7);
                         changedDuration = true;
                     }
                 }
@@ -3851,7 +3839,8 @@ namespace RustEssentials.Util
 
         public static void kickAllServer()
         {
-            foreach (PlayerClient targetClient in AllPlayerClients)
+            List<PlayerClient> APC = AllPlayerClients;
+            foreach (PlayerClient targetClient in APC)
             {
                 kickPlayer(targetClient.netUser, "All users were kicked.", false);
             }
@@ -3859,7 +3848,8 @@ namespace RustEssentials.Util
 
         public static void kickAll(PlayerClient senderClient)
         {
-            foreach (PlayerClient targetClient in AllPlayerClients)
+            List<PlayerClient> APC = AllPlayerClients;
+            foreach (PlayerClient targetClient in APC)
             {
                 if (targetClient != senderClient)
                     kickPlayer(targetClient.netUser, "All users were kicked.", false);
@@ -7135,7 +7125,7 @@ namespace RustEssentials.Util
                 t.Interval = Convert.ToInt32(kv.Value.ElementAt(0).Key);
                 t.Elapsed += ((sender, e) => onceMOTDElapsed(kv.Key));
                 t.Start();
-            }
+            }    
         }
 
         private static Dictionary<string, int> timeCycled = new Dictionary<string, int>();
@@ -7528,6 +7518,7 @@ namespace RustEssentials.Util
 
                         if (targetClient.netPlayer != sender)
                         {
+                            Broadcast.noticeTo(sender, "♫", ("You fed " + targetClient.userName + "."));
                             Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were fed by " + senderName + "."));
                         }
                         else
@@ -7627,6 +7618,7 @@ namespace RustEssentials.Util
                         if (targetClient.netPlayer != sender)
                         {
                             Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were healed by " + senderName + "."));
+                            Broadcast.noticeTo(sender, "♫", "You healed " + targetClient.userName + ".");
                         }
                         else
                         {
@@ -7680,11 +7672,11 @@ namespace RustEssentials.Util
                 {
                     case "on":
                         Broadcast.broadcastAll("Fall damage has been enabled for everyone.");
-                        fallDamage = false;
+                        fallDamage = true;
                         break;
                     case "off":
                         Broadcast.broadcastAll("Fall damage has been disabled for everyone.");
-                        fallDamage = true;
+                        fallDamage = false;
                         break;
                 }
             }
@@ -8421,7 +8413,7 @@ namespace RustEssentials.Util
         {
             if (target != null)
             {
-                kickQueue.Add(target.displayName);
+                kickQueue.Add(target.userID.ToString());
                 Broadcast.broadcastTo(target.networkPlayer, "You were kicked! Reason: " + reason);
                 Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was kicked for: " + reason);
                 target.Kick(NetError.Facepunch_Kick_Ban, false);
@@ -8432,7 +8424,7 @@ namespace RustEssentials.Util
         {
             if (target != null)
             {
-                kickQueue.Add(target.displayName);
+                kickQueue.Add(target.userID.ToString());
                 Broadcast.broadcastTo(target.networkPlayer, "You were kicked! Reason: " + reason);
                 Vars.conLog.Error("Nonwhitelisted player " + target.displayName + " (" + target.userID + ") attempted to join.");
                 target.Kick(NetError.Facepunch_Kick_Ban, false);
@@ -8443,7 +8435,7 @@ namespace RustEssentials.Util
         {
             if (target != null)
             {
-                kickQueue.Add(target.displayName);
+                kickQueue.Add(target.userID.ToString());
                 Broadcast.broadcastTo(target.networkPlayer, (isBan ? "You were banned! Reason: " : "You were kicked! Reason: ") + reason);
                 if (isBan)
                     Vars.conLog.Error("Banned player " + target.displayName + " (" + target.userID + ") attempted to join.");
@@ -9487,7 +9479,8 @@ namespace RustEssentials.Util
         {
             List<PlayerClient> winners = new List<PlayerClient>();
             List<string> winnerNames = new List<string>();
-            List<PlayerClient> possibleWinners = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => !vanishedList.Contains(pc.userID.ToString())).ToList();
+            List<PlayerClient> possibleWinners = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => !vanishedList.Contains(pc.userID.ToString()) && !lastWinners.Contains(pc.userID.ToString())).ToList();
+            lastWinners.Clear();
             string winnerList = "";
             System.Random rnd = new System.Random();
             playerAmount = Mathf.Clamp(playerAmount, 1, possibleWinners.Count);
@@ -9496,6 +9489,7 @@ namespace RustEssentials.Util
                 PlayerClient randomClient = possibleWinners[rnd.Next(0, possibleWinners.Count)];
                 winners.Add(randomClient);
                 winnerNames.Add(randomClient.userName);
+                lastWinners.Add(randomClient.userID.ToString());
             }
 
             if (winnerNames.Count == 2)
@@ -9520,7 +9514,6 @@ namespace RustEssentials.Util
             Broadcast.noticeAll("?", "1", 1);
             Thread.Sleep(1500);
             Broadcast.noticeAll("!", "Congratulations to " + winnerList + " on winning " + amount + " " + itemName + "!", 4);
-
             foreach (PlayerClient targetClient in winners)
             {
                 addItem(targetClient, itemName, amount);

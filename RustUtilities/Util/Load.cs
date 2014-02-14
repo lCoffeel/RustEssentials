@@ -475,7 +475,7 @@ namespace RustEssentials.Util
                                 {
                                     if (line.Contains("."))
                                     {
-                                        currentKit = line.Substring(1, line.IndexOf(".") - 1);
+                                        currentWarp = line.Substring(1, line.IndexOf(".") - 1);
                                         string prefix = line.Substring(line.IndexOf(".") + 1, line.Length - line.IndexOf(".") - 2);
                                         string rank = "";
                                         foreach (KeyValuePair<string, string> kv in Vars.rankPrefixes)
@@ -624,7 +624,6 @@ namespace RustEssentials.Util
                                             try
                                             {
                                                 Vars.cycleMOTDList.Add(currentMode + instances, new Dictionary<string, List<string>>() { { (Convert.ToInt16(interval.Remove(interval.Length - 1)) * multiplier).ToString(), new List<string>() } });
-
                                             }
                                             catch (Exception ex)
                                             {

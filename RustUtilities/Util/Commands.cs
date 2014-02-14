@@ -94,7 +94,7 @@ namespace RustEssentials.Util
                     {
                         switch (command)
                         {
-                            case "/clearInv":
+                            case "/clearinv":
                                 Vars.clearPlayer(playerClient, commandArgs);
                                 break;
                             case "/vanish":
