@@ -1882,7 +1882,7 @@ namespace RustEssentials.Util
                     double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
 
                     if (areaAdded <= (areaActual + 1))
-                        inZoneS = true;
+                        inZoneW = true;
 
                     if (inZoneW)
                         warZone = kv.Key;
@@ -3124,6 +3124,13 @@ namespace RustEssentials.Util
                     damage.amount = 0f;
                 }
             }
+            else
+            {
+                if (inSafeZone.ContainsKey(victim) && !inWarZone.ContainsKey(victim))
+                {
+                    damage.amount = 0f;
+                }
+            }
 
             if (victimFaction == attackerFaction && damage.attacker.IsDifferentPlayer(victim))
             {
@@ -3497,11 +3504,53 @@ namespace RustEssentials.Util
             catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
         }
 
-        public static void OnUserDisconnected(NetUser user)
+        public static void OnUserDisconnected(uLink.NetworkPlayer player, ConnectionAcceptor CA)
         {
             try
             {
-                PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == user.networkPlayer);
+                object localData = player.GetLocalData();
+                RustServerManagement RSM = RustServerManagement.Get();
+                if (localData is NetUser)
+                {
+                    NetUser user = (NetUser)localData;
+                    PlayerClient playerClient2 = user.playerClient;
+                    user.connection.netUser = null;
+                    CA.m_Connections.Remove(user.connection);
+                    try
+                    {
+                        if (playerClient2 != null)
+                        {
+                            RSM.EraseCharactersForClient(playerClient2, true, user);
+                        }
+                        NetCull.DestroyPlayerObjects(player);
+                        CullGrid.ClearPlayerCulling(user);
+                        NetCull.RemoveRPCs(player);
+                    }
+                    catch (Exception exception)
+                    {
+                        conLog.Error(exception.ToString());
+                        conLog.Error("DO NOT IGNORE THE ERROR ABOVE. THESE THINGS SHOULD NOT BE FAILING. EVER.");
+                    }
+                    conLog.Info("Player " + user.displayName + " disconnected. Data unloaded.");
+                    Rust.Steam.Server.OnUserLeave(user.connection.UserID);
+                    try
+                    {
+                        user.Dispose();
+                    }
+                    catch (Exception exception2)
+                    {
+                        conLog.Error(exception2.ToString());
+                        conLog.Error("DO NOT IGNORE THE ERROR ABOVE. THESE THINGS SHOULD NOT BE FAILING. EVER.");
+                    }
+                }
+                else if (localData is ClientConnection)
+                {
+                    ClientConnection item = (ClientConnection)localData;
+                    CA.m_Connections.Remove(item);
+                    ConsoleSystem.Print("User Disconnected: (unconnected " + player.ipAddress + ")", false);
+                }
+
+                PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == player);
                 
                 if (latestPM.ContainsKey(playerClient))
                     latestPM.Remove(playerClient);
@@ -3554,6 +3603,9 @@ namespace RustEssentials.Util
 
                 if (AllPlayerClients.Contains(playerClient))
                     AllPlayerClients.Remove(playerClient);
+
+                player.SetLocalData(null);
+                Rust.Steam.Server.OnPlayerCountChanged();
             }
             catch (Exception ex)
             {
