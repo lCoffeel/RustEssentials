@@ -283,93 +283,100 @@ namespace RustEssentials.Util
 
         public static void SetDeathReason(PlayerClient playerClient, ref DamageEvent damage)
         {
-            if ((playerClient != null) && NetCheck.PlayerValid(playerClient.netPlayer))
+            try
             {
-                IDMain idMain = damage.attacker.idMain;
-                string message = "";
-                if (idMain != null)
+                if ((playerClient != null) && NetCheck.PlayerValid(playerClient.netPlayer))
                 {
-                    idMain = idMain.idMain;
-                }
-                if (idMain is Character)
-                {
-                    Character character = idMain as Character;
-                    Controller playerControlledController = character.playerControlledController;
-                    if (playerControlledController != null)
+                    IDMain idMain = damage.attacker.idMain;
+                    string message = "";
+                    if (idMain != null)
                     {
-                        if (playerControlledController.playerClient == playerClient)
+                        idMain = idMain.idMain;
+                    }
+                    if (idMain is Character)
+                    {
+                        Character character = idMain as Character;
+                        Controller playerControlledController = character.playerControlledController;
+                        if (playerControlledController != null)
                         {
-                            if (killList.Contains(playerClient))
+                            if (playerControlledController.playerClient == playerClient)
                             {
-                                killList.Remove(playerClient);
-                                DeathScreen.SetReason(playerClient.netPlayer, "You fell victim to /kill");
-                                Broadcast.broadcastAll(playerClient.userName + " fell victim to /kill.");
-                            }
-                            else
-                            {
-                                DeathScreen.SetReason(playerClient.netPlayer, "You killed yourself. You silly sod.");
-                                if (Vars.suicideMessages)
+                                if (killList.Contains(playerClient))
                                 {
-                                    message = Vars.suicideMessage.Replace("$VICTIM$", playerClient.userName);
+                                    killList.Remove(playerClient);
+                                    DeathScreen.SetReason(playerClient.netPlayer, "You fell victim to /kill");
+                                    Broadcast.broadcastAll(playerClient.userName + " fell victim to /kill.");
+                                }
+                                else
+                                {
+                                    DeathScreen.SetReason(playerClient.netPlayer, "You killed yourself. You silly sod.");
+                                    if (Vars.suicideMessages)
+                                    {
+                                        message = Vars.suicideMessage.Replace("$VICTIM$", playerClient.userName);
+
+                                        Broadcast.broadcastAll(message);
+                                    }
+                                }
+                                return;
+                            }
+                            Character killerChar;
+                            Character victimChar;
+                            Character.FindByUser(playerControlledController.playerClient.userID, out killerChar);
+                            Character.FindByUser(playerClient.userID, out victimChar);
+                            Vector3 killerPos = killerChar.transform.position;
+                            Vector3 victimPos = victimChar.transform.position;
+                            double distance = Math.Round(Vector3.Distance(killerPos, victimPos));
+
+                            WeaponImpact extraData = damage.extraData as WeaponImpact;
+                            if (extraData != null)
+                            {
+                                if (Vars.murderMessages)
+                                {
+                                    message = Vars.murderMessage.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", playerControlledController.playerClient.userName).Replace("$WEAPON$", extraData.dataBlock.name).Replace("$PART$", BodyParts.GetNiceName(damage.bodyPart)).Replace("$DISTANCE$", Convert.ToString(distance) + "m");
 
                                     Broadcast.broadcastAll(message);
                                 }
+                                DeathScreen.SetReason(playerClient.netPlayer, playerControlledController.playerClient.userName + " killed you using a " + extraData.dataBlock.name + " with a hit to your " + BodyParts.GetNiceName(damage.bodyPart));
+                                return;
                             }
-                            return;
-                        }
-                        Character killerChar;
-                        Character victimChar;
-                        Character.FindByUser(playerControlledController.playerClient.userID, out killerChar);
-                        Character.FindByUser(playerClient.userID, out victimChar);
-                        Vector3 killerPos = killerChar.transform.position;
-                        Vector3 victimPos = victimChar.transform.position;
-                        double distance = Math.Round(Vector3.Distance(killerPos, victimPos));
-
-                        WeaponImpact extraData = damage.extraData as WeaponImpact;
-                        if (extraData != null)
-                        {
                             if (Vars.murderMessages)
                             {
-                                message = Vars.murderMessage.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", playerControlledController.playerClient.userName).Replace("$WEAPON$", extraData.dataBlock.name).Replace("$PART$", BodyParts.GetNiceName(damage.bodyPart)).Replace("$DISTANCE$", Convert.ToString(distance) + "m");
+                                message = Vars.murderMessageUnknown.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", playerControlledController.playerClient.userName);
 
                                 Broadcast.broadcastAll(message);
                             }
-                            DeathScreen.SetReason(playerClient.netPlayer, playerControlledController.playerClient.userName + " killed you using a " + extraData.dataBlock.name + " with a hit to your " + BodyParts.GetNiceName(damage.bodyPart));
+                            DeathScreen.SetReason(playerClient.netPlayer, playerControlledController.playerClient.userName + " killed you with a hit to your " + BodyParts.GetNiceName(damage.bodyPart));
                             return;
                         }
-                        if (Vars.murderMessages)
-                        {
-                            message = Vars.murderMessageUnknown.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", playerControlledController.playerClient.userName);
-
-                            Broadcast.broadcastAll(message);
-                        }
-                        DeathScreen.SetReason(playerClient.netPlayer, playerControlledController.playerClient.userName + " killed you with a hit to your " + BodyParts.GetNiceName(damage.bodyPart));
-                        return;
                     }
+
+                    string killer = idMain.ToString();
+                    if (killer.Contains("(Clone)"))
+                        killer = killer.Substring(0, killer.IndexOf("(Clone)"));
+
+                    switch (killer)
+                    {
+                        case "MutantBear":
+                            killer = "Mutant Bear";
+                            break;
+                        case "MutantWolf":
+                            killer = "Mutant Wolf";
+                            break;
+                    }
+
+                    if (Vars.accidentMessages)
+                    {
+                        message = Vars.accidentMessage.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", killer);
+
+                        Broadcast.broadcastAll(message);
+                    }
+
+                    DeathScreen.SetReason(playerClient.netPlayer, "You were killed by a " + killer);
                 }
-
-                string killer = idMain.ToString();
-                if (killer.Contains("(Clone)"))
-                    killer = killer.Substring(0, killer.IndexOf("(Clone)"));
-
-                switch (killer)
-                {
-                    case "MutantBear":
-                        killer = "Mutant Bear";
-                        break;
-                    case "MutantWolf":
-                        killer = "Mutant Wolf";
-                        break;
-                }
-
-                if (Vars.accidentMessages)
-                {
-                    message = Vars.accidentMessage.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", killer);
-
-                    Broadcast.broadcastAll(message);
-                }
-
-                DeathScreen.SetReason(playerClient.netPlayer, "You were killed by a " + killer);
+            }
+            catch (Exception ex)
+            {
+                Vars.conLog.Error(ex.ToString());
             }
         }
 
@@ -377,7 +384,7 @@ namespace RustEssentials.Util
         {
             try
             {
-                if (fallDamage)
+                if (Vars.fallDamage)
                 {
                     float num = (fallspeed - min_vel) / (max_vel - min_vel);
                     bool flag = num > 0.25f;
@@ -2613,14 +2620,14 @@ namespace RustEssentials.Util
         {
             Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
             items = new List<IInventoryItem>();
-            for (int i = 0; i < inventory.slotCount - 1; i++)
+            for (int i = 36; i < 40 ; i++)
             {
                 IInventoryItem item;
                 if (inventory.GetItem(i, out item))
                 {
                     try
                     {
-                        if (i > 35 && i < 40 && item != null)
+                        if (item != null)
                             items.Add(item);
                     }
                     catch { }
@@ -3086,140 +3093,144 @@ namespace RustEssentials.Util
         }
 
         public static void OnHumanHurt(ref DamageEvent damage)
-        { 
-            PlayerClient victim = damage.victim.client;
-            TakeDamage takeDamage = victim.controllable.GetComponent<TakeDamage>();
-            PlayerClient attacker = null;
-
-            if (godList.Contains(victim.userID.ToString()))
+        {
+            try
             {
-                damage.amount = 0f;
-            }
-            
-            string victimFaction = "Neutral";
-            string attackerFaction = "";
+                PlayerClient victim = damage.victim.client;
+                TakeDamage takeDamage = victim.controllable.GetComponent<TakeDamage>();
+                PlayerClient attacker = null;
 
-            KeyValuePair<string, Dictionary<string, string>>[] possibleFactions = Array.FindAll(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(victim.userID.ToString()));
-            if (possibleFactions.Count() > 0)
-            {
-                victimFaction = possibleFactions[0].Key;
-            }
+                if (godList.Contains(victim.userID.ToString()))
+                {
+                    damage.amount = 0f;
+                }
 
-            if (isPlayer(damage.attacker.idMain))
-            {
-                attacker = damage.attacker.client;
+                string victimFaction = "Neutral";
+                string attackerFaction = "";
 
-                possibleFactions = Array.FindAll(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(attacker.userID.ToString()));
+                KeyValuePair<string, Dictionary<string, string>>[] possibleFactions = Array.FindAll(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(victim.userID.ToString()));
                 if (possibleFactions.Count() > 0)
-                    attackerFaction = possibleFactions[0].Key;
+                {
+                    victimFaction = possibleFactions[0].Key;
+                }
 
-                if (inSafeZone.ContainsKey(attacker) && !inWarZone.ContainsKey(attacker))
+                if (isPlayer(damage.attacker.idMain))
                 {
-                    Broadcast.noticeTo(attacker.netPlayer, "☃", "You cannot hurt players while in a safe zone!");
-                    damage.amount = 0f;
-                }
-                else if (inSafeZone.ContainsKey(victim) && !inWarZone.ContainsKey(victim))
-                {
-                    Broadcast.noticeTo(attacker.netPlayer, "☃", "You cannot hurt players in a safe zone!");
-                    damage.amount = 0f;
-                }
-            }
-            else
-            {
-                if (inSafeZone.ContainsKey(victim) && !inWarZone.ContainsKey(victim))
-                {
-                    damage.amount = 0f;
-                }
-            }
+                    attacker = damage.attacker.client;
 
-            if (victimFaction == attackerFaction && damage.attacker.IsDifferentPlayer(victim))
-            {
-                if (damage.damageTypes == DamageTypeFlags.damage_bullet)
-                {
-                    Broadcast.sideNoticeTo(attacker.netPlayer, "You shot " + victim.userName);
-                    Broadcast.sideNoticeTo(victim.netPlayer, attacker.userName + " shot you");
-                }
-                else
-                {
-                    Broadcast.sideNoticeTo(attacker.netPlayer, "You hit " + victim.userName);
-                    Broadcast.sideNoticeTo(victim.netPlayer, attacker.userName + " hit you");
-                }
-                if (!inWarZone.ContainsKey(attacker) && !inWarZone.ContainsKey(victim))
-                {
-                    if (!friendlyFire)
+                    possibleFactions = Array.FindAll(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(attacker.userID.ToString()));
+                    if (possibleFactions.Count() > 0)
+                        attackerFaction = possibleFactions[0].Key;
+
+                    if (inSafeZone.ContainsKey(attacker) && !inWarZone.ContainsKey(attacker))
                     {
+                        Broadcast.noticeTo(attacker.netPlayer, "☃", "You cannot hurt players while in a safe zone!");
+                        damage.amount = 0f;
+                    }
+                    else if (inSafeZone.ContainsKey(victim) && !inWarZone.ContainsKey(victim))
+                    {
+                        Broadcast.noticeTo(attacker.netPlayer, "☃", "You cannot hurt players in a safe zone!");
                         damage.amount = 0f;
                     }
                 }
                 else
                 {
-                    damage.amount = damage.amount * warFriendlyDamage;
-                }
-            }
-            else
-            {
-                if (damage.attacker.IsDifferentPlayer(victim) && alliances.ContainsKey(attackerFaction))
-                {
-                    if (alliances[attackerFaction].Contains(victimFaction))
+                    if (inSafeZone.ContainsKey(victim) && !inWarZone.ContainsKey(victim))
                     {
-                        if (damage.damageTypes == DamageTypeFlags.damage_bullet)
+                        damage.amount = 0f;
+                    }
+                }
+
+                if (victimFaction == attackerFaction && damage.attacker.IsDifferentPlayer(victim))
+                {
+                    if (damage.damageTypes == DamageTypeFlags.damage_bullet)
+                    {
+                        Broadcast.sideNoticeTo(attacker.netPlayer, "You shot " + victim.userName);
+                        Broadcast.sideNoticeTo(victim.netPlayer, attacker.userName + " shot you");
+                    }
+                    else
+                    {
+                        Broadcast.sideNoticeTo(attacker.netPlayer, "You hit " + victim.userName);
+                        Broadcast.sideNoticeTo(victim.netPlayer, attacker.userName + " hit you");
+                    }
+                    if (!inWarZone.ContainsKey(attacker) && !inWarZone.ContainsKey(victim))
+                    {
+                        if (!friendlyFire)
                         {
-                            Broadcast.sideNoticeTo(attacker.netPlayer, "You shot an ally");
-                            Broadcast.sideNoticeTo(victim.netPlayer, "An ally shot you");
+                            damage.amount = 0f;
                         }
-                        else
-                        {
-                            Broadcast.sideNoticeTo(attacker.netPlayer, "You hit an ally");
-                            Broadcast.sideNoticeTo(victim.netPlayer, "An ally hit you");
-                        }
-                        if (!inWarZone.ContainsKey(attacker) && !inWarZone.ContainsKey(victim))
-                        {
-                            if (!alliedFire)
-                                damage.amount = (damage.amount * 2) / 3;
-                        }
-                        else
-                        {
-                            damage.amount = damage.amount * warAllyDamage;
-                        }
+                    }
+                    else
+                    {
+                        damage.amount = damage.amount * warFriendlyDamage;
                     }
                 }
                 else
                 {
-                    if (!inWarZone.ContainsKey(attacker) && !inWarZone.ContainsKey(victim))
+                    if (damage.attacker.IsDifferentPlayer(victim) && alliances.ContainsKey(attackerFaction))
                     {
-                        damage.amount = damage.amount * neutralDamage;
+                        if (alliances[attackerFaction].Contains(victimFaction))
+                        {
+                            if (damage.damageTypes == DamageTypeFlags.damage_bullet)
+                            {
+                                Broadcast.sideNoticeTo(attacker.netPlayer, "You shot an ally");
+                                Broadcast.sideNoticeTo(victim.netPlayer, "An ally shot you");
+                            }
+                            else
+                            {
+                                Broadcast.sideNoticeTo(attacker.netPlayer, "You hit an ally");
+                                Broadcast.sideNoticeTo(victim.netPlayer, "An ally hit you");
+                            }
+                            if (!inWarZone.ContainsKey(attacker) && !inWarZone.ContainsKey(victim))
+                            {
+                                if (!alliedFire)
+                                    damage.amount = (damage.amount * 2) / 3;
+                            }
+                            else
+                            {
+                                damage.amount = damage.amount * warAllyDamage;
+                            }
+                        }
                     }
                     else
                     {
-                        damage.amount = damage.amount * warDamage;
+                        if (!inWarZone.ContainsKey(attacker) && !inWarZone.ContainsKey(victim))
+                        {
+                            damage.amount = damage.amount * neutralDamage;
+                        }
+                        else
+                        {
+                            damage.amount = damage.amount * warDamage;
+                        }
+                    }
+
+                    if (!godList.Contains(victim.userID.ToString()))
+                    {
+                        if (isTeleporting.Contains(victim))
+                        {
+                            wasHit.Add(victim);
+                        }
+                        if (isAccepting.Contains(victim))
+                        {
+                            wasHit.Add(victim);
+                        }
                     }
                 }
 
-                if (!godList.Contains(victim.userID.ToString()))
+                if (takeDamage.dead)
                 {
-                    if (isTeleporting.Contains(victim))
-                    {
-                        wasHit.Add(victim);
-                    }
-                    if (isAccepting.Contains(victim))
-                    {
-                        wasHit.Add(victim);
-                    }
+                    damage.status = LifeStatus.IsDead;
+                }
+                else if (takeDamage.health > damage.amount)
+                {
+                    damage.status = LifeStatus.IsAlive;
+                }
+                else
+                {
+                    damage.status = LifeStatus.WasKilled;
                 }
             }
-
-            if (takeDamage.dead)
-            {
-                damage.status = LifeStatus.IsDead;
-            }
-            else if (takeDamage.health > damage.amount)
-            {
-                damage.status = LifeStatus.IsAlive;
-            }
-            else
-            {
-                damage.status = LifeStatus.WasKilled;
-            }
+            catch { }
         }
 
         public static bool belongsTo(ulong userID, ulong ownerID)
@@ -4532,7 +4543,24 @@ namespace RustEssentials.Util
                             }
                             else
                             {
-                                Broadcast.noticeTo(senderClient.netPlayer, ":(", "You do not have permission to do this.");
+                                if (warpsForUIDs.ContainsKey(senderClient.userID.ToString()))
+                                {
+                                    if (warpsForUIDs[senderClient.userID.ToString()].Contains(warpNameToLower))
+                                    {
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Warping in " + warpDelay + " seconds...");
+                                        Thread t = new Thread(() => warping(senderClient, warps[warpNameToLower]));
+                                        t.Start();
+                                        isTeleporting.Add(senderClient);
+                                    }
+                                    else
+                                    {
+                                        Broadcast.noticeTo(senderClient.netPlayer, ":(", "You do not have permission to do this.");
+                                    }
+                                }
+                                else
+                                {
+                                    Broadcast.noticeTo(senderClient.netPlayer, ":(", "You do not have permission to do this.");
+                                }
                             }
                         }
                         else
@@ -7382,81 +7410,127 @@ namespace RustEssentials.Util
 
         public static void HostileScent(TakeDamage damage, HostileWildlifeAI HWAI)
         {
-            PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.controllable.GetComponent<TakeDamage>() == damage);
-            bool b = false;
-            if (possibleClients.Count() > 0)
+            try
             {
-                b = hiddenList.Contains(possibleClients[0].userID.ToString()) && HWAI._targetTD == possibleClients[0].controllable.GetComponent<TakeDamage>();
+                bool b = false;
+                try
+                {
+                    PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.controllable.GetComponent<TakeDamage>() == damage);
+                    if (possibleClients.Count() > 0)
+                    {
+                        b = hiddenList.Contains(possibleClients[0].userID.ToString()) && HWAI._targetTD == possibleClients[0].controllable.GetComponent<TakeDamage>();
+                    }
+                }
+                catch (Exception ex)
+                {
+                }
+
+                if (b && HWAI.HasTarget())
+                    HWAI.LoseTarget();
+
+                if (!HWAI.IsScentBlind() && (((HWAI._state != 2) && (HWAI._state != 7)) && !HWAI.HasTarget()) && !b)
+                {
+                    HWAI.ExitCurrentState();
+                    HWAI.SetAttackTarget(damage);
+                    HWAI.EnterState_Chase();
+                }
             }
-
-            if (b && HWAI.HasTarget())
-                HWAI.LoseTarget();
-
-            if (!HWAI.IsScentBlind() && (((HWAI._state != 2) && (HWAI._state != 7)) && !HWAI.HasTarget()) && !b)
+            catch (Exception ex)
             {
-                HWAI.ExitCurrentState();
-                HWAI.SetAttackTarget(damage);
-                HWAI.EnterState_Chase();
+                Vars.conLog.Error(ex.ToString());
             }
         }
 
         public static void HostileHurt(DamageEvent damage, HostileWildlifeAI HWAI)
         {
-            bool b = false;
-            if (damage.attacker.idMain is Character)
+            try
             {
-                if (isPlayer(damage.attacker.idMain))
+                bool b = false;
+                try
                 {
-                    b = hiddenList.Contains(damage.attacker.client.userID.ToString()) && HWAI._targetTD == damage.attacker.client.controllable.GetComponent<TakeDamage>();
+                    if (damage.attacker.idMain is Character)
+                    {
+                        if (isPlayer(damage.attacker.idMain))
+                        {
+                            b = hiddenList.Contains(damage.attacker.client.userID.ToString()) && HWAI._targetTD == damage.attacker.client.controllable.GetComponent<TakeDamage>();
+                        }
+                    }
+                }
+                catch { }
+
+                if (b && HWAI.HasTarget())
+                    HWAI.LoseTarget();
+
+                if (!HWAI.HasTarget() && (damage.attacker.character != null) && !b)
+                {
+                    HWAI.SetAttackTarget(damage.attacker.character.gameObject.GetComponent<TakeDamage>());
+                    HWAI.ExitCurrentState();
+                    HWAI.EnterState_Chase();
                 }
             }
-
-            if (b && HWAI.HasTarget())
-                HWAI.LoseTarget();
-
-            if (!HWAI.HasTarget() && (damage.attacker.character != null) && !b)
+            catch (Exception ex)
             {
-                HWAI.SetAttackTarget(damage.attacker.character.gameObject.GetComponent<TakeDamage>());
-                HWAI.ExitCurrentState();
-                HWAI.EnterState_Chase();
+                Vars.conLog.Error(ex.ToString());
             }
         }
 
         public static void BasicHearFootstep(Vector3 origin, BasicWildLifeAI BWAI)
         {
-            bool b = false;
-            foreach (PlayerClient pc in AllPlayerClients)
+            try
             {
-                Character outChar;
-                Character.FindByUser(pc.userID, out outChar);
-
-                if (Vector3.Distance(outChar.transform.position, origin) < 1)
+                bool b = false;
+                try
                 {
-                    b = hiddenList.Contains(pc.userID.ToString());
+                    foreach (PlayerClient pc in AllPlayerClients)
+                    {
+                        Character outChar;
+                        Character.FindByUser(pc.userID, out outChar);
+
+                        if (Vector3.Distance(outChar.transform.position, origin) < 1)
+                        {
+                            b = hiddenList.Contains(pc.userID.ToString());
+                        }
+                    }
+                }
+                catch { }
+                if (((BWAI._state != 2) && (BWAI._state != 7)) && BWAI.afraidOfFootsteps && !b)
+                {
+                    BWAI.ExitCurrentState();
+                    BWAI.EnterState_Flee(origin);
                 }
             }
-            if (((BWAI._state != 2) && (BWAI._state != 7)) && BWAI.afraidOfFootsteps && !b)
+            catch (Exception ex)
             {
-                BWAI.ExitCurrentState();
-                BWAI.EnterState_Flee(origin);
+                Vars.conLog.Error(ex.ToString());
             }
         }
 
         public static void BasicHurt(DamageEvent damage, BasicWildLifeAI BWAI)
         {
-            bool b = false;
-            if (damage.attacker.idMain is Character)
+            try
             {
-                if (isPlayer(damage.attacker.idMain))
+                bool b = false;
+                try
                 {
-                    b = hiddenList.Contains(damage.attacker.client.userID.ToString());
+                    if (damage.attacker.idMain is Character)
+                    {
+                        if (isPlayer(damage.attacker.idMain))
+                        {
+                            b = hiddenList.Contains(damage.attacker.client.userID.ToString());
+                        }
+                    }
+                }
+                catch { }
+
+                if (((BWAI._state != 2) && (BWAI._state != 7)) && (damage.attacker.character != null) & !b)
+                {
+                    BWAI.ExitCurrentState();
+                    BWAI.EnterState_Flee(BWAI.transform.position + new Vector3(UnityEngine.Random.Range((float)-1f, (float)1f), 0f, UnityEngine.Random.Range((float)-1f, (float)1f)));
                 }
             }
-
-            if (((BWAI._state != 2) && (BWAI._state != 7)) && (damage.attacker.character != null) & !b)
+            catch (Exception ex)
             {
-                BWAI.ExitCurrentState();
-                BWAI.EnterState_Flee(BWAI.transform.position + new Vector3(UnityEngine.Random.Range((float)-1f, (float)1f), 0f, UnityEngine.Random.Range((float)-1f, (float)1f)));
+                Vars.conLog.Error(ex.ToString());
             }
         }
 
