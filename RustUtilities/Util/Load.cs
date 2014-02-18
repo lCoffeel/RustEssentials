@@ -240,6 +240,7 @@ namespace RustEssentials.Util
 
                 List<LootSpawnList.LootWeightedEntry> newLootPackages = new List<LootSpawnList.LootWeightedEntry>();
                 LootSpawnList.LootWeightedEntry lootPackage = new LootSpawnList.LootWeightedEntry();
+                int overridedPackages = 0;
                 foreach (string tablePath in tables)
                 {
                     string fileName = Path.GetFileName(tablePath);
@@ -447,10 +448,14 @@ namespace RustEssentials.Util
                             }
                         }
                         if (newLootPackages.Count > 0)
+                        {
+                            overridedPackages++;
                             DatablockDictionary._lootSpawnLists[tableName].LootPackages = newLootPackages.ToArray();
+                        }
+                        newLootPackages.Clear();
                     }
                 }
-                Vars.conLog.Info("Loot tables successfully overrided!");
+                Vars.conLog.Info(overridedPackages + "/" + DatablockDictionary._lootSpawnLists.Count + " loot tables successfully overrided!");
             }
             catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
         }
@@ -881,7 +886,7 @@ namespace RustEssentials.Util
                     {
                         foreach (string s in nkv.Value)
                         {
-                            Vars.kitsForRanks[kv.Key].Add(s);
+                            Vars.warpsForRanks[kv.Key].Add(s);
                         }
                     }
                 }

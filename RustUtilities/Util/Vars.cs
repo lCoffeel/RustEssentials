@@ -4308,10 +4308,17 @@ namespace RustEssentials.Util
                 }
                 if (timeElapsed >= warpDelay)
                 {
+                    Vector3 oldDest = destination;
+                    oldDest.y += 1;
                     if (Vector3.Distance(oldPos, destination) > 375)
                         destination.y += 8;
 
                     serverManagement.TeleportPlayerToWorld(senderClient.netPlayer, destination);
+                    TimerPlus tp = new TimerPlus();
+                    tp.AutoReset = false;
+                    tp.Interval = 500;
+                    tp.Elapsed += ((sender, e) => teleportToWorldElapsed(senderClient.netPlayer, oldDest));
+                    tp.Start();
                     isTeleporting.Remove(senderClient);
                     b = false;
                     break;
@@ -4327,6 +4334,12 @@ namespace RustEssentials.Util
                 Thread.Sleep(1000);
                 timeElapsed++;
             }
+        }
+
+        public static void teleportToWorldElapsed(uLink.NetworkPlayer np, Vector3 v3)
+        {
+            RustServerManagement serverManagement = RustServerManagement.Get();
+            serverManagement.TeleportPlayerToWorld(np, v3);
         }
 
         public static void teleporting(PlayerClient targetClient, PlayerClient senderClient)
@@ -4372,10 +4385,17 @@ namespace RustEssentials.Util
 
                     Vector3 destinationPos = senderChar.transform.position;
 
+                    Vector3 oldDest = destinationPos;
+                    oldDest.y += 1;
                     if (Vector3.Distance(destinationPos, oldPos) > 375)
                         destinationPos.y += 8;
 
                     serverManagement.TeleportPlayerToWorld(targetClient.netPlayer, destinationPos);
+                    TimerPlus tp = new TimerPlus();
+                    tp.AutoReset = false;
+                    tp.Interval = 500;
+                    tp.Elapsed += ((sender, e) => teleportToWorldElapsed(targetClient.netPlayer, oldDest));
+                    tp.Start();
                     teleportRequests[senderClient][targetClient].Close();
                     teleportRequests[senderClient].Remove(targetClient);
                     latestRequests[senderClient] = null;
@@ -4625,9 +4645,16 @@ namespace RustEssentials.Util
                             Character.FindByUser(targetClient.userID, out targetChar);
                             Vector3 destination = senderChar.transform.position;
 
+                            Vector3 oldDest = destination;
+                            oldDest.y += 1;
                             if (Vector3.Distance(destination, targetChar.transform.position) > 375)
                                 destination.y += 8;
                             serverManagement.TeleportPlayerToWorld(targetClient.netPlayer, destination);
+                            TimerPlus tp = new TimerPlus();
+                            tp.AutoReset = false;
+                            tp.Interval = 500;
+                            tp.Elapsed += ((sender, e) => teleportToWorldElapsed(targetClient.netPlayer, oldDest));
+                            tp.Start();
                             Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting " + targetClient.userName + " here...");
                         }
                     }
@@ -4647,9 +4674,16 @@ namespace RustEssentials.Util
                             Character.FindByUser(targetClient.userID, out targetChar);
                             Vector3 destination = senderChar.transform.position;
 
+                            Vector3 oldDest = destination;
+                            oldDest.y += 1;
                             if (Vector3.Distance(destination, targetChar.transform.position) > 375)
                                 destination.y += 8;
                             serverManagement.TeleportPlayerToWorld(targetClient.netPlayer, destination);
+                            TimerPlus tp = new TimerPlus();
+                            tp.AutoReset = false;
+                            tp.Interval = 500;
+                            tp.Elapsed += ((sender, e) => teleportToWorldElapsed(targetClient.netPlayer, oldDest));
+                            tp.Start();
                             Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting " + targetClient.userName + " here...");
                         }
                     }
@@ -4801,10 +4835,17 @@ namespace RustEssentials.Util
                             Character.FindByUser(targetClient.userID, out targetChar);
                             Vector3 destination = targetChar.transform.position;
 
+                            Vector3 oldDest = destination;
+                            oldDest.y += 1;
                             if (Vector3.Distance(destination, senderChar.transform.position) > 375)
                                 destination.y += 8;
 
                             serverManagement.TeleportPlayerToWorld(senderClient.netPlayer, destination);
+                            TimerPlus tp = new TimerPlus();
+                            tp.AutoReset = false;
+                            tp.Interval = 500;
+                            tp.Elapsed += ((sender, e) => teleportToWorldElapsed(senderClient.netPlayer, oldDest));
+                            tp.Start();
                             Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting to " + targetClient.userName + "...");
                         }
                     }
@@ -4824,10 +4865,17 @@ namespace RustEssentials.Util
                             Character.FindByUser(targetClient.userID, out targetChar);
                             Vector3 destination = targetChar.transform.position;
 
+                            Vector3 oldDest = destination;
+                            oldDest.y += 1;
                             if (Vector3.Distance(destination, senderChar.transform.position) > 375)
                                 destination.y += 8;
 
                             serverManagement.TeleportPlayerToWorld(senderClient.netPlayer, destination);
+                            TimerPlus tp = new TimerPlus();
+                            tp.AutoReset = false;
+                            tp.Interval = 500;
+                            tp.Elapsed += ((sender, e) => teleportToWorldElapsed(senderClient.netPlayer, oldDest));
+                            tp.Start();
                             Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting to " + targetClient.userName + "...");
                         }
                     }
@@ -4912,10 +4960,17 @@ namespace RustEssentials.Util
                             Character.FindByUser(targetClient2.userID, out targetChar2);
                             Vector3 destination = targetChar2.transform.position;
 
+                            Vector3 oldDest = destination;
+                            oldDest.y += 1;
                             if (Vector3.Distance(destination, targetChar.transform.position) > 375)
                                 destination.y += 8;
 
                             serverManagement.TeleportPlayerToWorld(targetClient.netPlayer, destination);
+                            TimerPlus tp = new TimerPlus();
+                            tp.AutoReset = false;
+                            tp.Interval = 500;
+                            tp.Elapsed += ((sender, e) => teleportToWorldElapsed(targetClient.netPlayer, oldDest));
+                            tp.Start();
                             Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting \"" + targetClient.userName + "\" to \"" + targetClient2.userName + "\"...");
                         }
                     }
