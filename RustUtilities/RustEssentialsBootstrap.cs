@@ -53,6 +53,7 @@ namespace RustEssentials
             createFiles();
 
             Bundling.OnceLoaded += new Bundling.OnLoadedEventHandler(AssetsReady);
+            
 
             Rust.Steam.Server.SetModded();
         }
@@ -60,7 +61,7 @@ namespace RustEssentials
         public void AssetsReady()
         {
             Vars.conLog.Info("====");
-            Vars.conLog.Info("Cerionn's Rust Essentials " + Vars.currentVersion + " loaded!");
+            Vars.conLog.Info("Cerionn's Rust Essentials v" + Vars.currentVersion + " loaded!");
             Vars.conLog.Info("----");
 
             getVersion();
@@ -78,8 +79,8 @@ namespace RustEssentials
             _load.loadKits();
             _load.loadMOTD();
             _load.loadWarps();
-            _load.loadController();
             Vars.loadItems();
+            _load.loadController();
             Vars.cycleMOTD();
             Vars.onceMOTD();
             Vars.readDoorData(); 
@@ -92,6 +93,9 @@ namespace RustEssentials
             Vars.zoneTimer();
             Vars.loopRequestSaving();
             Vars.loopNudity();
+            Vars.loopItems();
+            Vars.originalLootTables = DatablockDictionary._lootSpawnLists;
+            _load.loadTables();
 
             Vars.conLog.Info("====");
         }

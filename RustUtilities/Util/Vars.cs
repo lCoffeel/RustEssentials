@@ -20,6 +20,8 @@ using System.Timers;
 using System.Xml;
 using Facepunch;
 using UnityEngine;
+//using MySql.Data;
+//using MySql.Data.MySqlClient;
 
 namespace RustEssentials.Util
 {
@@ -31,6 +33,7 @@ namespace RustEssentials.Util
         public static string modsDir = Path.Combine(dataDir, "mods");
         public static string saveDir = Path.Combine(rootDir, "save\\RustEssentials");
         public static string logsDir = Path.Combine(saveDir, "Logs");
+        public static string tablesDir = Path.Combine(saveDir, "Tables");
         public static string cfgFile = Path.Combine(saveDir, "config.ini");
         public static string whiteListFile = Path.Combine(saveDir, "whitelist.txt");
         public static string ranksFile = Path.Combine(saveDir, "ranks.ini");
@@ -47,7 +50,7 @@ namespace RustEssentials.Util
         public static string cooldownsFile = Path.Combine(saveDir, "kit_cooldowns.dat");
         public static string requestCooldownsFile = Path.Combine(saveDir, "tpaPer_cooldowns.dat");
         public static string requestCooldownsAllFile = Path.Combine(saveDir, "tpaAll_cooldowns.dat");
-        public static string craftControlFile = Path.Combine(saveDir, "controller.ini");
+        public static string itemControllerFile = Path.Combine(saveDir, "controller.ini");
         public static string zonesFile = Path.Combine(saveDir, "zones.dat");
         public static string defaultRank = "Default";
         public static string currentVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString().Substring(0, 5);
@@ -90,6 +93,11 @@ namespace RustEssentials.Util
         public static bool enableRepair = true;
         public static bool forceNudity = false;
         public static bool denyRequestWarzone = true;
+        public static bool doorStops = true;
+        public static bool researchAtBench = true;
+        public static bool infiniteResearch = false;
+        public static bool researchPaper = false;
+        public static bool craftAtBench = true;
 
         public static string whitelistKickCMD = "Whitelist was enabled and you are not whitelisted.";
         public static string whitelistKickJoin = "You are not whitelisted!";
@@ -137,6 +145,8 @@ namespace RustEssentials.Util
         public static float warAllyDamage = 0.70f;
         // SAVED VARIABLES END
 
+        //public static MySqlConnection mysqlConnection;
+
         public static bool noErrors = true;
         public static bool timeFrozen = false;
         public static bool firstPlayerJoined = false;
@@ -159,13 +169,15 @@ namespace RustEssentials.Util
             { bansFile },
             { prefixFile },
             { warpsFile },
-            { zonesFile }
+            { zonesFile },
+            { itemControllerFile }
         };
         public static List<string> allDirs = new List<string>()
         {
             { rootDir },
             { saveDir },
-            { logsDir }
+            { logsDir },
+            { tablesDir }
         };
         public static List<string> whitelist = new List<string>();
         public static List<string> totalCommands = new List<string>();
@@ -190,8 +202,11 @@ namespace RustEssentials.Util
         public static List<string> emptyPrefixes = new List<string>();
         public static List<string> vanishedList = new List<string>();
         public static List<string> buildList = new List<string>();
+        public static List<string> craftList = new List<string>();
+        public static List<string> restrictItems = new List<string>();
         public static List<string> restrictCrafting = new List<string>();
         public static List<string> restrictResearch = new List<string>();
+        public static List<string> permitResearch = new List<string>();
         public static List<string> restrictBlueprints = new List<string>();
         public static List<string> lastWinners = new List<string>();
         public static List<PlayerClient> AllPlayerClients = new List<PlayerClient>();
@@ -225,6 +240,7 @@ namespace RustEssentials.Util
         public static Dictionary<string, List<string>> warpsForUIDs = new Dictionary<string, List<string>>();
         public static Dictionary<string, List<string>> factionInvites = new Dictionary<string, List<string>>();
         public static Dictionary<string, List<string>> alliances = new Dictionary<string, List<string>>();
+        public static Dictionary<string, LootSpawnList> originalLootTables = new Dictionary<string, LootSpawnList>();
         public static OrderedDictionary historyFaction = new OrderedDictionary();
         public static Dictionary<string, TimerPlus> muteTimes = new Dictionary<string, TimerPlus>();
         public static Dictionary<PlayerClient, PlayerClient> latestPM = new Dictionary<PlayerClient, PlayerClient>();
@@ -251,7 +267,8 @@ namespace RustEssentials.Util
             { kitsFile, kitsText() },
             { motdFile, motdText() },
             { prefixFile, prefixText() },
-            { warpsFile, warpsText() }
+            { warpsFile, warpsText() },
+            { itemControllerFile, itemControllerText() }
         };
 
         public static string filterNames(string playerName, string uid)
@@ -530,8 +547,6 @@ namespace RustEssentials.Util
                                             remFactionData(possibleFactions[0].Key, factionsByNames[possibleFactions[0].Key][possibleUIDs[0]], possibleFactions[0].Value[possibleUIDs[0]]);
                                             factions[possibleFactions[0].Key].Remove(possibleUIDs[0]);
                                             factionsByNames[possibleFactions[0].Key].Remove(possibleUIDs[0]);
-                                            if (latestFactionRequests.ContainsKey(senderClient))
-                                                latestFactionRequests.Remove(senderClient);
                                         }
                                     }
                                     else if (possibleTargets.Count() > 1)
@@ -550,8 +565,8 @@ namespace RustEssentials.Util
                                             remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
                                             factions[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
                                             factionsByNames[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
-                                            if (latestFactionRequests.ContainsKey(senderClient))
-                                                latestFactionRequests.Remove(senderClient);
+                                            if (latestFactionRequests.ContainsKey(targetClient))
+                                                latestFactionRequests.Remove(targetClient);
                                         }
                                         else
                                             Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is not in your faction.");
@@ -588,8 +603,6 @@ namespace RustEssentials.Util
                                             remFactionData(possibleFactions[0].Key, factionsByNames[possibleFactions[0].Key][possibleUIDs[0]], possibleFactions[0].Value[possibleUIDs[0]]);
                                             factions[possibleFactions[0].Key].Remove(possibleUIDs[0]);
                                             factionsByNames[possibleFactions[0].Key].Remove(possibleUIDs[0]);
-                                            if (latestFactionRequests.ContainsKey(senderClient))
-                                                latestFactionRequests.Remove(senderClient);
                                         }
                                     }
                                     else if (possibleTargets.Count() > 1)
@@ -608,8 +621,8 @@ namespace RustEssentials.Util
                                             remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
                                             factions[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
                                             factionsByNames[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
-                                            if (latestFactionRequests.ContainsKey(senderClient))
-                                                latestFactionRequests.Remove(senderClient);
+                                            if (latestFactionRequests.ContainsKey(targetClient))
+                                                latestFactionRequests.Remove(targetClient);
                                         }
                                         else
                                             Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is not in your faction.");
@@ -871,7 +884,7 @@ namespace RustEssentials.Util
                         {
                             string rank = possibleFactions[0].Value[senderClient.userID.ToString()];
 
-                            if (rank == "owner" || rank == "admin")
+                            if (rank == "owner")
                             {
                                 List<string> messageList = new List<string>();
                                 int curIndex = 0;
@@ -898,15 +911,25 @@ namespace RustEssentials.Util
                                     {
                                         PlayerClient targetClient = possibleTargets[0];
 
-                                        remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
-                                        possibleFactions[0].Value.Remove(targetClient.userID.ToString());
-                                        possibleFactions[0].Value.Add(targetClient.userID.ToString(), "admin");
-                                        addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "admin");
-                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
-                                        foreach (PlayerClient pc in targetClients)
+                                        if (targetClient != senderClient)
                                         {
-                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player " + targetClient.userName + " is now a faction admin.");
+                                            if (possibleFactions[0].Value[targetClient.userID.ToString()] != "admin")
+                                            {
+                                                remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                                possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                                possibleFactions[0].Value.Add(targetClient.userID.ToString(), "admin");
+                                                addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "admin");
+                                                PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                                foreach (PlayerClient pc in targetClients)
+                                                {
+                                                    Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player " + targetClient.userName + " is now a faction admin.");
+                                                }
+                                            }
+                                            else
+                                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You cannot admin a player who is already an admin.");
                                         }
+                                        else
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You cannot admin yourself.");
                                     }
                                 }
                                 else
@@ -921,15 +944,25 @@ namespace RustEssentials.Util
                                     {
                                         PlayerClient targetClient = possibleTargets[0];
 
-                                        remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
-                                        possibleFactions[0].Value.Remove(targetClient.userID.ToString());
-                                        possibleFactions[0].Value.Add(targetClient.userID.ToString(), "admin");
-                                        addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "admin");
-                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
-                                        foreach (PlayerClient pc in targetClients)
+                                        if (targetClient != senderClient)
                                         {
-                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player \"" + targetClient.userName + "\" is now a faction admin.");
+                                            if (possibleFactions[0].Value[targetClient.userID.ToString()] != "admin")
+                                            {
+                                                remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                                possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                                possibleFactions[0].Value.Add(targetClient.userID.ToString(), "admin");
+                                                addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "admin");
+                                                PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                                foreach (PlayerClient pc in targetClients)
+                                                {
+                                                    Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player \"" + targetClient.userName + "\" is now a faction admin.");
+                                                }
+                                            }
+                                            else
+                                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You cannot admin a player who is already an admin.");
                                         }
+                                        else
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You cannot admin yourself.");
                                     }
                                 }
                             }
@@ -944,7 +977,7 @@ namespace RustEssentials.Util
                         {
                             string rank = possibleFactions[0].Value[senderClient.userID.ToString()];
 
-                            if (rank == "owner" || rank == "admin")
+                            if (rank == "owner")
                             {
                                 List<string> messageList = new List<string>();
                                 int curIndex = 0;
@@ -971,15 +1004,25 @@ namespace RustEssentials.Util
                                     {
                                         PlayerClient targetClient = possibleTargets[0];
 
-                                        remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
-                                        possibleFactions[0].Value.Remove(targetClient.userID.ToString());
-                                        possibleFactions[0].Value.Add(targetClient.userID.ToString(), "normal");
-                                        addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "normal");
-                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
-                                        foreach (PlayerClient pc in targetClients)
+                                        if (targetClient != senderClient)
                                         {
-                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player " + targetClient.userName + " is no longer a faction admin.");
+                                            if (possibleFactions[0].Value[targetClient.userID.ToString()] == "admin")
+                                            {
+                                                remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                                possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                                possibleFactions[0].Value.Add(targetClient.userID.ToString(), "normal");
+                                                addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "normal");
+                                                PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                                foreach (PlayerClient pc in targetClients)
+                                                {
+                                                    Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player " + targetClient.userName + " is no longer a faction admin.");
+                                                }
+                                            }
+                                            else
+                                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You cannot deadmin a player who is not an admin.");
                                         }
+                                        else
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You cannot deadmin yourself.");
                                     }
                                 }
                                 else
@@ -994,15 +1037,25 @@ namespace RustEssentials.Util
                                     {
                                         PlayerClient targetClient = possibleTargets[0];
 
-                                        remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
-                                        possibleFactions[0].Value.Remove(targetClient.userID.ToString());
-                                        possibleFactions[0].Value.Add(targetClient.userID.ToString(), "normal");
-                                        addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "normal");
-                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
-                                        foreach (PlayerClient pc in targetClients)
+                                        if (targetClient != senderClient)
                                         {
-                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player " + targetClient.userName + " is no longer a faction admin.");
+                                            if (possibleFactions[0].Value[targetClient.userID.ToString()] == "admin")
+                                            {
+                                                remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                                possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                                possibleFactions[0].Value.Add(targetClient.userID.ToString(), "normal");
+                                                addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "normal");
+                                                PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                                foreach (PlayerClient pc in targetClients)
+                                                {
+                                                    Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Player " + targetClient.userName + " is no longer a faction admin.");
+                                                }
+                                            }
+                                            else
+                                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You cannot deadmin a player who is not an admin.");
                                         }
+                                        else
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You cannot deadmin yourself.");
                                     }
                                 }
                             }
@@ -1984,7 +2037,7 @@ namespace RustEssentials.Util
                 Vector3 origin = stream.ReadVector3();
                 Vector3 direction = stream.ReadVector3();
                 Ray ray = new Ray(origin, direction);
-                if (!DIDB.CheckPlacementResults(ray, out vector3, out quaternion, out carrier).Valid())
+                if (!DIDB.CheckPlacement(ray, out vector3, out quaternion, out carrier))
                 {
                     Rust.Notice.Popup(info.sender, "", "You can't place that here.", 4f);
                 }
@@ -2568,6 +2621,12 @@ namespace RustEssentials.Util
             }
         }
 
+        public static void removeItem(PlayerClient playerClient, IInventoryItem item)
+        {
+            Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
+            inventory.RemoveItem(item.slot);
+        }
+
         public static void clearArmor(PlayerClient playerClient)
         {
             Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
@@ -2656,6 +2715,27 @@ namespace RustEssentials.Util
             return items.Count() > 0;
         }
 
+        public static bool hasItem(PlayerClient playerClient, string itemName)
+        {
+            Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
+            for (int i = 0; i < inventory.slotCount - 1; i++)
+            {
+                IInventoryItem item2;
+                if (inventory.GetItem(i, out item2))
+                {
+                    try
+                    {
+                        if (item2.datablock.name == itemName)
+                        {
+                            return true;
+                        }
+                    }
+                    catch { }
+                }
+            }
+            return false;
+        }
+
         public static bool hasItem(PlayerClient playerClient, string itemName, out IInventoryItem item)
         {
             Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
@@ -2677,6 +2757,38 @@ namespace RustEssentials.Util
             }
             item = null;
             return false;
+        }
+
+        public static void craftTool(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                string mode = args[1];
+                string UID = senderClient.userID.ToString();
+                Inventory senderInv = senderClient.controllable.GetComponent<Inventory>();
+
+                switch (mode)
+                {
+                    case "on":
+                        if (!craftList.Contains(UID))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are now in super craft mode. Crafting, research, and blueprint restrictions have been bypassed.");
+                            craftList.Add(UID);
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are already in super craft mode.");
+                        break;
+                    case "off":
+                        if (craftList.Contains(UID))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are now in normal craft mode. Crafting, research, and blueprint restrictions are in place.");
+                            craftList.Remove(UID);
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are already in normal craft mode.");
+                        break;
+                }
+            }
         }
 
         public static void vanishTool(PlayerClient senderClient, string[] args)
@@ -3063,15 +3175,18 @@ namespace RustEssentials.Util
 
         public static void OnAIHurt(ref DamageEvent damage)
         {
-            if (isPlayer(damage.attacker.idMain))
+            if (damage.attacker.idMain != null)
             {
-                PlayerClient attackerClient = damage.attacker.client;
-
-                if (destroyerList.Contains(attackerClient.userID.ToString()))
+                if (isPlayer(damage.attacker.idMain))
                 {
-                    beingDestroyed.Add(damage.victim.idMain.gameObject);
-                    damage.amount = 1000f;
-                    damage.status = LifeStatus.WasKilled;
+                    PlayerClient attackerClient = damage.attacker.client;
+
+                    if (destroyerList.Contains(attackerClient.userID.ToString()))
+                    {
+                        beingDestroyed.Add(damage.victim.idMain.gameObject);
+                        damage.amount = 1000f;
+                        damage.status = LifeStatus.WasKilled;
+                    }
                 }
             }
         }
@@ -3233,8 +3348,18 @@ namespace RustEssentials.Util
             catch { }
         }
 
-        public static bool belongsTo(ulong userID, ulong ownerID)
+        public static bool belongsTo(Controllable controllable, ulong ownerID)
         {
+            if (controllable == null)
+                return false;
+
+            PlayerClient playerClient = controllable.playerClient;
+
+            if (playerClient == null)
+                return false;
+
+            ulong userID = playerClient.userID;
+
             if (completeDoorAccess.Contains(userID.ToString()))
                 return true;
 
@@ -3329,7 +3454,7 @@ namespace RustEssentials.Util
                     truth.punish = false;
                     truth.threshold = 999999999;
                 }
-                if (Vars.currentBans.ContainsValue(steamUID))
+                if (Vars.currentBans.ContainsKey(steamUID))
                 {
                     Vars.kickPlayer(user, Vars.currentBanReasons[steamUID], true);
                 }
@@ -3364,7 +3489,7 @@ namespace RustEssentials.Util
                         connectedClient = Array.Find(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName == user.displayName && pc.userID != user.userID);
                         instanceNum = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName == user.displayName).Count();
                     }
-                    if ((censorship && containsIllegalWord) || (restrictChars && containsIllegalChar) || (user.displayName.Length > maximumNameCount) || (user.displayName.Length < minimumNameCount) || (kickDuplicate && nameOccupied))
+                    if ((censorship && containsIllegalWord) || (restrictChars && containsIllegalChar) || (user.displayName.Length > maximumNameCount) || (user.displayName.Length < minimumNameCount) || (kickDuplicate && nameOccupied) || (user.displayName == botName))
                     {
                         if (containsIllegalWord)
                             Vars.otherKick(user, "Illegal words in name: " + string.Join(", ", illegalWords.ToArray()));
@@ -3394,6 +3519,11 @@ namespace RustEssentials.Util
                                             }
                                             else
                                                 Vars.otherKick(user, "Player name \"" + user.displayName + "\" already in use.");
+                                        }
+                                        else
+                                        {
+                                            if (user.displayName == botName)
+                                                Vars.otherKick(user, "You cannot impersonate the server bot.");
                                         }
                                     }
                                 }
@@ -3502,7 +3632,7 @@ namespace RustEssentials.Util
                 if (RSM.SpawnPlayer(user.playerClient, false, user.avatar) != null)
                 {
                     user.did_join = true;
-                    conLog.Info(userName + " has joined the game world. Avatar loaded.");
+                    conLog.Info(userName + " (" + user.userID + ") has joined the game world. Avatar loaded.");
                     if (vanishedList.Contains(user.userID.ToString()))
                     {
                         addArmor(user.playerClient, "Invisible Helmet", true);
@@ -3524,14 +3654,75 @@ namespace RustEssentials.Util
                 if (localData is NetUser)
                 {
                     NetUser user = (NetUser)localData;
-                    PlayerClient playerClient2 = user.playerClient;
+                    PlayerClient playerClient = user.playerClient;
+
+                    if (latestPM.ContainsKey(playerClient))
+                        latestPM.Remove(playerClient);
+
+                    if (latestRequests.ContainsKey(playerClient))
+                        latestRequests.Remove(playerClient);
+
+                    if (latestFactionRequests.ContainsKey(playerClient))
+                        latestFactionRequests.Remove(playerClient);
+
+                    if (killList.Contains(playerClient))
+                        killList.Remove(playerClient);
+
+                    if (isTeleporting.Contains(playerClient))
+                        isTeleporting.Remove(playerClient);
+
+                    if (isAccepting.Contains(playerClient))
+                        isAccepting.Remove(playerClient);
+
+                    if (wasHit.Contains(playerClient))
+                        wasHit.Remove(playerClient);
+
+                    if (inSafeZone.ContainsKey(playerClient))
+                        inSafeZone.Remove(playerClient);
+
+                    if (inWarZone.ContainsKey(playerClient))
+                        inWarZone.Remove(playerClient);
+
+                    if (firstPoints.ContainsKey(playerClient))
+                        firstPoints.Remove(playerClient);
+
+                    if (secondPoints.ContainsKey(playerClient))
+                        secondPoints.Remove(playerClient);
+
+                    if (blockedRequestsPer.ContainsKey(playerClient.userID.ToString()))
+                    {
+                        if (blockedRequestsPer[playerClient.userID.ToString()].Count < 1)
+                            blockedRequestsPer.Remove(playerClient.userID.ToString());
+                    }
+
+                    if (teleportRequests.ContainsKey(playerClient))
+                        teleportRequests.Remove(playerClient);
+
+                    string leaveMessage = "";
+                    if (Vars.enableLeave && !Vars.kickQueue.Contains(playerClient.userID.ToString()) && playerClient.userName.Length > 0)
+                    {
+                        leaveMessage = Vars.leaveMessage.Replace("$USER$", Vars.filterFullNames(playerClient.userName, playerClient.userID.ToString()));
+                        Broadcast.broadcastJoinLeave(leaveMessage);
+                        Vars.conLog.Chat("<BROADCAST ALL> " + Vars.botName + ": " + leaveMessage);
+                    }
+
+                    if (AllPlayerClients.Contains(playerClient))
+                        AllPlayerClients.Remove(playerClient);
+
                     user.connection.netUser = null;
                     CA.m_Connections.Remove(user.connection);
+                    bool b = true;
+                    if (Vars.kickQueue.Contains(playerClient.userID.ToString()) || playerClient.userName.Length == 0)
+                    {
+                        if (Vars.kickQueue.Contains(playerClient.userID.ToString()))
+                            Vars.kickQueue.Remove(playerClient.userID.ToString());
+                        b = false;
+                    }
                     try
                     {
-                        if (playerClient2 != null)
+                        if (playerClient != null)
                         {
-                            RSM.EraseCharactersForClient(playerClient2, true, user);
+                            RSM.EraseCharactersForClient(playerClient, true, user);
                         }
                         NetCull.DestroyPlayerObjects(player);
                         CullGrid.ClearPlayerCulling(user);
@@ -3542,7 +3733,8 @@ namespace RustEssentials.Util
                         conLog.Error(exception.ToString());
                         conLog.Error("DO NOT IGNORE THE ERROR ABOVE. THESE THINGS SHOULD NOT BE FAILING. EVER.");
                     }
-                    conLog.Info("Player " + user.displayName + " disconnected. Data unloaded.");
+                    if (b)
+                        conLog.Info("Player " + user.displayName + " (" + user.userID + ") disconnected. Data unloaded.");
                     Rust.Steam.Server.OnUserLeave(user.connection.UserID);
                     try
                     {
@@ -3561,66 +3753,12 @@ namespace RustEssentials.Util
                     ConsoleSystem.Print("User Disconnected: (unconnected " + player.ipAddress + ")", false);
                 }
 
-                PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == player);
-                
-                if (latestPM.ContainsKey(playerClient))
-                    latestPM.Remove(playerClient);
-
-                if (latestRequests.ContainsKey(playerClient))
-                    latestRequests.Remove(playerClient);
-
-                if (latestFactionRequests.ContainsKey(playerClient))
-                    latestFactionRequests.Remove(playerClient);
-
-                if (killList.Contains(playerClient))
-                    killList.Remove(playerClient);
-
-                if (isTeleporting.Contains(playerClient))
-                    isTeleporting.Remove(playerClient);
-
-                if (isAccepting.Contains(playerClient))
-                    isAccepting.Remove(playerClient);
-
-                if (wasHit.Contains(playerClient))
-                    wasHit.Remove(playerClient);
-
-                if (inSafeZone.ContainsKey(playerClient))
-                    inSafeZone.Remove(playerClient);
-
-                if (inWarZone.ContainsKey(playerClient))
-                    inWarZone.Remove(playerClient);
-
-                if (firstPoints.ContainsKey(playerClient))
-                    firstPoints.Remove(playerClient);
-
-                if (secondPoints.ContainsKey(playerClient))
-                    secondPoints.Remove(playerClient);
-
-                if (blockedRequestsPer[playerClient.userID.ToString()].Count < 1)
-                    blockedRequestsPer.Remove(playerClient.userID.ToString());
-
-                if (teleportRequests.ContainsKey(playerClient))
-                    teleportRequests.Remove(playerClient);
-
-                string leaveMessage = "";
-                if (Vars.enableLeave && !Vars.kickQueue.Contains(playerClient.userID.ToString()) && playerClient.userName.Length > 0)
-                {
-                    leaveMessage = Vars.leaveMessage.Replace("$USER$", Vars.filterFullNames(playerClient.userName, playerClient.userID.ToString()));
-                    Broadcast.broadcastJoinLeave(leaveMessage);
-                    Vars.conLog.Chat("<BROADCAST ALL> " + Vars.botName + ": " + leaveMessage);
-                }
-                else
-                    Vars.kickQueue.Remove(playerClient.userID.ToString());
-
-                if (AllPlayerClients.Contains(playerClient))
-                    AllPlayerClients.Remove(playerClient);
-
                 player.SetLocalData(null);
                 Rust.Steam.Server.OnPlayerCountChanged();
             }
             catch (Exception ex)
             {
-                //Vars.conLog.Error(ex.ToString());
+                Vars.conLog.Error(ex.ToString());
             }
         }
 
@@ -4308,14 +4446,20 @@ namespace RustEssentials.Util
                                 if (requestCooldownType == 1 && blockedRequestsPer[senderClient.userID.ToString()].ContainsKey(targetClient.userID.ToString()))
                                 {
                                     double timeLeft = Math.Round((blockedRequestsPer[senderClient.userID.ToString()][targetClient.userID.ToString()].TimeLeft / 1000));
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to that player for " + timeLeft + " second(s).");
-                                    return;
+                                    if (timeLeft > 0)
+                                    {
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to that player for " + timeLeft + " second(s).");
+                                        return;
+                                    }
                                 }
                                 if (requestCooldownType == 2 && blockedRequestsAll.ContainsKey(senderClient.userID.ToString()))
                                 {
                                     double timeLeft = Math.Round((blockedRequestsAll[senderClient.userID.ToString()].TimeLeft / 1000));
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to anyone for " + timeLeft + " second(s).");
-                                    return;
+                                    if (timeLeft > 0)
+                                    {
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to anyone for " + timeLeft + " second(s).");
+                                        return;
+                                    }
                                 }
                                 if (!teleportRequests[targetClient].ContainsKey(senderClient))
                                 {
@@ -4349,14 +4493,20 @@ namespace RustEssentials.Util
                                 if (requestCooldownType == 1 && blockedRequestsPer[senderClient.userID.ToString()].ContainsKey(targetClient.userID.ToString()))
                                 {
                                     double timeLeft = Math.Round((blockedRequestsPer[senderClient.userID.ToString()][targetClient.userID.ToString()].TimeLeft / 1000));
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to that player for " + timeLeft + " second(s).");
-                                    return;
+                                    if (timeLeft > 0)
+                                    {
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to that player for " + timeLeft + " second(s).");
+                                        return;
+                                    }
                                 }
                                 if (requestCooldownType == 2 && blockedRequestsAll.ContainsKey(senderClient.userID.ToString()))
                                 {
                                     double timeLeft = Math.Round((blockedRequestsAll[senderClient.userID.ToString()].TimeLeft / 1000));
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to anyone for " + timeLeft + " second(s).");
-                                    return;
+                                    if (timeLeft > 0)
+                                    {
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to anyone for " + timeLeft + " second(s).");
+                                        return;
+                                    }
                                 }
                                 if (!teleportRequests[targetClient].ContainsKey(senderClient))
                                 {
@@ -4756,13 +4906,13 @@ namespace RustEssentials.Util
                         else
                         {
                             PlayerClient targetClient2 = otherTargets[0];
-                            Character senderChar;
-                            Character.FindByUser(senderClient.userID, out senderChar);
                             Character targetChar;
                             Character.FindByUser(targetClient.userID, out targetChar);
-                            Vector3 destination = targetChar.transform.position;
+                            Character targetChar2;
+                            Character.FindByUser(targetClient2.userID, out targetChar2);
+                            Vector3 destination = targetChar2.transform.position;
 
-                            if (Vector3.Distance(destination, senderChar.transform.position) > 375)
+                            if (Vector3.Distance(destination, targetChar.transform.position) > 375)
                                 destination.y += 8;
 
                             serverManagement.TeleportPlayerToWorld(targetClient.netPlayer, destination);
@@ -4820,7 +4970,7 @@ namespace RustEssentials.Util
                             PlayerClient targetClient = possibleTargets[0];
                             if (!mutedUsers.Contains(targetClient.userID.ToString()))
                             {
-                                Broadcast.broadcastAll("Player \"" + playerName + "\" has been muted on global chat for " + timeString + timeMode);
+                                Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been muted on global chat for " + timeString + timeMode);
                                 mutedUsers.Add(targetClient.userID.ToString());
                                 TimerPlus tp = new TimerPlus();
                                 tp.AutoReset = false;
@@ -4847,7 +4997,7 @@ namespace RustEssentials.Util
                             PlayerClient targetClient = possibleTargets[0];
                             if (!mutedUsers.Contains(targetClient.userID.ToString()))
                             {
-                                Broadcast.broadcastAll("Player \"" + playerName + "\" has been muted on global chat for " + timeString + timeMode);
+                                Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been muted on global chat for " + timeString + timeMode);
                                 mutedUsers.Add(targetClient.userID.ToString());
                                 TimerPlus tp = new TimerPlus();
                                 tp.AutoReset = false;
@@ -5549,8 +5699,8 @@ namespace RustEssentials.Util
             sb.AppendLine("[Whitelist]");
             sb.AppendLine("# Enable whitelist upon server startup");
             sb.AppendLine("enableWhitelist=false");
-            sb.AppendLine("# Use the MySQL settings defined below for whitelisting - BROKEN");
-            sb.AppendLine("useMySQL=false");
+            //sb.AppendLine("# Use the MySQL settings defined below for whitelisting - BROKEN");
+            //sb.AppendLine("useMySQL=false");
             sb.AppendLine("# Use the Steam Group specified as the whitelist");
             sb.AppendLine("useSteamGroup=false");
             sb.AppendLine("steamGroupName=");
@@ -5588,6 +5738,8 @@ namespace RustEssentials.Util
             sb.AppendLine("enableRepair=true");
             sb.AppendLine("# Forces all players to be naked");
             sb.AppendLine("forceNudity=false");
+            sb.AppendLine("# Sets the creations of door stops after the door has been destroyed");
+            sb.AppendLine("doorStops=true");
             sb.AppendLine("");
             sb.AppendLine("[Chat]");
             sb.AppendLine("# Enables or disables direct chat. ATLEAST ONE MUST BE ENABLED!");
@@ -5672,18 +5824,18 @@ namespace RustEssentials.Util
             sb.AppendLine("requestCooldown=15m");
             sb.AppendLine("# If true, players will not be able to warp or use tpa.");
             sb.AppendLine("denyRequestWarzone=true");
-            sb.AppendLine("");
-            sb.AppendLine("[MySQL]");
-            sb.AppendLine("# IP for the MySQL whitelist database.");
-            sb.AppendLine("host=localhost");
-            sb.AppendLine("# Port for the MySQL whitelist database.");
-            sb.AppendLine("port=3306");
-            sb.AppendLine("# Database name for the MySQL whitelist database.");
-            sb.AppendLine("database=RustEssentials");
-            sb.AppendLine("# Username for the MySQL whitelist database.");
-            sb.AppendLine("user=root");
-            sb.AppendLine("# Password for the MySQL whitelist database.");
-            sb.AppendLine("pass=");
+            //sb.AppendLine("");
+            //sb.AppendLine("[MySQL]");
+            //sb.AppendLine("# IP for the MySQL whitelist database.");
+            //sb.AppendLine("host=localhost");
+            //sb.AppendLine("# Port for the MySQL whitelist database.");
+            //sb.AppendLine("port=3306");
+            //sb.AppendLine("# Database name for the MySQL whitelist database.");
+            //sb.AppendLine("database=RustEssentials");
+            //sb.AppendLine("# Username for the MySQL whitelist database.");
+            //sb.AppendLine("user=root");
+            //sb.AppendLine("# Password for the MySQL whitelist database.");
+            //sb.AppendLine("pass=");
             sb.AppendLine("");
             sb.AppendLine("[Inheritance]");
             sb.AppendLine("# If true, users will inherit their assigned commands plus the ones useable by those of lower ranks.");
@@ -5706,6 +5858,50 @@ namespace RustEssentials.Util
             sb.AppendLine("warFriendlyDamage=0");
             sb.AppendLine("# Damage multiplier for when a user is attacked by an allied user while in a war zone. Default 0.70.");
             sb.AppendLine("warAllyDamage=0.70");
+            sb.AppendLine("");
+            sb.AppendLine("[Item Controller]");
+            //sb.AppendLine("# If false, researching with research kits will not require a workbench");
+            //sb.AppendLine("researchAtBench=true");
+            sb.AppendLine("# If true, research kits will not disappear upon last use");
+            sb.AppendLine("infiniteResearch=false");
+            sb.AppendLine("# If true, researching will require paper");
+            sb.AppendLine("researchPaper=false");
+            //sb.AppendLine("# If false, items that usually require a nearby workbench to craft will no longer need one");
+            //sb.AppendLine("craftAtBench=true");
+
+            return sb;
+        }
+
+        public static StringBuilder itemControllerText()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine("# This is the item controller file. Restrictions for crafting, researching, and blueprints should be placed here.");
+            sb.AppendLine("# Please note that the # symbol resembles a comment and should not be used when configuring.");
+            sb.AppendLine("# ");
+            sb.AppendLine("# Item names should be placed directly under the category you want it restricted under.");
+            sb.AppendLine("# In order to restrict crafting for an item, simply place it below the [Crafting Restrictions] section.");
+            sb.AppendLine("# Be aware that item names are case-sensitive and must be spelled correctly in order to properly apply the restriction.");
+            sb.AppendLine("# Example of restricting an item:");
+            sb.AppendLine("#   [Item Restrictions]");
+            sb.AppendLine("#   Explosive Charge");
+            sb.AppendLine("#   ");
+            sb.AppendLine("#   [Crafting Restrictions]");
+            sb.AppendLine("#   Bolt Action Rifle");
+            sb.AppendLine("#   ");
+            sb.AppendLine("#   [Research Restrictions]");
+            sb.AppendLine("#   M4");
+            sb.AppendLine("#   ");
+            sb.AppendLine("#   [Blueprint Restrictions]");
+            sb.AppendLine("#   Kevlar Vest");
+            sb.AppendLine("");
+            sb.AppendLine("[Item Restrictions]");
+            sb.AppendLine("");
+            sb.AppendLine("[Crafting Restrictions]");
+            sb.AppendLine("");
+            sb.AppendLine("[Research Restrictions]");
+            sb.AppendLine("");
+            sb.AppendLine("[Blueprint Restrictions]");
 
             return sb;
         }
@@ -5720,7 +5916,7 @@ namespace RustEssentials.Util
             sb.AppendLine("# Warps are 3 point vectors (x, y, and z) with an assigned name.");
             sb.AppendLine("# By adding them here, you will be able to type /warp *name* to teleport to that vector.");
             sb.AppendLine("# Warps are permission bound and can be attached to either rank prefixes or UIDs.");
-            sb.AppendLine("# Warps that are attached to a rank will be inherited by ranks of higher authority unless inheritWarps in the config is fals.");
+            sb.AppendLine("# Warps that are attached to a rank will be inherited by ranks of higher authority unless inheritWarps in the config is false.");
             sb.AppendLine("# Example of a warp bound to Owners:");
             sb.AppendLine("#   [Village.O]");
             sb.AppendLine("#   (4986.2, 410.6, 5001.6)");
@@ -5944,6 +6140,7 @@ namespace RustEssentials.Util
             sb.AppendLine("/stop");
             sb.AppendLine("/access");
             sb.AppendLine("/remove");
+            sb.AppendLine("/craft");
             sb.AppendLine("");
             sb.AppendLine("[Administrator]");
             sb.AppendLine("/airdrop");
@@ -6019,12 +6216,44 @@ namespace RustEssentials.Util
             t.Start();
         }
 
+        public static void loopItems()
+        {
+            TimerPlus t = new TimerPlus();
+            t.AutoReset = true;
+            t.Interval = 5000;
+            t.Elapsed += ((sender, e) => checkItems());
+            t.Start();
+        }
+
         public static void sendNudity()
         {
             foreach (PlayerClient playerClient in AllPlayerClients)
             {
                 if (forceNudity)
                     ConsoleNetworker.SendClientCommand(playerClient.netPlayer, "censor.nudity false");
+            }
+        }
+
+        public static void checkItems()
+        {
+            foreach (PlayerClient playerClient in AllPlayerClients)
+            {
+                if (!craftList.Contains(playerClient.userID.ToString()))
+                {
+                    foreach (string itemName in restrictItems)
+                    {
+                        if (hasItem(playerClient, itemName))
+                        {
+                            Broadcast.broadcastTo(playerClient.netPlayer, "Illegal item \"" + itemName + "\" found. Item removed.");
+                            List<IInventoryItem> items;
+                            grabItem(playerClient, itemName, out items);
+                            foreach (IInventoryItem item in items)
+                            {
+                                removeItem(playerClient, item);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -6338,20 +6567,23 @@ namespace RustEssentials.Util
                 {
                     string kitName = s2.Split(':')[0].ToLower();
                     string cooldown = s2.Split(':')[1];
-
-                    TimerPlus t = new TimerPlus();
-                    t.AutoReset = false;
-                    t.Interval = Convert.ToInt32(cooldown);
-                    t.Elapsed += (sender, e) => restoreKit(sender, e, kitName, UID);
-                    t.Start();
-
-                    if (!playerCooldowns.Keys.Contains(UID))
+                    if (!cooldown.Contains("-"))
                     {
-                        playerCooldowns.Add(UID, new Dictionary<TimerPlus, string>() { { t, kitName } });
-                    }
-                    else
-                    {
-                        playerCooldowns[UID].Add(t, kitName);
+                        TimerPlus t = new TimerPlus();
+                        t.AutoReset = false;
+                        t.Interval = Convert.ToInt32(cooldown);
+                        t.Elapsed += (sender, e) => restoreKit(sender, e, kitName, UID);
+                        t.Start();
+
+                        if (!playerCooldowns.ContainsKey(UID))
+                        {
+                            playerCooldowns.Add(UID, new Dictionary<TimerPlus, string>() { { t, kitName } });
+                        }
+                        else
+                        {
+                            if (!playerCooldowns[UID].ContainsValue(kitName))
+                                playerCooldowns[UID].Add(t, kitName);
+                        }
                     }
                 }
             }
@@ -6444,9 +6676,13 @@ namespace RustEssentials.Util
                     List<string> allKits = currentKits.Split(';').ToList();
                     int index = Array.FindIndex(allKits.ToArray(), (string s) => s.StartsWith(kitName));
 
-                    allKits[index] = kitName + ":" + t.TimeLeft;
+                    if (t.TimeLeft > 0)
+                        allKits[index] = kitName + ":" + t.TimeLeft;
+                    else
+                        allKits.RemoveAt(index);
 
-                    fullString = UID + "=" + string.Join(";", allKits.ToArray());
+                    if (allKits.Count > 0)
+                        fullString = UID + "=" + string.Join(";", allKits.ToArray());
                 }
                 else
                 {
@@ -6456,7 +6692,10 @@ namespace RustEssentials.Util
                 }
 
                 int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID));
-                cooldownFileData[indexOfUID] = fullString;
+                if (fullString.Length > 0)
+                    cooldownFileData[indexOfUID] = fullString;
+                else
+                    cooldownFileData.RemoveAt(indexOfUID);
             }
             else
             {
@@ -6696,15 +6935,21 @@ namespace RustEssentials.Util
             sb.AppendLine("/airdrop (Spawns an airdrop with a random drop location)");
             sb.AppendLine("/airdrop <player name> (Spawns an airdrop with a drop location at the specified player)");
             sb.AppendLine("/ban <player name> (Bans player with reason: \"Banned by a(n) <Your Rank>\")");
-            sb.AppendLine("/ban <player name> [reason] (Bans player with reason)");
+            sb.AppendLine("/ban <player name> *reason* (Bans player with the specified reason)");
+            sb.AppendLine("/ban [player UID] (Bans player by UID with reason: \"Banned by a(n) <Your Rank>\")");
+            sb.AppendLine("/ban [player UID] *reason* (Bans player by UID with the specified reason)");
+            sb.AppendLine("/bane \"player name\" (Bans player by their exact name with reason: \"Banned by a(n) <Your Rank>\")");
+            sb.AppendLine("/bane \"player name\" *reason* (Bans player by their exact name with the specified reason)");
             sb.AppendLine("/chan {g} (Joins the global chat)");
             sb.AppendLine("/chan {global} (Joins the global chat)");
             sb.AppendLine("/chan {d} (Joins the direct chat)");
             sb.AppendLine("/chan {direct} (Joins the direct chat)");
             sb.AppendLine("/clearinv *name* (Clears the inventory of the specified player)");
             sb.AppendLine("/clearinv \"name\" (Clears the inventory of the specified player by their exact name)");
-            sb.AppendLine("/fall {on} (Turns on fall damage)");
-            sb.AppendLine("/fall {off} (Turns off fall damage)");
+            sb.AppendLine("/craft {on} (Turns on super craft mode. Crafting, research, and blueprint restrictions nullify for the sender)");
+            sb.AppendLine("/craft {off} (Turns off super craft mode. Crafting, research, and blueprint restrictions re-activate for the sender)");
+            sb.AppendLine("/fall {on} (Turns on server-wide fall damage)");
+            sb.AppendLine("/fall {off} (Turns off server-wide fall damage)");
             sb.AppendLine("/f {admin} *player name* (Gives faction admin to the specified faction member)");
             sb.AppendLine("/f {ally} *faction name* (Allies the specified faction)");
             sb.AppendLine("/f {build} {on} (Grants the sender build mode and allows them to build in zones)");
@@ -6768,7 +7013,9 @@ namespace RustEssentials.Util
             sb.AppendLine("/join (Emulates the joining of yourself)");
             sb.AppendLine("/join <player name> (Emulates the joining of a fake player)");
             sb.AppendLine("/kick <player name> (Kick player with reason: \"Kicked by a(n) <Your Rank>\")");
-            sb.AppendLine("/kick <player name> [reason] (Kick player with reason)");
+            sb.AppendLine("/kick <player name> *reason* (Kick player with the specified reason)");
+            sb.AppendLine("/kicke \"player name\" (Kick player by their exact name with reason: \"Kicked by a(n) <Your Rank>\")");
+            sb.AppendLine("/kicke \"player name\" *reason* (Kick player by their exact name with the specified reason)");
             sb.AppendLine("/kickall (Kicks all users, except for the command executor, out of the server)");
             sb.AppendLine("/kill *player name* (Kills the specified player)");
             sb.AppendLine("/kill \"player name\" (Kills the specified player with that exact name)");
@@ -6791,14 +7038,15 @@ namespace RustEssentials.Util
             sb.AppendLine("/random [item id] (Gives 1 of the specified item to 1 random player)");
             sb.AppendLine("/random [item id] [amount] (Gives an amount of the specified item to 1 random player)");
             sb.AppendLine("/random [item id] [amount] [amount of winners] (Gives an amount of the specified item to random players)");
-            sb.AppendLine("/reload {config/whitelist/ranks/commands/kits/motd/bans/prefix/warps/all} (Reloads the specified file)");
+            sb.AppendLine("/reload {config/whitelist/ranks/commands/kits/motd/bans/prefix/warps/controller/tables/all} (Reloads the specified file)");
             sb.AppendLine("/remove {on} (Gives access to delete entities (structures and AI entities) upon hit)");
             sb.AppendLine("/remove {off} (Revokes access to delete entities (structures and AI entities) upon hit)");
             sb.AppendLine("/rules (Lists the server rules)");
             sb.AppendLine("/save (Saves all world data)");
             sb.AppendLine("/say *message* (Says a message through the plugin)");
-            sb.AppendLine("/saypop *message* (Says a (!) dropdown message to all clients)");
+            sb.AppendLine("/saypop *message* (Says a (!) dropdown message to all clients if the first word is more than 2 characters)");
             sb.AppendLine("/saypop [icon] *message* (Says a dropdown message to all clients with designated icon)");
+            sb.AppendLine("/saypop [icon] *message* [#s] (Says a dropdown message to all clients with designated icon with a duration of # seconds (1-7 range))");
             sb.AppendLine("/share *player name* (Shares ownership of your doors with the designated user)");
             sb.AppendLine("/stop (Saves, deactivates, and effectively stops the server)");
             sb.AppendLine("/time (Returns current time of day)");
@@ -6851,93 +7099,48 @@ namespace RustEssentials.Util
                 switch (file)
                 {
                     case "config":
-                        RustEssentialsBootstrap._load.loadConfig();
+                        try { RustEssentialsBootstrap._load.loadConfig(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading config: " + ex.ToString()); }
                         break;
                     case "whitelist":
-                        Whitelist.readWhitelist();
+                        try { Whitelist.readWhitelist(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading whitelist: " + ex.ToString()); }
                         break;
                     case "ranks":
-                        RustEssentialsBootstrap._load.loadRanks();
+                        try { RustEssentialsBootstrap._load.loadRanks(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading ranks: " + ex.ToString()); }
                         break;
                     case "commands":
-                        RustEssentialsBootstrap._load.loadCommands();
+                        try { RustEssentialsBootstrap._load.loadCommands(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading commands: " + ex.ToString()); }
                         break;
                     case "kits":
-                        RustEssentialsBootstrap._load.loadKits();
+                        try { RustEssentialsBootstrap._load.loadKits(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading kits: " + ex.ToString()); }
                         break;
                     case "motd":
-                        RustEssentialsBootstrap._load.loadMOTD();
+                        try { RustEssentialsBootstrap._load.loadMOTD(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading MOTD: " + ex.ToString()); }
                         break;
                     case "bans":
-                        RustEssentialsBootstrap._load.loadBans();
+                        try { RustEssentialsBootstrap._load.loadBans(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading bans: " + ex.ToString()); }
                         break;
                     case "prefix":
-                        RustEssentialsBootstrap._load.loadPrefixes();
+                        try { RustEssentialsBootstrap._load.loadPrefixes(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading prefixes: " + ex.ToString()); }
                         break;
                     case "warps":
-                        RustEssentialsBootstrap._load.loadWarps();
-                        break;
-                    case "all":
-                        RustEssentialsBootstrap._load.loadConfig();
-                        Whitelist.readWhitelist();
-                        RustEssentialsBootstrap._load.loadRanks();
-                        RustEssentialsBootstrap._load.loadCommands();
-                        RustEssentialsBootstrap._load.loadKits();
-                        RustEssentialsBootstrap._load.loadMOTD();
-                        RustEssentialsBootstrap._load.loadBans();
-                        RustEssentialsBootstrap._load.loadPrefixes();
-                        RustEssentialsBootstrap._load.loadWarps();
-                        break;
-                }
-            }
-        }
-
-        public static void reloadFile(uLink.NetworkPlayer sender, string[] args)
-        {
-            if (args.Count() > 1)
-            {
-                string file = args[1];
-                switch (file)
-                {
-                    case "config":
-                        RustEssentialsBootstrap._load.loadConfig();
-                        Broadcast.broadcastTo(sender, "Config reloaded.");
-                        break;
-                    case "whitelist":
-                        Whitelist.readWhitelist();
-                        Broadcast.broadcastTo(sender, "Whitelist reloaded.");
-                        break;
-                    case "ranks":
-                        RustEssentialsBootstrap._load.loadRanks();
-                        Broadcast.broadcastTo(sender, "Ranks reloaded.");
-                        break;
-                    case "commands":
-                        RustEssentialsBootstrap._load.loadCommands();
-                        Broadcast.broadcastTo(sender, "Command permissions reloaded.");
-                        break;
-                    case "kits":
-                        RustEssentialsBootstrap._load.loadKits();
-                        Broadcast.broadcastTo(sender, "Kits reloaded.");
-                        break;
-                    case "motd":
-                        RustEssentialsBootstrap._load.loadMOTD();
-                        Broadcast.broadcastTo(sender, "MOTD reloaded.");
-                        break;
-                    case "bans":
-                        RustEssentialsBootstrap._load.loadBans();
-                        Broadcast.broadcastTo(sender, "Bans reloaded.");
-                        break;
-                    case "prefix":
-                        RustEssentialsBootstrap._load.loadPrefixes();
-                        Broadcast.broadcastTo(sender, "Prefixes reloaded.");
-                        break;
-                    case "warps":
-                        RustEssentialsBootstrap._load.loadWarps();
-                        Broadcast.broadcastTo(sender, "Warps reloaded.");
+                        try { RustEssentialsBootstrap._load.loadWarps(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading warps: " + ex.ToString()); }
                         break;
                     case "controller":
-                        RustEssentialsBootstrap._load.loadController();
-                        Broadcast.broadcastTo(sender, "Crafting Controller reloaded.");
+                        try { RustEssentialsBootstrap._load.loadController(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading controller: " + ex.ToString()); }
+                        break;
+                    case "tables":
+                        try { RustEssentialsBootstrap._load.loadTables(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading loot tables: " + ex.ToString()); }
                         break;
                     case "all":
                         try { RustEssentialsBootstrap._load.loadConfig(); }
@@ -6960,6 +7163,99 @@ namespace RustEssentials.Util
                         catch (Exception ex) { Vars.conLog.Error("Error when loading warps: " + ex.ToString()); }
                         try { RustEssentialsBootstrap._load.loadController(); }
                         catch (Exception ex) { Vars.conLog.Error("Error when loading controller: " + ex.ToString()); }
+                        try { RustEssentialsBootstrap._load.loadTables(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading loot tables: " + ex.ToString()); }
+                        break;
+                }
+            }
+        }
+
+        public static void reloadFile(uLink.NetworkPlayer sender, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                string file = args[1].ToLower();
+                switch (file)
+                {
+                    case "config":
+                        if (RustEssentialsBootstrap._load.loadConfig())
+                            Broadcast.broadcastTo(sender, "Config reloaded.");
+                        else
+                            Broadcast.broadcastTo(sender, "Config reloaded unsuccessfully! Possibly missing variables...");
+                        break;
+                    case "whitelist":
+                        try { Whitelist.readWhitelist(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading whitelist: " + ex.ToString()); }
+                        Broadcast.broadcastTo(sender, "Whitelist reloaded.");
+                        break;
+                    case "ranks":
+                        try { RustEssentialsBootstrap._load.loadRanks(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading ranks: " + ex.ToString()); }
+                        Broadcast.broadcastTo(sender, "Ranks reloaded.");
+                        break;
+                    case "commands":
+                        try { RustEssentialsBootstrap._load.loadCommands(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading commands: " + ex.ToString()); }
+                        Broadcast.broadcastTo(sender, "Command permissions reloaded.");
+                        break;
+                    case "kits":
+                        try { RustEssentialsBootstrap._load.loadKits(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading kits: " + ex.ToString()); }
+                        Broadcast.broadcastTo(sender, "Kits reloaded.");
+                        break;
+                    case "motd":
+                        try { RustEssentialsBootstrap._load.loadMOTD(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading MOTD: " + ex.ToString()); }
+                        Broadcast.broadcastTo(sender, "MOTD reloaded.");
+                        break;
+                    case "bans":
+                        try { RustEssentialsBootstrap._load.loadBans(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading bans: " + ex.ToString()); }
+                        Broadcast.broadcastTo(sender, "Bans reloaded.");
+                        break;
+                    case "prefix":
+                        try { RustEssentialsBootstrap._load.loadPrefixes(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading prefixes: " + ex.ToString()); }
+                        Broadcast.broadcastTo(sender, "Prefixes reloaded.");
+                        break;
+                    case "warps":
+                        try { RustEssentialsBootstrap._load.loadWarps(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading warps: " + ex.ToString()); }
+                        Broadcast.broadcastTo(sender, "Warps reloaded.");
+                        break;
+                    case "controller":
+                        try { RustEssentialsBootstrap._load.loadController(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading controller: " + ex.ToString()); }
+                        Broadcast.broadcastTo(sender, "Item Controller reloaded.");
+                        break;
+                    case "tables":
+                        try { RustEssentialsBootstrap._load.loadTables(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading loot tables: " + ex.ToString()); }
+                        Broadcast.broadcastTo(sender, "Loot tables reloaded.");
+                        break;
+                    case "all":
+                        try { RustEssentialsBootstrap._load.loadConfig(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading config: " + ex.ToString()); }
+                        try { Whitelist.readWhitelist(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading whitelist: " + ex.ToString()); }
+                        try { RustEssentialsBootstrap._load.loadRanks(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading ranks: " + ex.ToString()); }
+                        try { RustEssentialsBootstrap._load.loadCommands(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading commands: " + ex.ToString()); }
+                        try { RustEssentialsBootstrap._load.loadKits(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading kits: " + ex.ToString()); }
+                        try { RustEssentialsBootstrap._load.loadMOTD(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading MOTD: " + ex.ToString()); }
+                        try { RustEssentialsBootstrap._load.loadBans(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading bans: " + ex.ToString()); }
+                        try { RustEssentialsBootstrap._load.loadPrefixes(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading prefixes: " + ex.ToString()); }
+                        try { RustEssentialsBootstrap._load.loadWarps(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading warps: " + ex.ToString()); }
+                        try { RustEssentialsBootstrap._load.loadController(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading controller: " + ex.ToString()); }
+                        try { RustEssentialsBootstrap._load.loadTables(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading loot tables: " + ex.ToString()); }
                         Broadcast.broadcastTo(sender, "All files reloaded.");
                         break;
                     default:
@@ -7415,18 +7711,37 @@ namespace RustEssentials.Util
                 bool b = false;
                 try
                 {
-                    PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.controllable.GetComponent<TakeDamage>() == damage);
+                    List<PlayerClient> possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.controllable.GetComponent<TakeDamage>() == damage).ToList();
                     if (possibleClients.Count() > 0)
                     {
                         b = hiddenList.Contains(possibleClients[0].userID.ToString()) && HWAI._targetTD == possibleClients[0].controllable.GetComponent<TakeDamage>();
                     }
+                    
+                    try
+                    {
+                        if (!b)
+                        {
+                            possibleClients.Clear();
+                            if (isPlayer(damage.idMain))
+                            {
+                                Character character = damage.idMain as Character;
+                                foreach (string UID in hiddenList)
+                                {
+                                    if (UID == character.playerClient.userID.ToString() && HWAI._targetTD == character.playerClient.controllable.GetComponent<TakeDamage>())
+                                        b = true;
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("HS #2: " + ex.ToString());
+                    }
                 }
                 catch (Exception ex)
                 {
+                    Vars.conLog.Error("HS #1: " + ex.ToString());
                 }
-
-                if (b && HWAI.HasTarget())
-                    HWAI.LoseTarget();
 
                 if (!HWAI.IsScentBlind() && (((HWAI._state != 2) && (HWAI._state != 7)) && !HWAI.HasTarget()) && !b)
                 {
@@ -7434,6 +7749,9 @@ namespace RustEssentials.Util
                     HWAI.SetAttackTarget(damage);
                     HWAI.EnterState_Chase();
                 }
+
+                if (b && HWAI.HasTarget())
+                    HWAI._targetTD = null;
             }
             catch (Exception ex)
             {
@@ -7448,18 +7766,15 @@ namespace RustEssentials.Util
                 bool b = false;
                 try
                 {
-                    if (damage.attacker.idMain is Character)
+                    if (isPlayer(damage.attacker.idMain))
                     {
-                        if (isPlayer(damage.attacker.idMain))
-                        {
-                            b = hiddenList.Contains(damage.attacker.client.userID.ToString()) && HWAI._targetTD == damage.attacker.client.controllable.GetComponent<TakeDamage>();
-                        }
+                        b = hiddenList.Contains(damage.attacker.client.userID.ToString()) && HWAI._targetTD == damage.attacker.client.controllable.GetComponent<TakeDamage>();
                     }
                 }
-                catch { }
-
-                if (b && HWAI.HasTarget())
-                    HWAI.LoseTarget();
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("HH: " + ex.ToString());
+                }
 
                 if (!HWAI.HasTarget() && (damage.attacker.character != null) && !b)
                 {
@@ -7467,6 +7782,9 @@ namespace RustEssentials.Util
                     HWAI.ExitCurrentState();
                     HWAI.EnterState_Chase();
                 }
+
+                if (b && HWAI.HasTarget())
+                    HWAI._targetTD = null;
             }
             catch (Exception ex)
             {
@@ -7914,8 +8232,8 @@ namespace RustEssentials.Util
                 {
                     foreach (KeyValuePair<string, string> kv in currentBans)
                     {
-                        string reason = currentBanReasons[kv.Value];
-                        sw.WriteLine(kv.Key + "=" + kv.Value + " # " + reason);
+                        string reason = currentBanReasons[kv.Key];
+                        sw.WriteLine(kv.Value + "=" + kv.Key + " # " + reason);
                     }
                 }
             }
@@ -8032,16 +8350,16 @@ namespace RustEssentials.Util
                 }
 
                 RustEssentialsBootstrap._load.loadBans();
-                if (currentBans.Keys.Contains(targetName))
+                if (currentBans.ContainsValue(targetName)) // If the unban is by player name
                 {
-                    string UID = currentBans[targetName];
-                    currentBans.Remove(targetName);
+                    string UID = Array.Find(currentBans.ToArray(), (KeyValuePair<string, string> kv) => kv.Value == targetName).Key;
+                    currentBans.Remove(UID);
                     currentBanReasons.Remove(UID);
                     saveBans();
 
-                    Broadcast.noticeTo(playerClient.netPlayer, "☻", "Player " + targetName + " has been unbanned.");
+                    Broadcast.noticeTo(playerClient.netPlayer, "☻", "Player " + targetName + " (" + UID + ") has been unbanned.");
                 }
-                else if (currentBans.Values.Contains(targetName))
+                else if (currentBans.ContainsKey(targetName)) // If the unban is by UID
                 {
                     try
                     {
@@ -8049,12 +8367,12 @@ namespace RustEssentials.Util
                         string playerName = "";
                         foreach (KeyValuePair<string, string> kv in currentBans)
                         {
-                            if (kv.Value == UID)
-                                playerName = kv.Key;
+                            if (kv.Key == UID)
+                                playerName = kv.Value;
                         }
-                        if (currentBans.ContainsKey(playerName))
+                        if (currentBans.ContainsValue(playerName))
                         {
-                            currentBans.Remove(playerName);
+                            currentBans.Remove(UID);
                             currentBanReasons.Remove(UID);
                             saveBans();
 
@@ -8063,12 +8381,12 @@ namespace RustEssentials.Util
                     }
                     catch (Exception ex)
                     {
-                        Broadcast.noticeTo(playerClient.netPlayer, "№", "Player " + targetName + " is not banned!");
+                        Broadcast.noticeTo(playerClient.netPlayer, "№", "Player/UID " + targetName + " is not banned!");
                     }
                 }
                 else
                 {
-                    Broadcast.noticeTo(playerClient.netPlayer, "№", "Player " + targetName + " is not banned!");
+                    Broadcast.noticeTo(playerClient.netPlayer, "№", "Player/UID " + targetName + " is not banned!");
                 }
             }
         }
@@ -8160,13 +8478,13 @@ namespace RustEssentials.Util
                                 if (ofLowerRank(target.userID.ToString(), senderClient.userID.ToString(), false))
                                 {
                                     RustEssentialsBootstrap._load.loadBans();
-                                    if (!currentBans.Keys.Contains(target.displayName))
+                                    if (!currentBans.ContainsKey(target.userID.ToString()))
                                     {
                                         Broadcast.broadcastTo(target.networkPlayer, "You were banned! Reason: " + reason);
                                         target.Kick(NetError.Facepunch_Kick_Ban, false);
                                         Broadcast.broadcastAll("Player " + target.displayName + " was banned. Reason: " + reason);
-                                        currentBans.Add(target.displayName, target.userID.ToString());
-                                        currentBanReasons.Add(UID, reason);
+                                        currentBans.Add(target.userID.ToString(), target.displayName);
+                                        currentBanReasons.Add(target.userID.ToString(), reason);
                                         saveBans();
                                     }
                                     else
@@ -8212,11 +8530,11 @@ namespace RustEssentials.Util
                         if (ofLowerRank(UID.ToString(), senderClient.userID.ToString(), false))
                         {
                             RustEssentialsBootstrap._load.loadBans();
-                            if (!currentBans.Values.Contains(UID))
+                            if (!currentBans.ContainsKey(UID))
                             {
                                 Broadcast.broadcastAll("UID " + UID + " was banned. Reason: " + reason);
                                 ulong UIDLong = Convert.ToUInt64(UID);
-                                currentBans.Add("Unknown Player", UID);
+                                currentBans.Add(UID, "Unknown Player");
                                 currentBanReasons.Add(UID, reason);
                                 saveBans();
                             }
@@ -8274,12 +8592,12 @@ namespace RustEssentials.Util
                                     if (ofLowerRank(target.userID.ToString(), senderClient.userID.ToString(), false))
                                     {
                                         RustEssentialsBootstrap._load.loadBans();
-                                        if (!currentBans.Keys.Contains(target.displayName))
+                                        if (!currentBans.ContainsKey(target.userID.ToString()))
                                         {
                                             Broadcast.broadcastTo(target.networkPlayer, "You were banned! Reason: " + reason);
                                             target.Kick(NetError.Facepunch_Kick_Ban, false);
                                             Broadcast.broadcastAll("Player " + target.displayName + " was banned. Reason: " + reason);
-                                            currentBans.Add(target.displayName, target.userID.ToString());
+                                            currentBans.Add(target.userID.ToString(), target.displayName);
                                             currentBanReasons.Add(target.userID.ToString(), reason);
                                             saveBans();
                                         }
@@ -8339,12 +8657,12 @@ namespace RustEssentials.Util
                                     if (ofLowerRank(target.userID.ToString(), senderClient.userID.ToString(), false))
                                     {
                                         RustEssentialsBootstrap._load.loadBans();
-                                        if (!currentBans.Keys.Contains(target.displayName))
+                                        if (!currentBans.ContainsKey(target.userID.ToString()))
                                         {
                                             Broadcast.broadcastTo(target.networkPlayer, "You were banned! Reason: " + reason);
                                             target.Kick(NetError.Facepunch_Kick_Ban, false);
                                             Broadcast.broadcastAll("Player " + target.displayName + " was banned. Reason: " + reason);
-                                            currentBans.Add(target.displayName, target.userID.ToString());
+                                            currentBans.Add(target.userID.ToString(), target.displayName);
                                             currentBanReasons.Add(target.userID.ToString(), reason);
                                             saveBans();
                                         }
@@ -8756,7 +9074,16 @@ namespace RustEssentials.Util
                                 if (playerCooldowns.Keys.Contains(senderClient.userID.ToString()))
                                 {
                                     if (playerCooldowns[senderClient.userID.ToString()].Values.Contains(kitNameToLower))
-                                        b = false;
+                                    {
+                                        foreach (KeyValuePair<TimerPlus, string> kv in playerCooldowns[senderClient.userID.ToString()])
+                                        {
+                                            if (kv.Value == kitNameToLower)
+                                            {
+                                                if (Math.Round((kv.Key.TimeLeft / 1000)) > 0)
+                                                    b = false;
+                                            }
+                                        }
+                                    }
                                 }
 
                                 if (b) // If I am not on cool down for this kit
@@ -9100,7 +9427,7 @@ namespace RustEssentials.Util
                             {
                                 if (senderClient != targetClient)
                                     Broadcast.broadcastTo(senderClient.netPlayer, "You gave " + targetClient.userName + " " + amount + " " + itemName);
-                                Broadcast.noticeTo(targetClient.netPlayer, "☻", "You were given " + amount + " " + itemName + " by " + senderClient.userName);
+                                Broadcast.noticeTo(targetClient.netPlayer, "☻", "You were given " + amount + " " + itemName + (senderClient.userName.Length > 0 && senderClient.userName != targetClient.userName ? " by " + senderClient.userName : ""));
                             }
                         }
                     }
@@ -9141,7 +9468,7 @@ namespace RustEssentials.Util
                                 {
                                     if (senderClient != targetClient)
                                         Broadcast.broadcastTo(senderClient.netPlayer, "You gave " + targetClient.userName + " " + amount + " " + itemName);
-                                    Broadcast.noticeTo(targetClient.netPlayer, "☻", "You were given " + amount + " " + itemName + " by " + senderClient.userName);
+                                    Broadcast.noticeTo(targetClient.netPlayer, "☻", "You were given " + amount + " " + itemName + (senderClient.userName.Length > 0 && senderClient.userName != targetClient.userName ? " by " + senderClient.userName : ""));
                                 }
                             }
                         }
@@ -9580,32 +9907,255 @@ namespace RustEssentials.Util
             }
         }
 
+        public static InventoryItem.MergeResult ResearchItemKit(IInventoryItem otherItem, IResearchToolItem researchItem)
+        {
+            BlueprintDataBlock block2;
+            PlayerInventory inventory = researchItem.inventory as PlayerInventory;
+            if ((inventory == null) || (otherItem.inventory != inventory))
+            {
+                return InventoryItem.MergeResult.Failed;
+            }
+            PlayerClient playerClient = Array.Find(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == inventory.networkView.owner);
+            ItemDataBlock datablock = otherItem.datablock;
+            if ((datablock == null) || !datablock.isResearchable || restrictResearch.Contains(otherItem.datablock.name))
+            {
+                if (datablock == null)
+                    return InventoryItem.MergeResult.Failed;
+                if (!datablock.isResearchable || restrictResearch.Contains(otherItem.datablock.name))
+                {
+                    if (!permitResearch.Contains(otherItem.datablock.name) && !craftList.Contains(playerClient.userID.ToString()))
+                    {
+                        Rust.Notice.Popup(inventory.networkView.owner, "", "You cannot research this item!", 4f);
+                        return InventoryItem.MergeResult.Failed;
+                    }
+                }
+            }
+            if (!inventory.AtWorkBench() && researchAtBench && !craftList.Contains(playerClient.userID.ToString()))
+            {
+                Rust.Notice.Popup(inventory.networkView.owner, "", "You must be at a workbench to research.", 4f);
+                return InventoryItem.MergeResult.Failed;
+            }
+            if (!BlueprintDataBlock.FindBlueprintForItem<BlueprintDataBlock>(otherItem.datablock, out block2))
+            {
+                Rust.Notice.Popup(inventory.networkView.owner, "", "There is no crafting recipe for this.", 4f);
+                return InventoryItem.MergeResult.Failed;
+            }
+            if (inventory.KnowsBP(block2))
+            {
+                Rust.Notice.Popup(inventory.networkView.owner, "", "You already researched this.", 4f);
+                return InventoryItem.MergeResult.Failed;
+            }
+            IInventoryItem paper;
+            int numPaper = 1;
+            if (researchPaper && !craftList.Contains(playerClient.userID.ToString()))
+            {
+                if (hasItem(playerClient, "Paper", out paper))
+                {
+                    if (paper.Consume(ref numPaper))
+                        paper.inventory.RemoveItem(paper.slot);
+                }
+                else
+                {
+                    Rust.Notice.Popup(inventory.networkView.owner, "", "Researching requires paper.", 4f);
+                    return InventoryItem.MergeResult.Failed;
+                }
+            }
+            inventory.BindBlueprint(block2);
+            Rust.Notice.Popup(inventory.networkView.owner, "", "You can now craft: " + otherItem.datablock.name, 4f);
+            int numWant = 1;
+            if (!infiniteResearch)
+            {
+                if (researchItem.Consume(ref numWant))
+                    researchItem.inventory.RemoveItem(researchItem.slot);
+            }
+            return InventoryItem.MergeResult.Combined;
+        }
+
         public static void ResearchItem(IBlueprintItem item, BlueprintDataBlock BDB)
         {
             PlayerInventory inventory = item.inventory as PlayerInventory;
             if (inventory != null)
             {
-                if (inventory.BindBlueprint(BDB))
+                bool b = false;
+                PlayerClient playerClient = Array.Find(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == inventory.networkView.owner);
+                if (!restrictBlueprints.Contains(BDB.resultItem.name) || craftList.Contains(playerClient.userID.ToString()))
                 {
-                    int count = 1;
-                    if (item.Consume(ref count))
+                    if (inventory.BindBlueprint(BDB))
                     {
-                        inventory.RemoveItem(item.slot);
+                        int count = 1;
+                        if (item.Consume(ref count))
+                        {
+                            inventory.RemoveItem(item.slot);
+                        }
+                        Rust.Notice.Popup(inventory.networkView.owner, "", "You can now craft: " + BDB.resultItem.name, 4f);
                     }
-                    Rust.Notice.Popup(inventory.networkView.owner, "", "You can now craft: " + BDB.resultItem.name, 4f);
+                    else
+                    {
+                        Rust.Notice.Popup(inventory.networkView.owner, "", "You already researched this.", 4f);
+                    }
+                }
+                else
+                    Broadcast.noticeTo(inventory.networkView.owner, "", "You cannot research this item!", 4);
+            }
+        }
+
+        public static bool CanCraft(int amount, Inventory workbenchInv, BlueprintDataBlock BDB)
+        {
+            if (BDB.lastCanWorkResult == null)
+            {
+                BDB.lastCanWorkResult = new List<int>();
+            }
+            else
+            {
+                BDB.lastCanWorkResult.Clear();
+            }
+            if (BDB.lastCanWorkIngredientCount == null)
+            {
+                BDB.lastCanWorkIngredientCount = new List<int>(BDB.ingredients.Length);
+            }
+            else
+            {
+                BDB.lastCanWorkIngredientCount.Clear();
+            }
+            PlayerClient playerClient = Array.Find(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == workbenchInv.networkView.owner);
+            if (playerClient != null)
+            {
+                if (!craftList.Contains(playerClient.userID.ToString()))
+                {
+                    if (BDB.RequireWorkbench && craftAtBench)
+                    {
+                        CraftingInventory component = workbenchInv.GetComponent<CraftingInventory>();
+                        if ((component == null) || !component.AtWorkBench())
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (BDB.RequireWorkbench && craftAtBench)
+                {
+                    CraftingInventory component = workbenchInv.GetComponent<CraftingInventory>();
+                    if ((component == null) || !component.AtWorkBench())
+                    {
+                        return false;
+                    }
+                }
+            }
+            if (playerClient != null)
+            {
+                if (!craftList.Contains(playerClient.userID.ToString()))
+                {
+                    foreach (BlueprintDataBlock.IngredientEntry entry in BDB.ingredients)
+                    {
+                        if (entry.amount != 0)
+                        {
+                            int item = workbenchInv.CanConsume(entry.Ingredient, entry.amount * amount, BDB.lastCanWorkResult);
+                            if (item <= 0)
+                            {
+                                BDB.lastCanWorkResult.Clear();
+                                BDB.lastCanWorkIngredientCount.Clear();
+                                return false;
+                            }
+                            BDB.lastCanWorkIngredientCount.Add(item);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                foreach (BlueprintDataBlock.IngredientEntry entry in BDB.ingredients)
+                {
+                    if (entry.amount != 0)
+                    {
+                        int item = workbenchInv.CanConsume(entry.Ingredient, entry.amount * amount, BDB.lastCanWorkResult);
+                        if (item <= 0)
+                        {
+                            BDB.lastCanWorkResult.Clear();
+                            BDB.lastCanWorkIngredientCount.Clear();
+                            return false;
+                        }
+                        BDB.lastCanWorkIngredientCount.Add(item);
+                    }
+                }
+            }
+            return true;
+        }
+
+        public static bool CraftItem(int amount, Inventory workbenchInv, BlueprintDataBlock BDB)
+        {
+            if (!BDB.CanWork(amount, workbenchInv))
+            {
+                return false;
+            }
+            int num = 0;
+            PlayerClient playerClient = Array.Find(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == workbenchInv.networkView.owner);
+            if (playerClient != null)
+            {
+                if (!restrictCrafting.Contains(BDB.resultItem.name) || craftList.Contains(playerClient.userID.ToString()))
+                {
+                    for (int i = 0; i < BDB.ingredients.Length; i++)
+                    {
+                        int count = BDB.ingredients[i].amount * amount;
+                        if (count != 0)
+                        {
+                            int num4 = BDB.lastCanWorkIngredientCount[i];
+                            for (int j = 0; j < num4; j++)
+                            {
+                                IInventoryItem item;
+                                int slot = BDB.lastCanWorkResult[num++];
+                                if (workbenchInv.GetItem(slot, out item) && item.Consume(ref count))
+                                {
+                                    workbenchInv.RemoveItem(slot);
+                                }
+                            }
+                        }
+                    }
                 }
                 else
                 {
-                    Rust.Notice.Popup(inventory.networkView.owner, "", "You already have this blueprint", 4f);
+                    Broadcast.noticeTo(workbenchInv.networkView.owner, "♨", "You cannot craft this item!", 4);
+                    return false;
                 }
             }
+            else
+            {
+                if (!restrictCrafting.Contains(BDB.resultItem.name))
+                {
+                    for (int i = 0; i < BDB.ingredients.Length; i++)
+                    {
+                        int count = BDB.ingredients[i].amount * amount;
+                        if (count != 0)
+                        {
+                            int num4 = BDB.lastCanWorkIngredientCount[i];
+                            for (int j = 0; j < num4; j++)
+                            {
+                                IInventoryItem item;
+                                int slot = BDB.lastCanWorkResult[num++];
+                                if (workbenchInv.GetItem(slot, out item) && item.Consume(ref count))
+                                {
+                                    workbenchInv.RemoveItem(slot);
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Broadcast.noticeTo(workbenchInv.networkView.owner, "♨", "You cannot craft this item!", 4);
+                    return false;
+                }
+            }
+            workbenchInv.AddItemAmount(BDB.resultItem, amount * BDB.numResultItem);
+            return true;
         }
 
         public static void giveawayItem(string itemName, int amount, int playerAmount)
         {
             List<PlayerClient> winners = new List<PlayerClient>();
             List<string> winnerNames = new List<string>();
-            List<PlayerClient> possibleWinners = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => !vanishedList.Contains(pc.userID.ToString()) && !lastWinners.Contains(pc.userID.ToString())).ToList();
+            List<PlayerClient> possibleWinners = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => !vanishedList.Contains(pc.userID.ToString()) && !lastWinners.Contains(pc.userID.ToString()) && pc.userName.Length > 0).ToList();
             lastWinners.Clear();
             string winnerList = "";
             System.Random rnd = new System.Random();
@@ -9643,6 +10193,27 @@ namespace RustEssentials.Util
             foreach (PlayerClient targetClient in winners)
             {
                 addItem(targetClient, itemName, amount);
+            }
+        }
+
+        public static void DeployableKilled(DeployableObject DO)
+        {
+            if (DO.handleDeathHere)
+            {
+                if (DO.clientDeathEffect != null)
+                {
+                    NetCull.RPC(NetEntityID.Get((UnityEngine.MonoBehaviour)DO), "Client_OnKilled", uLink.RPCMode.OthersBuffered);
+                }
+                NetCull.Destroy(DO.gameObject);
+                if (DO.corpseObject != null)
+                {
+                    bool b = true;
+                    if (!doorStops && (DO.corpseObject.name == "MetalDoor_Corpse" || DO.corpseObject.name == "WoodDoor_Corpse"))
+                        b = false;
+
+                    if (b)
+                        NetCull.InstantiateStatic(DO.corpseObject, DO.transform.position, DO.transform.rotation);
+                }
             }
         }
     }

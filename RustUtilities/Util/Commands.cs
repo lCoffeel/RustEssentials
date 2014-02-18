@@ -78,7 +78,7 @@ namespace RustEssentials.Util
             string[] commandArgs = message.Split(' ');
             string command = commandArgs[0];
 
-            if (Vars.totalCommands.Contains(command))
+            if (Vars.totalCommands.Contains(command) || (playerChar.netUser.CanAdmin() && commandArgs[0] == "/reload"))
             {
                 if (Vars.enabledCommands[Vars.findRank(playerClient.userID.ToString())].Contains(command) || (playerChar.netUser.CanAdmin() && commandArgs[0] == "/reload"))
                 {
@@ -97,6 +97,9 @@ namespace RustEssentials.Util
                             case "/clearinv":
                                 Vars.clearPlayer(playerClient, commandArgs);
                                 break;
+                            case "/craft":
+                                Vars.craftTool(playerClient, commandArgs);
+                                break;
                             case "/vanish":
                                 Vars.vanishTool(playerClient, commandArgs);
                                 break;
@@ -108,7 +111,7 @@ namespace RustEssentials.Util
                                 break;
                             case "/owner":
                                 Vars.showOwner(playerClient, commandArgs);
-                                break;
+                                break; 
                             case "/remove":
                                 Vars.removerTool(playerClient, commandArgs);
                                 break;

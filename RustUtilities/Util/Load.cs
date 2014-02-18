@@ -88,12 +88,13 @@ namespace RustEssentials.Util
         {
             try
             {
-                if (File.Exists(Vars.craftControlFile))
+                if (File.Exists(Vars.itemControllerFile))
                 {
                     Vars.restrictCrafting.Clear();
                     Vars.restrictResearch.Clear();
                     Vars.restrictBlueprints.Clear();
-                    using (StreamReader sr = new StreamReader(Vars.craftControlFile))
+                    int restrictionCount = 0;
+                    using (StreamReader sr = new StreamReader(Vars.itemControllerFile))
                     {
                         string line;
                         while ((line = sr.ReadLine()) != null)
@@ -113,31 +114,343 @@ namespace RustEssentials.Util
                                 }
                                 else
                                 {
-                                    if (!Vars.itemIDs.Values.Contains(line))
-                                        Vars.conLog.Error("No such item named \"" + line + "\" in section [" + currentRestriction + "].");
-                                    else
+                                    if (line.Length > 0)
                                     {
-                                        switch (currentRestriction)
+                                        if (!Vars.itemIDs.Values.Contains(line))
+                                            Vars.conLog.Error("No such item named \"" + line + "\" in section " + currentRestriction + ".");
+                                        else
                                         {
-                                            case "[Crafting]":
-                                                if (!Vars.restrictCrafting.Contains(line))
-                                                    Vars.restrictCrafting.Add(line);
-                                                break;
-                                            case "[Researching]":
-                                                if (!Vars.restrictResearch.Contains(line))
-                                                    Vars.restrictResearch.Add(line);
-                                                break;
-                                            case "[Blueprints]":
-                                                if (!Vars.restrictBlueprints.Contains(line))
-                                                    Vars.restrictBlueprints.Add(line);
-                                                break;
+                                            switch (currentRestriction)
+                                            {
+                                                case "[Item Restrictions]":
+                                                    if (!Vars.restrictItems.Contains(line))
+                                                    {
+                                                        Vars.restrictItems.Add(line);
+                                                        restrictionCount++;
+                                                    }
+                                                    break;
+                                                case "[Crafting Restrictions]":
+                                                    if (!Vars.restrictCrafting.Contains(line))
+                                                    {
+                                                        Vars.restrictCrafting.Add(line);
+                                                        restrictionCount++;
+                                                    }
+                                                    break;
+                                                case "[Research Restrictions]":
+                                                    if (!Vars.restrictResearch.Contains(line))
+                                                    {
+                                                        Vars.restrictResearch.Add(line);
+                                                        restrictionCount++;
+                                                    }
+                                                    break;
+                                                case "[Blueprint Restrictions]":
+                                                    if (!Vars.restrictBlueprints.Contains(line))
+                                                    {
+                                                        Vars.restrictBlueprints.Add(line);
+                                                        restrictionCount++;
+                                                    }
+                                                    break;
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
+                    Vars.conLog.Info("Item Controller successfully loaded with " + restrictionCount + " restrictions!");
                 }
+            }
+            catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
+        }
+
+        public void loadTables()
+        {
+            try
+            {
+                string currentSection = "";
+                bool isSkipping = false;
+
+                if (!Directory.Exists(Vars.tablesDir))
+                    Directory.CreateDirectory(Vars.tablesDir);
+
+                List<string> tables = Directory.GetFiles(Vars.tablesDir, "*.ini").ToList();
+                foreach (string table in tables)
+                {
+                    string tableName = Path.GetFileNameWithoutExtension(table);
+                    if (!Vars.originalLootTables.ContainsKey(tableName))
+                        tables.Remove(table);
+                }
+
+                if (tables.Count < Vars.originalLootTables.Count)
+                {
+                    foreach (KeyValuePair<string, LootSpawnList> lootTable in Vars.originalLootTables)
+                    {
+                        string tableName = lootTable.Key;
+                        string filePath = Path.Combine(Vars.tablesDir, tableName + ".ini");
+
+                        if (!File.Exists(filePath))
+                        {
+                            using (StreamWriter sw = new StreamWriter(filePath))
+                            {
+                                sw.WriteLine("[Settings]");
+                                sw.WriteLine("# Minimum number of items/tables that can be selected.");
+                                sw.WriteLine("minimumSelections=" + lootTable.Value.minPackagesToSpawn);
+                                sw.WriteLine("# Maximum number of items/tables that can be selected.");
+                                sw.WriteLine("maximumSelections=" + lootTable.Value.maxPackagesToSpawn);
+                                sw.WriteLine("# If true, the same item/table can be randomly selected multiple times for spawning.");
+                                sw.WriteLine("allowDuplicates=" + (!lootTable.Value.noDuplicates).ToString().ToLower());
+                                sw.WriteLine("# If true, all items and tables will be used regardless of probability - there will be no random selection.");
+                                sw.WriteLine("useAll=" + lootTable.Value.spawnOneOfEach.ToString().ToLower());
+                                sw.WriteLine("");
+                                foreach (LootSpawnList.LootWeightedEntry entry in lootTable.Value.LootPackages)
+                                {
+                                    try
+                                    {
+                                        if (entry.obj is LootSpawnList)
+                                        {
+                                            LootSpawnList entryTable = (LootSpawnList)entry.obj;
+                                            string entryName = Array.Find(Vars.originalLootTables.ToArray(), (KeyValuePair<string, LootSpawnList> kv) => kv.Value == entryTable).Key;
+                                            if (entryName != null)
+                                            {
+                                                sw.WriteLine("[" + entryName + ".Table]");
+                                                sw.WriteLine("probability=" + entry.weight);
+                                                sw.WriteLine("minimumAmount=" + entry.amountMin);
+                                                sw.WriteLine("maximumAmount=" + entry.amountMax);
+                                                sw.WriteLine("");
+                                            }
+                                        }
+                                        else if (entry.obj is ItemDataBlock)
+                                        {
+                                            ItemDataBlock entryItem = (ItemDataBlock)entry.obj;
+                                            string entryName = entryItem.name;
+
+                                            sw.WriteLine("[" + entryName + ".Item]");
+                                            sw.WriteLine("probability=" + entry.weight);
+                                            sw.WriteLine("minimumAmount=" + entry.amountMin);
+                                            sw.WriteLine("maximumAmount=" + entry.amountMax);
+                                            sw.WriteLine("");
+                                        }
+                                    }
+                                    catch (Exception ex) { Vars.conLog.Error("Something went wrong when uncovering a loot package: " + ex.ToString()); }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                List<LootSpawnList.LootWeightedEntry> newLootPackages = new List<LootSpawnList.LootWeightedEntry>();
+                LootSpawnList.LootWeightedEntry lootPackage = new LootSpawnList.LootWeightedEntry();
+                foreach (string tablePath in tables)
+                {
+                    string fileName = Path.GetFileName(tablePath);
+                    string tableName = Path.GetFileNameWithoutExtension(tablePath);
+                    if (File.Exists(tablePath))
+                    {
+                        using (StreamReader sr = new StreamReader(tablePath))
+                        {
+                            string line;
+                            while ((line = sr.ReadLine()) != null)
+                            {
+                                if (!line.StartsWith("#"))
+                                {
+                                    if (line.IndexOf("#") > -1)
+                                    {
+                                        line = line.Substring(0, line.IndexOf("#"));
+                                    }
+
+                                    line = line.Trim();
+
+                                    if (line.StartsWith("[") && line.EndsWith("]"))
+                                    {
+                                        currentSection = line.Trim();
+                                        isSkipping = false;
+                                        lootPackage = new LootSpawnList.LootWeightedEntry();
+                                        if (currentSection == "[Settings]")
+                                        {
+                                        }
+                                        else if (currentSection.EndsWith(".Item]"))
+                                        {
+                                            try
+                                            {
+                                                string itemName = currentSection.Substring(1, currentSection.LastIndexOf(".Item]") - 1);
+                                                if (Vars.itemIDs.ContainsValue(itemName))
+                                                {
+                                                    ItemDataBlock item = DatablockDictionary.GetByName(itemName);
+                                                    lootPackage.obj = item;
+                                                }
+                                                else
+                                                {
+                                                    Vars.conLog.Error("Invalid item name [" + itemName + "] in " + fileName + "!");
+                                                    isSkipping = true;
+                                                }
+                                            }
+                                            catch { Vars.conLog.Error("Invalid item section name " + currentSection + " in " + fileName + "!"); isSkipping = true; }
+                                        }
+                                        else if (currentSection.EndsWith(".Table]"))
+                                        {
+                                            try
+                                            {
+                                                string tableSectionName = currentSection.Substring(1, currentSection.LastIndexOf(".Table]") - 1);
+                                                if (Vars.originalLootTables.ContainsKey(tableSectionName))
+                                                {
+                                                    LootSpawnList table = DatablockDictionary.GetLootSpawnListByName(tableSectionName);
+                                                    lootPackage.obj = table;
+                                                }
+                                                else
+                                                {
+                                                    Vars.conLog.Error("Invalid table name [" + tableSectionName + "] in " + fileName + "!");
+                                                    isSkipping = true;
+                                                }
+                                            }
+                                            catch { Vars.conLog.Error("Invalid table section name " + currentSection + " in " + fileName + "!"); isSkipping = true; }
+                                        }
+                                        else
+                                        {
+                                            Vars.conLog.Error("Invalid table/item section name " + currentSection + " in " + fileName + "!");
+                                            isSkipping = true;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (!isSkipping)
+                                        {
+                                            if (currentSection == "[Settings]")
+                                            {
+                                                if (line.Length > 0 && line.Contains("="))
+                                                {
+                                                    string variableName = line.Split('=')[0];
+                                                    string variableValue = line.Split('=')[1];
+                                                    if (variableName.Length > 0 && variableValue.Length > 0)
+                                                    {
+                                                        switch (variableName)
+                                                        {
+                                                            case "minimumSelections":
+                                                                int minimumLoot = Vars.originalLootTables[tableName].minPackagesToSpawn;
+                                                                if (int.TryParse(variableValue, out minimumLoot))
+                                                                {
+                                                                    if (minimumLoot >= 0)
+                                                                        DatablockDictionary._lootSpawnLists[tableName].minPackagesToSpawn = minimumLoot;
+                                                                    else
+                                                                        Vars.conLog.Error("Variable \"minimumLoot\" must be above 0 in " + fileName + "!");
+                                                                }
+                                                                else
+                                                                {
+                                                                    Vars.conLog.Error("Could not parse \"minimumLoot\" as an integer in " + fileName + "!");
+                                                                }
+                                                                break;
+                                                            case "maximumSelections":
+                                                                int maximumLoot = Vars.originalLootTables[tableName].maxPackagesToSpawn;
+                                                                if (int.TryParse(variableValue, out maximumLoot))
+                                                                {
+                                                                    if (maximumLoot >= 0)
+                                                                        DatablockDictionary._lootSpawnLists[tableName].maxPackagesToSpawn = maximumLoot;
+                                                                    else
+                                                                        Vars.conLog.Error("Variable \"maximumLoot\" must be above 0 in " + fileName + "!");
+                                                                }
+                                                                else
+                                                                {
+                                                                    Vars.conLog.Error("Could not parse \"maximumLoot\" as an integer in " + fileName + "!");
+                                                                }
+                                                                break;
+                                                            case "allowDuplicates":
+                                                                bool allowDuplicates = !Vars.originalLootTables[tableName].noDuplicates;
+                                                                if (bool.TryParse(variableValue, out allowDuplicates))
+                                                                {
+                                                                    DatablockDictionary._lootSpawnLists[tableName].noDuplicates = !allowDuplicates;
+                                                                }
+                                                                else
+                                                                {
+                                                                    Vars.conLog.Error("Could not parse \"allowDuplicates\" as a boolean in " + fileName + "!");
+                                                                }
+                                                                break;
+                                                            case "useAll":
+                                                                bool useAll = !Vars.originalLootTables[tableName].spawnOneOfEach;
+                                                                if (bool.TryParse(variableValue, out useAll))
+                                                                {
+                                                                    DatablockDictionary._lootSpawnLists[tableName].spawnOneOfEach = useAll;
+                                                                }
+                                                                else
+                                                                {
+                                                                    Vars.conLog.Error("Could not parse \"useAll\" as a boolean in " + fileName + "!");
+                                                                }
+                                                                break;
+                                                            default:
+                                                                Vars.conLog.Error("Unfamiliar variable name \"" + variableName + "\" in " + fileName + "!");
+                                                                break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            else if (currentSection.EndsWith(".Item]") || currentSection.EndsWith(".Table]"))
+                                            {
+                                                if (line.Length > 0 && line.Contains("="))
+                                                {
+                                                    string variableName = line.Split('=')[0];
+                                                    string variableValue = line.Split('=')[1];
+                                                    if (variableName.Length > 0 && variableValue.Length > 0)
+                                                    {
+                                                        switch (variableName)
+                                                        {
+                                                            case "probability":
+                                                                float probability;
+                                                                if (float.TryParse(variableValue, out probability))
+                                                                {
+                                                                    if (probability >= 0)
+                                                                        lootPackage.weight = probability;
+                                                                    else
+                                                                        Vars.conLog.Error("Variable \"probability\" must be above 0 in " + fileName + "!");
+                                                                }
+                                                                else
+                                                                {
+                                                                    Vars.conLog.Error("Could not parse \"probability\" as a float in " + fileName + "!");
+                                                                }
+                                                                break;
+                                                            case "minimumAmount":
+                                                                int minimum;
+                                                                if (int.TryParse(variableValue, out minimum))
+                                                                {
+                                                                    if (minimum >= 0)
+                                                                        lootPackage.amountMin = minimum;
+                                                                    else
+                                                                        Vars.conLog.Error("Variable \"minimum\" must be above 0 in " + fileName + "!");
+                                                                }
+                                                                else
+                                                                {
+                                                                    Vars.conLog.Error("Could not parse \"minimum\" as an integer in " + fileName + "!");
+                                                                }
+                                                                break;
+                                                            case "maximumAmount":
+                                                                int maximum;
+                                                                if (int.TryParse(variableValue, out maximum))
+                                                                {
+                                                                    if (maximum >= 0)
+                                                                        lootPackage.amountMax = maximum;
+                                                                    else
+                                                                        Vars.conLog.Error("Variable \"maximum\" must be above 0 in " + fileName + "!");
+                                                                }
+                                                                else
+                                                                {
+                                                                    Vars.conLog.Error("Could not parse \"maximum\" as an integer in " + fileName + "!");
+                                                                }
+                                                                newLootPackages.Add(lootPackage);
+                                                                break;
+                                                            default:
+                                                                Vars.conLog.Error("Unfamiliar variable name \"" + variableName + "\" in " + fileName + "!");
+                                                                break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (newLootPackages.Count > 0)
+                            DatablockDictionary._lootSpawnLists[tableName].LootPackages = newLootPackages.ToArray();
+                    }
+                }
+                Vars.conLog.Info("Loot tables successfully overrided!");
             }
             catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
         }
@@ -680,299 +993,328 @@ namespace RustEssentials.Util
             catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
         }
 
-        public void loadConfig()
+        public bool loadConfig()
         {
             if (File.Exists(Vars.cfgFile))
             {
-                Config.setVariables();
-
-                try { Vars.enableWhitelist = Convert.ToBoolean(Config.enabledWhitelist); }
-                catch (Exception ex)
+                if (Config.setVariables())
                 {
-                    Vars.conLog.Error("enableWhitelist could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                Vars.useMySQL = false;
-                //try { Vars.useMySQL = Convert.ToBoolean(Config.MySQL); }
-                //catch (Exception ex)
-                //{
-                //    Vars.conLog.Error("useMySQL could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                //}
-                try { Vars.useSteamGroup = Convert.ToBoolean(Config.useSteamGroup); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("useSteamGroup could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                Vars.steamGroup = Config.steamGroup.Replace("\r\n", "").Replace("\n", "");
-                try { Vars.autoRefresh = Convert.ToBoolean(Config.autoRefresh); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("autoRefresh could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { Vars.refreshInterval = Convert.ToInt16(Config.refreshInterval) * 1000; }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("refreshInterval could not be parsed as a number!");
-                }
-                try { Vars.whitelistToMembers = Convert.ToBoolean(Config.whitelistToMembers); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("whitelistToMembers could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                Vars.whitelistKickCMD = Config.whitelistKickCMD;
-                Vars.whitelistKickJoin = Config.whitelistKickJoin;
-                Vars.whitelistCheckGood = Config.whitelistCheckGood;
-                Vars.whitelistCheckBad = Config.whitelistCheckBad;
-
-                try { Vars.announceDrops = Convert.ToBoolean(Config.announceDrops); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("announceDrops could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-
-                try { Vars.fallDamage = Convert.ToBoolean(Config.fallDamage); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("fallDamage could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { voice.distance = (float)Convert.ToInt16(Config.voiceDistance); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("voiceDistance could not be parsed as a number!");
-                }
-                try { Vars.enableRepair = Convert.ToBoolean(Config.enableRepair); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("enableRepair could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { Vars.forceNudity = Convert.ToBoolean(Config.forceNudity); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("forceNudity could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-
-                try { Vars.directChat = Convert.ToBoolean(Config.directChat); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("directChat could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { Vars.globalChat = Convert.ToBoolean(Config.globalChat); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("globalChat could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { Vars.removeTag = Convert.ToBoolean(Config.removeTag); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("removeTag could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                if (Vars.directChat)
-                    Vars.removeTag = false;
-                Vars.defaultChat = Config.defaultChat;
-                if (!Vars.directChat && !Vars.globalChat)
-                {
-                    if (Vars.defaultChat == "direct" || Vars.defaultChat == "global")
-                        Vars.conLog.Error("Both chat channels were disabled! Enabling channel defined as defaultChat...");
-                    else
+                    try { Vars.enableWhitelist = Convert.ToBoolean(Config.enabledWhitelist); }
+                    catch (Exception ex)
                     {
-                        Vars.conLog.Error("Both chat channels were disabled and defaultChat was not a recognized channel!");
-                        Vars.conLog.Error("Defaulting to direct...");
+                        Vars.conLog.Error("enableWhitelist could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
                     }
-                }
-                Vars.allowedChars = Config.allowedChars.Replace("\n", "").Split(',').ToList();
-                try { Vars.restrictChars = Convert.ToBoolean(Config.restrictChars); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("restrictChars could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { Vars.minimumNameCount = Convert.ToInt16(Config.minimumNameCount); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("minimumNameCount could not be parsed as a number!");
-                }
-                try { Vars.maximumNameCount = Convert.ToInt16(Config.maximumNameCount); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("maximumNameCount could not be parsed as a number!");
-                }
-                try { Vars.kickDuplicate = Convert.ToBoolean(Config.kickDuplicate); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("kickDuplicate could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { Vars.lowerAuthority = Convert.ToBoolean(Config.lowerAuthority); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("lowerAuthority could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                Vars.illegalWords = Config.illegalWords.Replace("\n", "").Split(',').ToList();
-                try { Vars.censorship = Convert.ToBoolean(Config.censorship); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("censorship could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
+                    Vars.useMySQL = false;
+                    //try { Vars.useMySQL = Convert.ToBoolean(Config.MySQL); }
+                    //catch (Exception ex)
+                    //{
+                    //    Vars.conLog.Error("useMySQL could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    //}
+                    try { Vars.useSteamGroup = Convert.ToBoolean(Config.useSteamGroup); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("useSteamGroup could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    Vars.steamGroup = Config.steamGroup.Replace("\r\n", "").Replace("\n", "");
+                    try { Vars.autoRefresh = Convert.ToBoolean(Config.autoRefresh); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("autoRefresh could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.refreshInterval = Convert.ToInt16(Config.refreshInterval) * 1000; }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("refreshInterval could not be parsed as a number!");
+                    }
+                    try { Vars.whitelistToMembers = Convert.ToBoolean(Config.whitelistToMembers); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("whitelistToMembers could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    Vars.whitelistKickCMD = Config.whitelistKickCMD;
+                    Vars.whitelistKickJoin = Config.whitelistKickJoin;
+                    Vars.whitelistCheckGood = Config.whitelistCheckGood;
+                    Vars.whitelistCheckBad = Config.whitelistCheckBad;
 
-                Vars.botName = Vars.replaceQuotes(Config.botName);
-                Vars.joinMessage = Vars.replaceQuotes(Config.joinMessage).Replace("\n", "");
-                try { Vars.enableJoin = Convert.ToBoolean(Config.enableJoin); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("enableJoin could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
+                    try { Vars.announceDrops = Convert.ToBoolean(Config.announceDrops); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("announceDrops could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
 
-                Vars.leaveMessage = Vars.replaceQuotes(Config.leaveMessage).Replace("\n", "");
-                try { Vars.enableLeave = Convert.ToBoolean(Config.enableLeave); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("enableLeave could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
+                    try { Vars.fallDamage = Convert.ToBoolean(Config.fallDamage); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("fallDamage could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { voice.distance = (float)Convert.ToInt16(Config.voiceDistance); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("voiceDistance could not be parsed as a number!");
+                    }
+                    try { Vars.enableRepair = Convert.ToBoolean(Config.enableRepair); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("enableRepair could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.forceNudity = Convert.ToBoolean(Config.forceNudity); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("forceNudity could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.doorStops = Convert.ToBoolean(Config.doorStops); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("doorStops could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
 
-                Vars.suicideMessage = Vars.replaceQuotes(Config.suicideMessage).Replace("\n", "");
-                try { Vars.suicideMessages = Convert.ToBoolean(Config.enableSuicide); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("enableSuicide could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
+                    try { Vars.directChat = Convert.ToBoolean(Config.directChat); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("directChat could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.globalChat = Convert.ToBoolean(Config.globalChat); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("globalChat could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.removeTag = Convert.ToBoolean(Config.removeTag); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("removeTag could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    if (Vars.directChat)
+                        Vars.removeTag = false;
+                    Vars.defaultChat = Config.defaultChat;
+                    if (!Vars.directChat && !Vars.globalChat)
+                    {
+                        if (Vars.defaultChat == "direct" || Vars.defaultChat == "global")
+                            Vars.conLog.Error("Both chat channels were disabled! Enabling channel defined as defaultChat...");
+                        else
+                        {
+                            Vars.conLog.Error("Both chat channels were disabled and defaultChat was not a recognized channel!");
+                            Vars.conLog.Error("Defaulting to direct...");
+                        }
+                    }
+                    Vars.allowedChars = Config.allowedChars.Replace("\n", "").Split(',').ToList();
+                    try { Vars.restrictChars = Convert.ToBoolean(Config.restrictChars); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("restrictChars could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.minimumNameCount = Convert.ToInt16(Config.minimumNameCount); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("minimumNameCount could not be parsed as a number!");
+                    }
+                    try { Vars.maximumNameCount = Convert.ToInt16(Config.maximumNameCount); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("maximumNameCount could not be parsed as a number!");
+                    }
+                    try { Vars.kickDuplicate = Convert.ToBoolean(Config.kickDuplicate); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("kickDuplicate could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.lowerAuthority = Convert.ToBoolean(Config.lowerAuthority); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("lowerAuthority could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    Vars.illegalWords = Config.illegalWords.Replace("\n", "").Split(',').ToList();
+                    try { Vars.censorship = Convert.ToBoolean(Config.censorship); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("censorship could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
 
-                Vars.murderMessage = Vars.replaceQuotes(Config.murderMessage).Replace("\n", "");
-                if (Config.murderMessageUnknown.Contains("$VICTIM$") && Config.murderMessageUnknown.Contains("$KILLER$"))
-                    Vars.murderMessageUnknown = Vars.replaceQuotes(Config.murderMessageUnknown).Replace("\n", "");
-                else
-                    Vars.conLog.Error("Murder Message Unknown must contain both $VICTIM$ and $KILLER$! Defaulting to original...");
-                try { Vars.murderMessages = Convert.ToBoolean(Config.enableMurder); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("enableMurder could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
+                    Vars.botName = Vars.replaceQuotes(Config.botName);
+                    Vars.joinMessage = Vars.replaceQuotes(Config.joinMessage).Replace("\n", "");
+                    try { Vars.enableJoin = Convert.ToBoolean(Config.enableJoin); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("enableJoin could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
 
-                Vars.accidentMessage = Vars.replaceQuotes(Config.deathMessage).Replace("\n", "");
-                try { Vars.accidentMessages = Convert.ToBoolean(Config.enableDeath); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("enableDeath could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
+                    Vars.leaveMessage = Vars.replaceQuotes(Config.leaveMessage).Replace("\n", "");
+                    try { Vars.enableLeave = Convert.ToBoolean(Config.enableLeave); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("enableLeave could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
 
-                try { Vars.logPluginChat = Convert.ToBoolean(Config.logPluginChat); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("logPluginChat could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { Vars.chatLogCap = Convert.ToInt16(Config.chatLogCap); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("refreshInterval could not be parsed as a number!");
-                }
-                try { Vars.logCap = Convert.ToInt16(Config.logCap); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("refreshInterval could not be parsed as a number!");
-                }
-                try { Vars.unknownCommand = Convert.ToBoolean(Config.unknownCommand); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("unknownCommand could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { Vars.nextToName = Convert.ToBoolean(Config.nextToName); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("nextToName could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { Vars.removePrefix = Convert.ToBoolean(Config.removePrefix); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("removePrefix could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
+                    Vars.suicideMessage = Vars.replaceQuotes(Config.suicideMessage).Replace("\n", "");
+                    try { Vars.suicideMessages = Convert.ToBoolean(Config.enableSuicide); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("enableSuicide could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
 
-                try { Vars.teleportRequestOn = Convert.ToBoolean(Config.teleportRequest); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("teleportRequest could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { Vars.requestDelay = Convert.ToInt16(Config.requestDelay); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("requestDelay could not be parsed as a number!");
-                }
-                try { Vars.warpDelay = Convert.ToInt16(Config.warpDelay); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("warpDelay could not be parsed as a number!");
-                }
-                try { Vars.requestCooldownType = Convert.ToInt16(Config.requestCooldownType); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("requestCooldownType could not be parsed as a number!");
-                }
-                try
-                {
-                    int number = Convert.ToInt16(Config.requestCooldown.Substring(0, Config.requestCooldown.Length - 1));
-                    int multiplier = 1000;
-                    if (Config.requestCooldown.EndsWith("m"))
-                        multiplier *= 60;
-                    Vars.requestCooldown = number * multiplier; 
-                }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("requestCooldown could not be parsed!");
-                }
-                try { Vars.denyRequestWarzone = Convert.ToBoolean(Config.denyRequestWarzone); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("denyRequestWarzone could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
+                    Vars.murderMessage = Vars.replaceQuotes(Config.murderMessage).Replace("\n", "");
+                    if (Config.murderMessageUnknown.Contains("$VICTIM$") && Config.murderMessageUnknown.Contains("$KILLER$"))
+                        Vars.murderMessageUnknown = Vars.replaceQuotes(Config.murderMessageUnknown).Replace("\n", "");
+                    else
+                        Vars.conLog.Error("Murder Message Unknown must contain both $VICTIM$ and $KILLER$! Defaulting to original...");
+                    try { Vars.murderMessages = Convert.ToBoolean(Config.enableMurder); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("enableMurder could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
 
-                try { Vars.inheritCommands = Convert.ToBoolean(Config.inheritCommands); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("inheritCommands could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { Vars.inheritKits = Convert.ToBoolean(Config.inheritKits); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("inheritKits could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { Vars.inheritWarps = Convert.ToBoolean(Config.inheritWarps); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("inheritWarps could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
+                    Vars.accidentMessage = Vars.replaceQuotes(Config.deathMessage).Replace("\n", "");
+                    try { Vars.accidentMessages = Convert.ToBoolean(Config.enableDeath); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("enableDeath could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
 
-                try { Vars.friendlyFire = Convert.ToBoolean(Config.friendlyFire); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("friendlyFire could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { Vars.alliedFire = Convert.ToBoolean(Config.alliedFire); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("alliedFire could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                }
-                try { Vars.neutralDamage = Convert.ToInt16(Config.neutralDamage); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("neutralDamage could not be parsed as a number!");
-                }
-                try { Vars.warDamage = Convert.ToInt16(Config.warDamage); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("warDamage could not be parsed as a number!");
-                }
-                try { Vars.warFriendlyDamage = Convert.ToInt16(Config.warFriendlyDamage); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("warFriendlyDamage could not be parsed as a number!");
-                }
-                try { Vars.warAllyDamage = Convert.ToInt16(Config.warAllyDamage); }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("warAllyDamage could not be parsed as a number!");
-                }
+                    try { Vars.logPluginChat = Convert.ToBoolean(Config.logPluginChat); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("logPluginChat could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.chatLogCap = Convert.ToInt16(Config.chatLogCap); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("refreshInterval could not be parsed as a number!");
+                    }
+                    try { Vars.logCap = Convert.ToInt16(Config.logCap); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("refreshInterval could not be parsed as a number!");
+                    }
+                    try { Vars.unknownCommand = Convert.ToBoolean(Config.unknownCommand); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("unknownCommand could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.nextToName = Convert.ToBoolean(Config.nextToName); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("nextToName could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.removePrefix = Convert.ToBoolean(Config.removePrefix); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("removePrefix could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
 
-                Vars.conLog.Info("Config loaded.");
+                    try { Vars.teleportRequestOn = Convert.ToBoolean(Config.teleportRequest); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("teleportRequest could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.requestDelay = Convert.ToInt16(Config.requestDelay); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("requestDelay could not be parsed as a number!");
+                    }
+                    try { Vars.warpDelay = Convert.ToInt16(Config.warpDelay); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("warpDelay could not be parsed as a number!");
+                    }
+                    try { Vars.requestCooldownType = Convert.ToInt16(Config.requestCooldownType); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("requestCooldownType could not be parsed as a number!");
+                    }
+                    try
+                    {
+                        int number = Convert.ToInt16(Config.requestCooldown.Substring(0, Config.requestCooldown.Length - 1));
+                        int multiplier = 1000;
+                        if (Config.requestCooldown.EndsWith("m"))
+                            multiplier *= 60;
+                        Vars.requestCooldown = number * multiplier;
+                    }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("requestCooldown could not be parsed!");
+                    }
+                    try { Vars.denyRequestWarzone = Convert.ToBoolean(Config.denyRequestWarzone); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("denyRequestWarzone could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+
+                    try { Vars.inheritCommands = Convert.ToBoolean(Config.inheritCommands); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("inheritCommands could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.inheritKits = Convert.ToBoolean(Config.inheritKits); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("inheritKits could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.inheritWarps = Convert.ToBoolean(Config.inheritWarps); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("inheritWarps could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+
+                    try { Vars.friendlyFire = Convert.ToBoolean(Config.friendlyFire); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("friendlyFire could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.alliedFire = Convert.ToBoolean(Config.alliedFire); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("alliedFire could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.neutralDamage = Convert.ToInt16(Config.neutralDamage); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("neutralDamage could not be parsed as a number!");
+                    }
+                    try { Vars.warDamage = Convert.ToInt16(Config.warDamage); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("warDamage could not be parsed as a number!");
+                    }
+                    try { Vars.warFriendlyDamage = Convert.ToInt16(Config.warFriendlyDamage); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("warFriendlyDamage could not be parsed as a number!");
+                    }
+                    try { Vars.warAllyDamage = Convert.ToInt16(Config.warAllyDamage); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("warAllyDamage could not be parsed as a number!");
+                    }
+
+                    //try { Vars.researchAtBench = Convert.ToBoolean(Config.researchAtBench); }
+                    //catch (Exception ex)
+                    //{
+                    //    Vars.conLog.Error("researchAtBench could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    //}
+                    try { Vars.infiniteResearch = Convert.ToBoolean(Config.infiniteResearch); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("infiniteResearch could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.researchPaper = Convert.ToBoolean(Config.researchPaper); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("researchPaper could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    //try { Vars.craftAtBench = Convert.ToBoolean(Config.craftAtBench); }
+                    //catch (Exception ex)
+                    //{
+                    //    Vars.conLog.Error("craftAtBench could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    //}
+
+                    Vars.conLog.Info("Config loaded.");
+                    return true;
+                }
             }
             else
             {
                 Vars.conLog.Error("Config was not found! Using defaults...");
             }
+            return false;
         }
 
         public void loadBans()
@@ -993,14 +1335,17 @@ namespace RustEssentials.Util
                             line = line.Substring(0, line.IndexOf("#")).Trim();
                             string playerName = line.Split('=')[0];
                             string playerUID = line.Split('=')[1];
-                            previousBans.Add(playerName, playerUID);
-                            previousBanReasons.Add(playerUID, reason);
+                            if (!previousBans.ContainsKey(playerUID))
+                                previousBans.Add(playerUID, playerName);
+                            if (!previousBanReasons.ContainsKey(playerUID))
+                                previousBanReasons.Add(playerUID, reason);
                         }
                     }
                 }
 
                 Vars.currentBans = previousBans;
                 Vars.currentBanReasons = previousBanReasons;
+                Vars.saveBans();
             }
         }
     }

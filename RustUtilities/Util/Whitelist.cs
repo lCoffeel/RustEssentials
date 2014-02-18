@@ -16,6 +16,8 @@ using Rust.Steam;
 using System.Runtime.InteropServices;
 using System;
 using System.Threading;
+//using MySql.Data;
+//using MySql.Data.MySqlClient;
 
 namespace RustEssentials.Util
 {
@@ -72,9 +74,9 @@ namespace RustEssentials.Util
                     }
                     else
                     {
-                        Vars.conLog.Info("Attempting connection to whitelist database...");
-                        string connectionInfo = "SERVER=" + Config.host + ";PORT=" + Config.port + ";DATABASE=" + Config.database +
-                            ";UID=" + Config.user + ";PASSWORD=" + Config.pass;
+                        //Vars.conLog.Info("Attempting connection to whitelist database...");
+                        //string connectionInfo = "SERVER=" + Config.host + ";PORT=" + Config.port + ";DATABASE=" + Config.database +
+                        //    ";UID=" + Config.user + ";PASSWORD=" + Config.pass;
 
                         //Vars.mysqlConnection = new MySqlConnection(connectionInfo);
                         //try
@@ -154,9 +156,9 @@ namespace RustEssentials.Util
                 }
                 else
                 {
-                    Vars.conLog.Info("Attempting connection to whitelist database...");
-                    string connectionInfo = "SERVER=" + Config.host + ";PORT=" + Config.port + ";DATABASE=" + Config.database +
-                        ";UID=" + Config.user + ";PASSWORD=" + Config.pass;
+                    //Vars.conLog.Info("Attempting connection to whitelist database...");
+                    //string connectionInfo = "SERVER=" + Config.host + ";PORT=" + Config.port + ";DATABASE=" + Config.database +
+                    //    ";UID=" + Config.user + ";PASSWORD=" + Config.pass;
 
                     //Vars.mysqlConnection = new MySqlConnection(connectionInfo);
                     //try

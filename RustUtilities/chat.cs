@@ -51,26 +51,20 @@ public class chat : ConsoleSystem
                 message = message.Replace("\"", "\\\"").Replace("[PM]", "").Replace("[PM to]", "").Replace("[PM from]", "").Replace("[PM From]", "").Replace("[PM To]", "").Replace("[F]", "");
                 if (Vars.censorship)
                 {
-                    foreach (string s in Vars.illegalWords)
+                    List<string> splitMessage = new List<string>(message.Replace(".", "").Replace("!", "").Replace(",", "").Replace("?", "").Replace(";", "").Split(' '));
+                    foreach (string s in splitMessage)
                     {
-                        string asterisks = "";
-                        for (int i = 0; i < s.Length - 1; i++)
+                        if (Vars.illegalWords.Contains(s.ToLower()))
                         {
-                            asterisks += "*";
-                        }
-
-                        if (message.ToLower().IndexOf(s.ToLower()) > -1)
-                        {
-                            int indexOf = message.ToLower().IndexOf(s.ToLower());
-                            string beforeWord = message.Substring(0, indexOf - 1);
-                            string afterWord = "";
-
-                            if (indexOf < s.Length - 1)
-                                afterWord = message.Substring(indexOf + s.Length, s.Length - indexOf - 1);
-
-                            message = beforeWord + asterisks + afterWord;
+                            string asterisks = "";
+                            for (int i = 0; i < s.Length; i++)
+                            {
+                                asterisks += "*";
+                            }
+                            splitMessage[splitMessage.IndexOf(s)] = asterisks;
                         }
                     }
+                    message = string.Join(" ", splitMessage.ToArray());
                 }
 
                 if (!Vars.inDirect.Contains(UID) && !Vars.inGlobal.Contains(UID) && !Vars.inFaction.Contains(UID))
