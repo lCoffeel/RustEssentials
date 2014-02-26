@@ -35,7 +35,8 @@ namespace RustEssentials.Util
         private static Match MatchAnnounceDrops;
         // Environment
         private static Match MatchStartTime;
-        private static Match MatchTimeScale;
+        private static Match MatchDayLength;
+        private static Match MatchNightLength;
         private static Match MatchFreezeTime;
         private static Match MatchFallDamage;
         private static Match MatchVoiceDistance;
@@ -122,7 +123,8 @@ namespace RustEssentials.Util
         public static string announceDrops;
         // Environment
         public static string startTime;
-        public static string timeScale;
+        public static string dayLength;
+        public static string nightLength;
         public static string freezeTime;
         public static string fallDamage;
         public static string voiceDistance;
@@ -212,7 +214,8 @@ namespace RustEssentials.Util
                 MatchWhitelistBad = Regex.Match(configInput, @"whitelistCheckBad=[^\n]*", RegexOptions.IgnoreCase);
                 MatchAnnounceDrops = Regex.Match(configInput, @"announceDrops=\w+", RegexOptions.IgnoreCase);
                 MatchStartTime = Regex.Match(configInput, @"startTime=\w+", RegexOptions.IgnoreCase);
-                MatchTimeScale = Regex.Match(configInput, @"timeScale=\w+", RegexOptions.IgnoreCase);
+                MatchDayLength = Regex.Match(configInput, @"dayLength=\w+", RegexOptions.IgnoreCase);
+                MatchNightLength = Regex.Match(configInput, @"nightLength=\w+", RegexOptions.IgnoreCase);
                 MatchFreezeTime = Regex.Match(configInput, @"freezeTime=\w+", RegexOptions.IgnoreCase);
                 MatchFallDamage = Regex.Match(configInput, @"fallDamage=\w+", RegexOptions.IgnoreCase);
                 MatchVoiceDistance = Regex.Match(configInput, @"voiceDistance=\w+", RegexOptions.IgnoreCase);
@@ -288,7 +291,8 @@ namespace RustEssentials.Util
                 whitelistCheckBad = MatchWhitelistBad.ToString().Split('=')[1].Replace("\r", "");
                 announceDrops = MatchAnnounceDrops.ToString().Split('=')[1];
                 startTime = MatchStartTime.ToString().Split('=')[1];
-                timeScale = MatchTimeScale.ToString().Split('=')[1];
+                dayLength = MatchDayLength.ToString().Split('=')[1];
+                nightLength = MatchNightLength.ToString().Split('=')[1];
                 freezeTime = MatchFreezeTime.ToString().Split('=')[1];
                 fallDamage = MatchFallDamage.ToString().Split('=')[1];
                 voiceDistance = MatchVoiceDistance.ToString().Split('=')[1];

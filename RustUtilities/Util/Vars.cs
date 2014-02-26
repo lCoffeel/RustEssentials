@@ -47,6 +47,7 @@ namespace RustEssentials.Util
         public static string warpsFile = Path.Combine(saveDir, "warps.ini");
         public static string doorsFile = Path.Combine(saveDir, "door_data.dat");
         public static string factionsFile = Path.Combine(saveDir, "factions.dat");
+        public static string alliesFile = Path.Combine(saveDir, "allies.dat");
         public static string cooldownsFile = Path.Combine(saveDir, "kit_cooldowns.dat");
         public static string requestCooldownsFile = Path.Combine(saveDir, "tpaPer_cooldowns.dat");
         public static string requestCooldownsAllFile = Path.Combine(saveDir, "tpaAll_cooldowns.dat");
@@ -67,14 +68,14 @@ namespace RustEssentials.Util
         public static bool autoRefresh = true;
         public static bool whitelistToMembers = false;
         public static bool announceDrops = true;
-        public static bool directChat = true;
+        public static bool directChat = false;
         public static bool globalChat = true;
         public static bool logPluginChat = true;
         public static bool unknownCommand = true;
         public static bool enableJoin = true;
         public static bool enableLeave = true;
         public static bool teleportRequestOn = true;
-        public static bool removeTag = true;
+        public static bool removeTag = false;
         public static bool nextToName = true;
         public static bool removePrefix = true;
         public static bool inheritCommands = true;
@@ -103,7 +104,7 @@ namespace RustEssentials.Util
         public static string whitelistKickJoin = "You are not whitelisted!";
         public static string whitelistCheckGood = "You are whitelisted!";
         public static string whitelistCheckBad = "You are not whitelisted!";
-        public static string defaultChat = "direct";
+        public static string defaultChat = "global";
         public static string botName = "Essentials";
         public static string joinMessage = "Player $USER$ has joined.";
         public static string leaveMessage = "Player $USER$ has left.";
@@ -163,6 +164,7 @@ namespace RustEssentials.Util
             { motdFile },
             { doorsFile },
             { factionsFile },
+            { alliesFile },
             { cooldownsFile },
             { requestCooldownsFile },
             { requestCooldownsAllFile },
@@ -195,6 +197,7 @@ namespace RustEssentials.Util
         public static List<string> completeDoorAccess = new List<string>();
         public static List<string> godList = new List<string>();
         public static List<string> destroyerList = new List<string>();
+        public static List<string> destroyerAllList = new List<string>();
         public static List<string> ownershipList = new List<string>();
         public static List<string> hiddenList = new List<string>();
         public static List<string> unassignedWarps = new List<string>();
@@ -209,6 +212,7 @@ namespace RustEssentials.Util
         public static List<string> permitResearch = new List<string>();
         public static List<string> restrictBlueprints = new List<string>();
         public static List<string> lastWinners = new List<string>();
+        public static List<HostileWildlifeAI> ignoringAIList = new List<HostileWildlifeAI>();
         public static List<PlayerClient> AllPlayerClients = new List<PlayerClient>();
         public static Dictionary<string, Zone> safeZones = new Dictionary<string, Zone>();
         public static Dictionary<string, Zone> warZones = new Dictionary<string, Zone>();
@@ -301,99 +305,111 @@ namespace RustEssentials.Util
         public static void SetDeathReason(PlayerClient playerClient, ref DamageEvent damage)
         {
             try
-            {
-                if ((playerClient != null) && NetCheck.PlayerValid(playerClient.netPlayer))
+            {   
+                if (playerClient != null)
                 {
-                    IDMain idMain = damage.attacker.idMain;
-                    string message = "";
-                    if (idMain != null)
+                    if (playerClient.netPlayer != null)
                     {
-                        idMain = idMain.idMain;
-                    }
-                    if (idMain is Character)
-                    {
-                        Character character = idMain as Character;
-                        Controller playerControlledController = character.playerControlledController;
-                        if (playerControlledController != null)
+                        if (NetCheck.PlayerValid(playerClient.netPlayer))
                         {
-                            if (playerControlledController.playerClient == playerClient)
+                            IDMain idMain = damage.attacker.idMain;
+                            string message = "";
+                            if (idMain != null)
                             {
-                                if (killList.Contains(playerClient))
+                                idMain = idMain.idMain;
+                                if (idMain is Character)
                                 {
-                                    killList.Remove(playerClient);
-                                    DeathScreen.SetReason(playerClient.netPlayer, "You fell victim to /kill");
-                                    Broadcast.broadcastAll(playerClient.userName + " fell victim to /kill.");
-                                }
-                                else
-                                {
-                                    DeathScreen.SetReason(playerClient.netPlayer, "You killed yourself. You silly sod.");
-                                    if (Vars.suicideMessages)
+                                    Character character = idMain as Character;
+                                    Controller playerControlledController = character.playerControlledController;
+                                    if (playerControlledController != null)
                                     {
-                                        message = Vars.suicideMessage.Replace("$VICTIM$", playerClient.userName);
+                                        if (playerControlledController.playerClient == playerClient)
+                                        {
+                                            if (killList.Contains(playerClient))
+                                            {
+                                                killList.Remove(playerClient);
+                                                DeathScreen.SetReason(playerClient.netPlayer, "You fell victim to /kill");
+                                                Broadcast.broadcastAll(playerClient.userName + " fell victim to /kill.");
+                                            }
+                                            else
+                                            {
+                                                DeathScreen.SetReason(playerClient.netPlayer, "You killed yourself. You silly sod.");
+                                                if (Vars.suicideMessages)
+                                                {
+                                                    message = Vars.suicideMessage.Replace("$VICTIM$", playerClient.userName);
 
-                                        Broadcast.broadcastAll(message);
+                                                    Broadcast.broadcastAll(message);
+                                                }
+                                            }
+                                            return;
+                                        }
+                                        Character killerChar;
+                                        Character victimChar;
+                                        Character.FindByUser(playerControlledController.playerClient.userID, out killerChar);
+                                        Character.FindByUser(playerClient.userID, out victimChar);
+                                        Vector3 killerPos = killerChar.transform.position;
+                                        Vector3 victimPos = victimChar.transform.position;
+                                        double distance = Math.Round(Vector3.Distance(killerPos, victimPos));
+
+                                        WeaponImpact extraData = damage.extraData as WeaponImpact;
+                                        if (wasHit.Contains(playerClient))
+                                        {
+                                            wasHit.Remove(playerClient);
+                                        }
+                                        if (extraData != null)
+                                        {
+                                            if (Vars.murderMessages)
+                                            {
+                                                message = Vars.murderMessage.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", playerControlledController.playerClient.userName).Replace("$WEAPON$", extraData.dataBlock.name).Replace("$PART$", BodyParts.GetNiceName(damage.bodyPart)).Replace("$DISTANCE$", Convert.ToString(distance) + "m");
+
+                                                Broadcast.broadcastAll(message);
+                                            }
+                                            DeathScreen.SetReason(playerClient.netPlayer, playerControlledController.playerClient.userName + " killed you using a " + extraData.dataBlock.name + " with a hit to your " + BodyParts.GetNiceName(damage.bodyPart));
+                                            return;
+                                        }
+                                        if (Vars.murderMessages)
+                                        {
+                                            message = Vars.murderMessageUnknown.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", playerControlledController.playerClient.userName);
+
+                                            Broadcast.broadcastAll(message);
+                                        }
+                                        DeathScreen.SetReason(playerClient.netPlayer, playerControlledController.playerClient.userName + " killed you with a hit to your " + BodyParts.GetNiceName(damage.bodyPart));
+                                        return;
                                     }
                                 }
-                                return;
-                            }
-                            Character killerChar;
-                            Character victimChar;
-                            Character.FindByUser(playerControlledController.playerClient.userID, out killerChar);
-                            Character.FindByUser(playerClient.userID, out victimChar);
-                            Vector3 killerPos = killerChar.transform.position;
-                            Vector3 victimPos = victimChar.transform.position;
-                            double distance = Math.Round(Vector3.Distance(killerPos, victimPos));
 
-                            WeaponImpact extraData = damage.extraData as WeaponImpact;
-                            if (extraData != null)
-                            {
-                                if (Vars.murderMessages)
+                                string killer = idMain.ToString();
+                                if (killer.Contains("(Clone)"))
+                                    killer = killer.Substring(0, killer.IndexOf("(Clone)"));
+
+                                switch (killer)
                                 {
-                                    message = Vars.murderMessage.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", playerControlledController.playerClient.userName).Replace("$WEAPON$", extraData.dataBlock.name).Replace("$PART$", BodyParts.GetNiceName(damage.bodyPart)).Replace("$DISTANCE$", Convert.ToString(distance) + "m");
+                                    case "MutantBear":
+                                        killer = "Mutant Bear";
+                                        break;
+                                    case "MutantWolf":
+                                        killer = "Mutant Wolf";
+                                        break;
+                                }
+                                Character victimChar2;
+                                Character.FindByUser(playerClient.userID, out victimChar2);
+
+                                if (Vars.accidentMessages)
+                                {
+                                    message = Vars.accidentMessage.Replace("$VICTIM$", victimChar2.netUser.displayName).Replace("$KILLER$", killer);
 
                                     Broadcast.broadcastAll(message);
                                 }
-                                DeathScreen.SetReason(playerClient.netPlayer, playerControlledController.playerClient.userName + " killed you using a " + extraData.dataBlock.name + " with a hit to your " + BodyParts.GetNiceName(damage.bodyPart));
-                                return;
-                            }
-                            if (Vars.murderMessages)
-                            {
-                                message = Vars.murderMessageUnknown.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", playerControlledController.playerClient.userName);
 
-                                Broadcast.broadcastAll(message);
+                                DeathScreen.SetReason(playerClient.netPlayer, "You were killed by a " + killer);
                             }
-                            DeathScreen.SetReason(playerClient.netPlayer, playerControlledController.playerClient.userName + " killed you with a hit to your " + BodyParts.GetNiceName(damage.bodyPart));
-                            return;
                         }
                     }
-
-                    string killer = idMain.ToString();
-                    if (killer.Contains("(Clone)"))
-                        killer = killer.Substring(0, killer.IndexOf("(Clone)"));
-
-                    switch (killer)
-                    {
-                        case "MutantBear":
-                            killer = "Mutant Bear";
-                            break;
-                        case "MutantWolf":
-                            killer = "Mutant Wolf";
-                            break;
-                    }
-
-                    if (Vars.accidentMessages)
-                    {
-                        message = Vars.accidentMessage.Replace("$VICTIM$", playerClient.userName).Replace("$KILLER$", killer);
-
-                        Broadcast.broadcastAll(message);
-                    }
-
-                    DeathScreen.SetReason(playerClient.netPlayer, "You were killed by a " + killer);
                 }
             }
             catch (Exception ex)
             {
-                Vars.conLog.Error(ex.ToString());
+                Vars.conLog.Error("SDR: " + ex.ToString());
             }
         }
 
@@ -449,19 +465,24 @@ namespace RustEssentials.Util
 
                             string factionName = string.Join(" ", messageList.ToArray());
 
-                            if (!factions.ContainsKey(factionName))
+                            if (!factions.ContainsKey(factionName) && !factionsByNames.ContainsKey(factionName) && !alliances.ContainsKey(factionName))
                             {
                                 if (possibleFactions.Count() == 0)
                                 {
                                     if (factionName.Length < 16)
                                     {
-                                        factions.Add(factionName, new Dictionary<string, string>());
-                                        factionsByNames.Add(factionName, new Dictionary<string, string>());
-                                        alliances.Add(factionName, new List<string>());
-                                        factions[factionName].Add(senderClient.userID.ToString(), "owner");
-                                        factionsByNames[factionName].Add(senderClient.userID.ToString(), senderClient.userName);
-                                        Broadcast.broadcastTo(senderClient.netPlayer, "Faction [" + factionName + "] created.");
-                                        addFactionData(factionName, senderClient.userName, senderClient.userID.ToString(), "owner");
+                                        if (!factionName.Contains("=") && !factionName.Contains(";") && !factionName.Contains(":"))
+                                        {
+                                            factions.Add(factionName, new Dictionary<string, string>());
+                                            factionsByNames.Add(factionName, new Dictionary<string, string>());
+                                            alliances.Add(factionName, new List<string>());
+                                            factions[factionName].Add(senderClient.userID.ToString(), "owner");
+                                            factionsByNames[factionName].Add(senderClient.userID.ToString(), senderClient.userName);
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "Faction [" + factionName + "] created.");
+                                            addFactionData(factionName, senderClient.userName, senderClient.userID.ToString(), "owner");
+                                        }
+                                        else
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "Faction names cannot contain =, :, or ;!");
                                     }
                                     else
                                         Broadcast.broadcastTo(senderClient.netPlayer, "Faction names must be less than 16 characters!");
@@ -488,7 +509,10 @@ namespace RustEssentials.Util
                                     Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, "Your faction was disbanded.");
                                 }
                                 factions.Remove(possibleFactions[0].Key);
+                                factionsByNames.Remove(possibleFactions[0].Key);
+                                alliances.Remove(possibleFactions[0].Key);
                                 remFactionData(possibleFactions[0].Key, "disband", "");
+                                remAlliesData(possibleFactions[0].Key, "disband");
                             }
                             else
                                 Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You do not have permission to disband your current faction.");
@@ -525,17 +549,17 @@ namespace RustEssentials.Util
                                         List<string> possibleUIDs = new List<string>();
                                         foreach (KeyValuePair<string, string> kv in factionsByNames[possibleFactions[0].Key])
                                         {
-                                            if (kv.Value.Equals(targetName))
+                                            if (kv.Value.Equals(targetName) && targetName != senderClient.userID.ToString())
                                                 possibleUIDs.Add(kv.Key);
                                         }
 
                                         if (possibleUIDs.Count() == 0)
                                         {
-                                            Broadcast.broadcastTo(senderClient.netPlayer, "No member name equals \"" + targetName + "\".");
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "No member name or UID equals \"" + targetName + "\".");
                                         }
                                         else if (possibleUIDs.Count() > 1)
                                         {
-                                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many member names equal \"" + targetName + "\".");
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many member names or UID equal \"" + targetName + "\".");
                                         }
                                         else
                                         {
@@ -555,21 +579,26 @@ namespace RustEssentials.Util
                                     {
                                         PlayerClient targetClient = possibleTargets[0];
 
-                                        if (possibleFactions[0].Value.ContainsKey(targetClient.userID.ToString()))
+                                        if (targetClient != senderClient)
                                         {
-                                            PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
-                                            foreach (PlayerClient pc in targetClients)
+                                            if (possibleFactions[0].Value.ContainsKey(targetClient.userID.ToString()))
                                             {
-                                                Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " was kicked from the faction.");
+                                                PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                                foreach (PlayerClient pc in targetClients)
+                                                {
+                                                    Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " was kicked from the faction.");
+                                                }
+                                                remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                                factions[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
+                                                factionsByNames[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
+                                                if (latestFactionRequests.ContainsKey(targetClient))
+                                                    latestFactionRequests.Remove(targetClient);
                                             }
-                                            remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
-                                            factions[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
-                                            factionsByNames[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
-                                            if (latestFactionRequests.ContainsKey(targetClient))
-                                                latestFactionRequests.Remove(targetClient);
+                                            else
+                                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is not in your faction.");
                                         }
                                         else
-                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is not in your faction.");
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You cannot kick yourself from the faction.");
                                     }
                                 }
                                 else
@@ -581,17 +610,17 @@ namespace RustEssentials.Util
                                         List<string> possibleUIDs = new List<string>();
                                         foreach (KeyValuePair<string, string> kv in factionsByNames[possibleFactions[0].Key])
                                         {
-                                            if (kv.Value.Contains(targetName))
+                                            if (kv.Value.Contains(targetName) && targetName != senderClient.userID.ToString())
                                                 possibleUIDs.Add(kv.Key);
                                         }
 
                                         if (possibleUIDs.Count() == 0)
                                         {
-                                            Broadcast.broadcastTo(senderClient.netPlayer, "No member name contain \"" + targetName + "\".");
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "No member name or UID contain \"" + targetName + "\".");
                                         }
                                         else if (possibleUIDs.Count() > 1)
                                         {
-                                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many member names contain \"" + targetName + "\".");
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "Too many member names or UID contain \"" + targetName + "\".");
                                         }
                                         else
                                         {
@@ -611,21 +640,26 @@ namespace RustEssentials.Util
                                     {
                                         PlayerClient targetClient = possibleTargets[0];
 
-                                        if (possibleFactions[0].Value.ContainsKey(targetClient.userID.ToString()))
+                                        if (targetClient != senderClient)
                                         {
-                                            PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
-                                            foreach (PlayerClient pc in targetClients)
+                                            if (possibleFactions[0].Value.ContainsKey(targetClient.userID.ToString()))
                                             {
-                                                Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " was kicked from the faction.");
+                                                PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                                foreach (PlayerClient pc in targetClients)
+                                                {
+                                                    Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " was kicked from the faction.");
+                                                }
+                                                remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                                factions[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
+                                                factionsByNames[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
+                                                if (latestFactionRequests.ContainsKey(targetClient))
+                                                    latestFactionRequests.Remove(targetClient);
                                             }
-                                            remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
-                                            factions[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
-                                            factionsByNames[possibleFactions[0].Key].Remove(targetClient.userID.ToString());
-                                            if (latestFactionRequests.ContainsKey(targetClient))
-                                                latestFactionRequests.Remove(targetClient);
+                                            else
+                                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is not in your faction.");
                                         }
                                         else
-                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " is not in your faction.");
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You cannot kick yourself from the faction.");
                                     }
                                 }
                             }
@@ -1097,19 +1131,27 @@ namespace RustEssentials.Util
                                     {
                                         PlayerClient targetClient = possibleTargets[0];
 
-                                        remFactionData(possibleFactions[0].Key, senderClient.userName, possibleFactions[0].Value[senderClient.userID.ToString()]);
-                                        possibleFactions[0].Value.Remove(senderClient.userID.ToString());
-                                        possibleFactions[0].Value.Add(senderClient.userID.ToString(), "admin");
-                                        addFactionData(possibleFactions[0].Key, senderClient.userName, senderClient.userID.ToString(), "admin");
-                                        remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
-                                        possibleFactions[0].Value.Remove(targetClient.userID.ToString());
-                                        possibleFactions[0].Value.Add(targetClient.userID.ToString(), "owner");
-                                        addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "owner");
-                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
-                                        foreach (PlayerClient pc in targetClients)
+                                        if (targetClient != senderClient)
                                         {
-                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, senderClient.userName + " now owns the faction.");
+                                            remFactionData(possibleFactions[0].Key, senderClient.userName, possibleFactions[0].Value[senderClient.userID.ToString()]);
+                                            possibleFactions[0].Value.Remove(senderClient.userID.ToString());
+
+                                            remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                            possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                            possibleFactions[0].Value.Add(targetClient.userID.ToString(), "owner");
+                                            addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "owner");
+
+                                            possibleFactions[0].Value.Add(senderClient.userID.ToString(), "normal");
+                                            addFactionData(possibleFactions[0].Key, senderClient.userName, targetClient.userID.ToString(), "normal");
+
+                                            PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                            foreach (PlayerClient pc in targetClients)
+                                            {
+                                                Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, targetClient.userName + " now owns the faction.");
+                                            }
                                         }
+                                        else
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You are already the owner of this faction.");
                                     }
                                 }
                                 else
@@ -1124,19 +1166,27 @@ namespace RustEssentials.Util
                                     {
                                         PlayerClient targetClient = possibleTargets[0];
 
-                                        remFactionData(possibleFactions[0].Key, senderClient.userName, possibleFactions[0].Value[senderClient.userID.ToString()]);
-                                        possibleFactions[0].Value.Remove(senderClient.userID.ToString());
-                                        possibleFactions[0].Value.Add(senderClient.userID.ToString(), "admin");
-                                        addFactionData(possibleFactions[0].Key, senderClient.userName, senderClient.userID.ToString(), "admin");
-                                        remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
-                                        possibleFactions[0].Value.Remove(targetClient.userID.ToString());
-                                        possibleFactions[0].Value.Add(targetClient.userID.ToString(), "owner");
-                                        addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "owner");
-                                        PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
-                                        foreach (PlayerClient pc in targetClients)
+                                        if (targetClient != senderClient)
                                         {
-                                            Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, senderClient.userName + " now owns the faction.");
+                                            remFactionData(possibleFactions[0].Key, senderClient.userName, possibleFactions[0].Value[senderClient.userID.ToString()]);
+                                            possibleFactions[0].Value.Remove(senderClient.userID.ToString());
+
+                                            remFactionData(possibleFactions[0].Key, targetClient.userName, possibleFactions[0].Value[targetClient.userID.ToString()]);
+                                            possibleFactions[0].Value.Remove(targetClient.userID.ToString());
+                                            possibleFactions[0].Value.Add(targetClient.userID.ToString(), "owner");
+                                            addFactionData(possibleFactions[0].Key, targetClient.userName, targetClient.userID.ToString(), "owner");
+
+                                            possibleFactions[0].Value.Add(senderClient.userID.ToString(), "normal");
+                                            addFactionData(possibleFactions[0].Key, senderClient.userName, targetClient.userID.ToString(), "normal");
+
+                                            PlayerClient[] targetClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => possibleFactions[0].Value.ContainsKey(pc.userID.ToString()));
+                                            foreach (PlayerClient pc in targetClients)
+                                            {
+                                                Broadcast.broadcastCustomTo(pc.netPlayer, "[F] " + possibleFactions[0].Key, senderClient.userName + " now owns the faction.");
+                                            }
                                         }
+                                        else
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You are already the owner of this faction.");
                                     }
                                 }
                             }
@@ -1152,7 +1202,6 @@ namespace RustEssentials.Util
                             Dictionary<string, List<string>> factionNames = new Dictionary<string, List<string>>();
                             List<string> factionNames2 = new List<string>();
                             int currentPage = 1;
-                            int lastPage = 1;
 
                             foreach (string factionName in factions.Keys)
                             {
@@ -1167,8 +1216,14 @@ namespace RustEssentials.Util
                                     else
                                     {
                                         currentPage++;
-                                        lastPage = currentPage;
-                                        factionNames[currentPage.ToString()].Add(factionName);
+                                        if (!factionNames.ContainsKey(currentPage.ToString()))
+                                        {
+                                            factionNames.Add(currentPage.ToString(), new List<string>() { { factionName } });
+                                        }
+                                        else
+                                        {
+                                            factionNames[currentPage.ToString()].Add(factionName);
+                                        }
                                     }
                                 }
                             }
@@ -1177,7 +1232,7 @@ namespace RustEssentials.Util
                             bool continueOn = true;
                             if (args.Count() > 2)
                             {
-                                if (!Int32.TryParse(args[2], out pageNumber) || !factionNames.ContainsKey(pageNumber.ToString()))
+                                if (!int.TryParse(args[2], out pageNumber) || !factionNames.ContainsKey(pageNumber.ToString()))
                                 {
                                     Broadcast.broadcastTo(senderClient.netPlayer, "No such page \"" + args[2] + "\".");
                                     continueOn = false;
@@ -1189,7 +1244,7 @@ namespace RustEssentials.Util
                                 List<string> otherFactionNames = new List<string>();
                                 if (factionNames.Count > 0)
                                 {
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "All factions [" + pageNumber + "/" + lastPage + "]:", true);
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "All factions [" + pageNumber + "/" + currentPage + "]:", true);
                                     while (factionNames[pageNumber.ToString()].Count > 0)
                                     {
                                         factionNames2.Clear();
@@ -1220,7 +1275,7 @@ namespace RustEssentials.Util
                         }
                         catch (Exception ex)
                         {
-                            //Vars.conLog.Info(ex.ToString());
+                            Vars.conLog.Error("FLIST: " + ex.ToString());
                         }
                         break;
                     case "ally":
@@ -1262,6 +1317,7 @@ namespace RustEssentials.Util
                                                 }
                                                 alliances[factionResults[0].Key].Add(possibleFactions[0].Key);
                                                 alliances[possibleFactions[0].Key].Add(factionResults[0].Key);
+                                                addAlliesData(factionResults[0].Key, possibleFactions[0].Key);
                                             }
                                             else
                                                 Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You are already allied with [" + factionResults[0].Key + "].");
@@ -1316,6 +1372,7 @@ namespace RustEssentials.Util
                                             }
                                             alliances[factionResults[0].Key].Remove(possibleFactions[0].Key);
                                             alliances[possibleFactions[0].Key].Remove(factionResults[0].Key);
+                                            remAlliesData(factionResults[0].Key, possibleFactions[0].Key);
                                         }
                                         else
                                             Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "You are not allied with [" + factionResults[0].Key +"].");
@@ -1349,57 +1406,98 @@ namespace RustEssentials.Util
                             {
                                 PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userName.Contains(factionName));
                                 if (possibleClients.Count() == 0)
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "No factions or players equal or contain \"" + factionName + "\".");
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "No factions or players contain \"" + factionName + "\".");
                                 else if (possibleClients.Count() > 1)
                                     Broadcast.broadcastTo(senderClient.netPlayer, "Too many player names contain \"" + factionName + "\".");
                                 else
                                 {
-                                    KeyValuePair<string, Dictionary<string, string>> playerFaction = Array.Find(factionsByNames.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsValue(possibleClients[0].userName));
-                                    int onlineMembers = 0;
-                                    foreach (string s in playerFaction.Value.Keys)
+                                    try
                                     {
-                                        PlayerClient[] possibleClients2 = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == s);
-                                        if (possibleClients2.Count() > 0)
-                                            onlineMembers++;
-                                    }
-                                    string ownerName = factionsByNames[playerFaction.Key][Array.Find(playerFaction.Value.ToArray(), (KeyValuePair<string, string> kv) => kv.Value == "owner").Key];
-
-                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "=== [" + playerFaction.Key + "]'s information ===");
-                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Total members: " + playerFaction.Value.Count);
-                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Online members: " + onlineMembers);
-                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Offline members: " + (playerFaction.Value.Count - onlineMembers));
-                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Owner: " + ownerName);
-                                    Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Members:");
-                                    List<string> names = new List<string>();
-                                    List<string> names2 = new List<string>();
-                                    foreach (string name in factionsByNames[playerFaction.Key].Values)
-                                    {
-                                        if (name != ownerName)
-                                            names.Add(name);
-                                    }
-
-                                    List<string> otherNames = new List<string>();
-                                    while (names.Count > 0)
-                                    {
-                                        names2.Clear();
-                                        otherNames.Clear();
-                                        foreach (string s in names)
+                                        KeyValuePair<string, Dictionary<string, string>> playerFaction = Array.Find(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(possibleClients[0].userID.ToString()));
+                                        int onlineMembers = 0;
+                                        foreach (string s in playerFaction.Value.Keys)
                                         {
-                                            names2.Add(s);
-                                            otherNames.Add(s);
+                                            PlayerClient[] possibleClients2 = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == s);
+                                            if (possibleClients2.Count() > 0)
+                                                onlineMembers++;
+                                        }
+                                        string ownerName = factionsByNames[playerFaction.Key][Array.Find(playerFaction.Value.ToArray(), (KeyValuePair<string, string> kv) => kv.Value == "owner").Key];
 
-                                            if ((string.Join(", ", names2.ToArray())).Length > 70)
+                                        Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "=== [" + playerFaction.Key + "]'s information ===");
+                                        Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Total members: " + playerFaction.Value.Count);
+                                        Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Online members: " + onlineMembers);
+                                        Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Offline members: " + (playerFaction.Value.Count - onlineMembers));
+                                        Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Owner: " + ownerName);
+                                        Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Members:");
+                                        List<string> names = new List<string>();
+                                        List<string> names2 = new List<string>();
+                                        foreach (string name in factionsByNames[playerFaction.Key].Values)
+                                        {
+                                            if (name != ownerName)
+                                                names.Add(name);
+                                        }
+
+                                        List<string> otherNames = new List<string>();
+                                        while (names.Count > 0)
+                                        {
+                                            names2.Clear();
+                                            otherNames.Clear();
+                                            foreach (string s in names)
                                             {
-                                                names2.Remove(s);
-                                                otherNames.Remove(s);
-                                                break;
+                                                names2.Add(s);
+                                                otherNames.Add(s);
+
+                                                if ((string.Join(", ", names2.ToArray())).Length > 70)
+                                                {
+                                                    names2.Remove(s);
+                                                    otherNames.Remove(s);
+                                                    break;
+                                                }
+                                            }
+                                            foreach (string s in otherNames)
+                                            {
+                                                names.Remove(s);
+                                            }
+                                            Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, string.Join(", ", names2.ToArray()));
+                                        }
+                                        Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + playerFaction.Key, "Allies:");
+                                        List<string> allies = new List<string>();
+                                        List<string> allies2 = new List<string>();
+                                        if (alliances.ContainsKey(playerFaction.Key))
+                                        {
+                                            foreach (string name in alliances[playerFaction.Key])
+                                            {
+                                                names.Add(name);
+                                            }
+
+                                            List<string> otherAllies = new List<string>();
+                                            while (allies.Count > 0)
+                                            {
+                                                allies2.Clear();
+                                                otherAllies.Clear();
+                                                foreach (string s in allies)
+                                                {
+                                                    allies2.Add(s);
+                                                    otherAllies.Add(s);
+
+                                                    if ((string.Join(", ", allies2.ToArray())).Length > 70)
+                                                    {
+                                                        allies2.Remove(s);
+                                                        otherAllies.Remove(s);
+                                                        break;
+                                                    }
+                                                }
+                                                foreach (string s in otherAllies)
+                                                {
+                                                    allies.Remove(s);
+                                                }
+                                                Broadcast.broadcastTo(senderClient.netPlayer, string.Join(", ", allies2.ToArray()));
                                             }
                                         }
-                                        foreach (string s in otherNames)
-                                        {
-                                            names.Remove(s);
-                                        }
-                                        Broadcast.broadcastTo(senderClient.netPlayer, string.Join(", ", names2.ToArray()));
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        conLog.Error(ex.ToString());
                                     }
                                 }
                             }
@@ -1453,6 +1551,40 @@ namespace RustEssentials.Util
                                     }
                                     Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + factionResults[0].Key, string.Join(", ", names2.ToArray()));
                                 }
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + factionResults[0].Key, "Allies:");
+                                List<string> allies = new List<string>();
+                                List<string> allies2 = new List<string>();
+                                if (alliances.ContainsKey(factionResults[0].Key))
+                                {
+                                    foreach (string name in alliances[factionResults[0].Key])
+                                    {
+                                        names.Add(name);
+                                    }
+
+                                    List<string> otherAllies = new List<string>();
+                                    while (allies.Count > 0)
+                                    {
+                                        allies2.Clear();
+                                        otherAllies.Clear();
+                                        foreach (string s in allies)
+                                        {
+                                            allies2.Add(s);
+                                            otherAllies.Add(s);
+
+                                            if ((string.Join(", ", allies2.ToArray())).Length > 70)
+                                            {
+                                                allies2.Remove(s);
+                                                otherAllies.Remove(s);
+                                                break;
+                                            }
+                                        }
+                                        foreach (string s in otherAllies)
+                                        {
+                                            allies.Remove(s);
+                                        }
+                                        Broadcast.broadcastTo(senderClient.netPlayer, string.Join(", ", allies2.ToArray()));
+                                    }
+                                }
                             }
                         }
                         else
@@ -1478,7 +1610,8 @@ namespace RustEssentials.Util
                                 List<string> names2 = new List<string>();
                                 foreach (string name in factionsByNames[possibleFactions[0].Key].Values)
                                 {
-                                    names.Add(name);
+                                    if (name != ownerName)
+                                        names.Add(name);
                                 }
 
                                 List<string> otherNames = new List<string>();
@@ -1503,6 +1636,40 @@ namespace RustEssentials.Util
                                         names.Remove(s);
                                     }
                                     Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, string.Join(", ", names2.ToArray()));
+                                }
+                                Broadcast.broadcastCustomTo(senderClient.netPlayer, "[F] " + possibleFactions[0].Key, "Allies:");
+                                List<string> allies = new List<string>();
+                                List<string> allies2 = new List<string>();
+                                if (alliances.ContainsKey(possibleFactions[0].Key))
+                                {
+                                    foreach (string name in alliances[possibleFactions[0].Key])
+                                    {
+                                        names.Add(name);
+                                    }
+
+                                    List<string> otherAllies = new List<string>();
+                                    while (allies.Count > 0)
+                                    {
+                                        allies2.Clear();
+                                        otherAllies.Clear();
+                                        foreach (string s in allies)
+                                        {
+                                            allies2.Add(s);
+                                            otherAllies.Add(s);
+
+                                            if ((string.Join(", ", allies2.ToArray())).Length > 70)
+                                            {
+                                                allies2.Remove(s);
+                                                otherAllies.Remove(s);
+                                                break;
+                                            }
+                                        }
+                                        foreach (string s in otherAllies)
+                                        {
+                                            allies.Remove(s);
+                                        }
+                                        Broadcast.broadcastTo(senderClient.netPlayer, string.Join(", ", allies2.ToArray()));
+                                    }
                                 }
                             }
                             else
@@ -1616,31 +1783,34 @@ namespace RustEssentials.Util
                             Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.", true);
                         break;
                     case "build":
-                        if (args.Count() > 2)
+                        if (Vars.enabledCommands[Vars.findRank(senderClient.userID.ToString())].Contains("/f build"))
                         {
-                            string mode = args[2];
-                            string UID = senderClient.userID.ToString();
-
-                            switch (mode)
+                            if (args.Count() > 2)
                             {
-                                case "on":
-                                    if (!buildList.Contains(UID))
-                                    {
-                                        Broadcast.broadcastTo(senderClient.netPlayer, "You can now build in safe zones and war zones.");
-                                        buildList.Add(UID);
-                                    }
-                                    else
-                                        Broadcast.broadcastTo(senderClient.netPlayer, "You are already in build mode.");
-                                    break;
-                                case "off":
-                                    if (buildList.Contains(UID))
-                                    {
-                                        Broadcast.broadcastTo(senderClient.netPlayer, "You can no longer build in safe zones and war zones.");
-                                        buildList.Remove(UID);
-                                    }
-                                    else
-                                        Broadcast.broadcastTo(senderClient.netPlayer, "You are not in build mode.");
-                                    break;
+                                string mode = args[2];
+                                string UID = senderClient.userID.ToString();
+
+                                switch (mode)
+                                {
+                                    case "on":
+                                        if (!buildList.Contains(UID))
+                                        {
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "You can now build in safe zones and war zones.");
+                                            buildList.Add(UID);
+                                        }
+                                        else
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "You are already in build mode.");
+                                        break;
+                                    case "off":
+                                        if (buildList.Contains(UID))
+                                        {
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "You can no longer build in safe zones and war zones.");
+                                            buildList.Remove(UID);
+                                        }
+                                        else
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "You are not in build mode.");
+                                        break;
+                                }
                             }
                         }
                         break;
@@ -1727,15 +1897,6 @@ namespace RustEssentials.Util
                 }
             }
 
-        }
-
-        public static void zoneTimer()
-        {
-            TimerPlus t = new TimerPlus();
-            t.AutoReset = true;
-            t.Interval = 500;
-            t.Elapsed += cycleZones;
-            t.Start();
         }
 
         public static void readZoneData()
@@ -1875,88 +2036,121 @@ namespace RustEssentials.Util
             return (area < 0 ? -area : area);
         }
 
-        public static void cycleZones(object sender, ElapsedEventArgs e)
+        public static void zoneTimer()
         {
-            foreach (PlayerClient pc in AllPlayerClients)
+            Thread t = new Thread(zoneLoop);
+            t.Start();
+        }
+
+        public static void zoneLoop()
+        {
+            bool loopZones = true;
+            while (loopZones)
             {
-                Character playerChar;
-                Character.FindByUser(pc.userID, out playerChar);
-                Vector2 playerPos = new Vector2(playerChar.transform.position.x, playerChar.transform.position.z);
+                cycleZones();
+                Thread.Sleep(500);
+            }
+        }
 
-                string safeZone = "";
-                bool inZoneS = false;
-                foreach (KeyValuePair<string, Zone> kv in safeZones)
+        public static void cycleZones()
+        {
+            List<PlayerClient> playerClients = AllPlayerClients;
+            foreach (PlayerClient pc in playerClients)
+            {
+                try
                 {
-                    Zone zone = kv.Value;
-                    Vector2 point1 = zone.firstPoint;
-                    Vector2 point2 = zone.secondPoint;
-                    Vector2 point3 = zone.thirdPoint;
-                    Vector2 point4 = zone.forthPoint;
-                    float s1 = (Vector2.Distance(point1,point2) + Vector2.Distance(point2,playerPos) + Vector2.Distance(playerPos,point1)) / 2;
-                    float s2 = (Vector2.Distance(point2,point3) + Vector2.Distance(point3,playerPos) + Vector2.Distance(playerPos,point2)) / 2;
-                    float s3 = (Vector2.Distance(point3,point4) + Vector2.Distance(point4,playerPos) + Vector2.Distance(playerPos,point3)) / 2;
-                    float s4 = (Vector2.Distance(point4,point1) + Vector2.Distance(point1,playerPos) + Vector2.Distance(playerPos,point4)) / 2;
-                    double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1,point2)) * (s1 - Vector2.Distance(point2,playerPos)) * (s1 - Vector2.Distance(playerPos,point1)));
-                    double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2,point3)) * (s2 - Vector2.Distance(point3,playerPos)) * (s2 - Vector2.Distance(playerPos,point2)));
-                    double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3,point4)) * (s3 - Vector2.Distance(point4,playerPos)) * (s3 - Vector2.Distance(playerPos,point3)));
-                    double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4,point1)) * (s4 - Vector2.Distance(point1,playerPos)) * (s4 - Vector2.Distance(playerPos,point4)));
-                    double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                    double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+                    if (pc != null)
+                    {
+                        if (pc.userID != null)
+                        {
+                            Character playerChar;
+                            Character.FindByUser(pc.userID, out playerChar);
+                            if (playerChar != null)
+                            {
+                                Vector2 playerPos = new Vector2(playerChar.transform.position.x, playerChar.transform.position.z);
 
-                    if (areaAdded <= (areaActual + 1))
-                        inZoneS = true;
+                                string safeZone = "";
+                                bool inZoneS = false;
+                                foreach (KeyValuePair<string, Zone> kv in safeZones)
+                                {
+                                    Zone zone = kv.Value;
+                                    Vector2 point1 = zone.firstPoint;
+                                    Vector2 point2 = zone.secondPoint;
+                                    Vector2 point3 = zone.thirdPoint;
+                                    Vector2 point4 = zone.forthPoint;
+                                    float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, playerPos) + Vector2.Distance(playerPos, point1)) / 2;
+                                    float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, playerPos) + Vector2.Distance(playerPos, point2)) / 2;
+                                    float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, playerPos) + Vector2.Distance(playerPos, point3)) / 2;
+                                    float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, playerPos) + Vector2.Distance(playerPos, point4)) / 2;
+                                    double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, playerPos)) * (s1 - Vector2.Distance(playerPos, point1)));
+                                    double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, playerPos)) * (s2 - Vector2.Distance(playerPos, point2)));
+                                    double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, playerPos)) * (s3 - Vector2.Distance(playerPos, point3)));
+                                    double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, playerPos)) * (s4 - Vector2.Distance(playerPos, point4)));
+                                    double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                                    double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
 
-                    if (inZoneS)
-                        safeZone = kv.Key;
+                                    if (areaAdded <= (areaActual + 1))
+                                        inZoneS = true;
+
+                                    if (inZoneS)
+                                        safeZone = kv.Key;
+                                }
+                                if (!inZoneS && inSafeZone.ContainsKey(pc))
+                                {
+                                    Broadcast.noticeTo(pc.netPlayer, "⊛", "You have left the safe zone.");
+                                    inSafeZone.Remove(pc);
+                                }
+
+                                if (!inSafeZone.ContainsKey(pc) && inZoneS)
+                                {
+                                    Broadcast.noticeTo(pc.netPlayer, "⊛", "You have entered a safe zone. Players cannot harm you.");
+                                    inSafeZone.Add(pc, safeZone);
+                                }
+
+                                string warZone = "";
+                                bool inZoneW = false;
+                                foreach (KeyValuePair<string, Zone> kv in warZones)
+                                {
+                                    Zone zone = kv.Value;
+                                    Vector2 point1 = zone.firstPoint;
+                                    Vector2 point2 = zone.secondPoint;
+                                    Vector2 point3 = zone.thirdPoint;
+                                    Vector2 point4 = zone.forthPoint;
+                                    float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, playerPos) + Vector2.Distance(playerPos, point1)) / 2;
+                                    float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, playerPos) + Vector2.Distance(playerPos, point2)) / 2;
+                                    float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, playerPos) + Vector2.Distance(playerPos, point3)) / 2;
+                                    float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, playerPos) + Vector2.Distance(playerPos, point4)) / 2;
+                                    double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, playerPos)) * (s1 - Vector2.Distance(playerPos, point1)));
+                                    double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, playerPos)) * (s2 - Vector2.Distance(playerPos, point2)));
+                                    double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, playerPos)) * (s3 - Vector2.Distance(playerPos, point3)));
+                                    double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, playerPos)) * (s4 - Vector2.Distance(playerPos, point4)));
+                                    double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                                    double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                                    if (areaAdded <= (areaActual + 1))
+                                        inZoneW = true;
+
+                                    if (inZoneW)
+                                        warZone = kv.Key;
+                                }
+                                if (!inZoneW && inWarZone.ContainsKey(pc))
+                                {
+                                    Broadcast.noticeTo(pc.netPlayer, "", "You have left the war zone.");
+                                    inWarZone.Remove(pc);
+                                }
+
+                                if (!inWarZone.ContainsKey(pc) && inZoneW)
+                                {
+                                    Broadcast.noticeTo(pc.netPlayer, "", "You have entered a war zone. Damage is multiplied by " + warDamage + "x.");
+                                    inWarZone.Add(pc, warZone);
+                                }
+                            }
+                        }
+                    }
                 }
-                if (!inZoneS && inSafeZone.ContainsKey(pc))
+                catch (Exception ex)
                 {
-                    Broadcast.noticeTo(pc.netPlayer, "⊛", "You have left the safe zone.");
-                    inSafeZone.Remove(pc);
-                }
-
-                if (!inSafeZone.ContainsKey(pc) && inZoneS)
-                {
-                    Broadcast.noticeTo(pc.netPlayer, "⊛", "You have entered a safe zone. Players cannot harm you.");
-                    inSafeZone.Add(pc, safeZone);
-                }
-
-                string warZone = "";
-                bool inZoneW = false;
-                foreach (KeyValuePair<string, Zone> kv in warZones)
-                {
-                    Zone zone = kv.Value;
-                    Vector2 point1 = zone.firstPoint;
-                    Vector2 point2 = zone.secondPoint;
-                    Vector2 point3 = zone.thirdPoint;
-                    Vector2 point4 = zone.forthPoint;
-                    float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, playerPos) + Vector2.Distance(playerPos, point1)) / 2;
-                    float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, playerPos) + Vector2.Distance(playerPos, point2)) / 2;
-                    float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, playerPos) + Vector2.Distance(playerPos, point3)) / 2;
-                    float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, playerPos) + Vector2.Distance(playerPos, point4)) / 2;
-                    double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, playerPos)) * (s1 - Vector2.Distance(playerPos, point1)));
-                    double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, playerPos)) * (s2 - Vector2.Distance(playerPos, point2)));
-                    double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, playerPos)) * (s3 - Vector2.Distance(playerPos, point3)));
-                    double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, playerPos)) * (s4 - Vector2.Distance(playerPos, point4)));
-                    double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                    double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
-
-                    if (areaAdded <= (areaActual + 1))
-                        inZoneW = true;
-
-                    if (inZoneW)
-                        warZone = kv.Key;
-                }
-                if (!inZoneW && inWarZone.ContainsKey(pc))
-                {
-                    Broadcast.noticeTo(pc.netPlayer, "", "You have left the war zone.");
-                    inWarZone.Remove(pc);
-                }
-
-                if (!inWarZone.ContainsKey(pc) && inZoneW)
-                {
-                    Broadcast.noticeTo(pc.netPlayer, "", "You have entered a war zone. Damage is multiplied by " + warDamage + "x.");
-                    inWarZone.Add(pc, warZone);
+                    conLog.Error("CZ: " + ex.ToString());
                 }
             }
         }
@@ -2076,48 +2270,48 @@ namespace RustEssentials.Util
             Vector2 origin2D = new Vector2(origin.x, origin.z);
 
             bool inZone = false;
-            foreach (KeyValuePair<string, Zone> kv in safeZones)
-            {
-                Zone zone = kv.Value;
-                Vector2 point1 = zone.firstPoint;
-                Vector2 point2 = zone.secondPoint;
-                Vector2 point3 = zone.thirdPoint;
-                Vector2 point4 = zone.forthPoint;
-                float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, origin2D) + Vector2.Distance(origin2D, point1)) / 2;
-                float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, origin2D) + Vector2.Distance(origin2D, point2)) / 2;
-                float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, origin2D) + Vector2.Distance(origin2D, point3)) / 2;
-                float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, origin2D) + Vector2.Distance(origin2D, point4)) / 2;
-                double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, origin2D)) * (s1 - Vector2.Distance(origin2D, point1)));
-                double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, origin2D)) * (s2 - Vector2.Distance(origin2D, point2)));
-                double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, origin2D)) * (s3 - Vector2.Distance(origin2D, point3)));
-                double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, origin2D)) * (s4 - Vector2.Distance(origin2D, point4)));
-                double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+                foreach (KeyValuePair<string, Zone> kv in safeZones)
+                {
+                    Zone zone = kv.Value;
+                    Vector2 point1 = zone.firstPoint;
+                    Vector2 point2 = zone.secondPoint;
+                    Vector2 point3 = zone.thirdPoint;
+                    Vector2 point4 = zone.forthPoint;
+                    float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, origin2D) + Vector2.Distance(origin2D, point1)) / 2;
+                    float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, origin2D) + Vector2.Distance(origin2D, point2)) / 2;
+                    float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, origin2D) + Vector2.Distance(origin2D, point3)) / 2;
+                    float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, origin2D) + Vector2.Distance(origin2D, point4)) / 2;
+                    double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, origin2D)) * (s1 - Vector2.Distance(origin2D, point1)));
+                    double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, origin2D)) * (s2 - Vector2.Distance(origin2D, point2)));
+                    double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, origin2D)) * (s3 - Vector2.Distance(origin2D, point3)));
+                    double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, origin2D)) * (s4 - Vector2.Distance(origin2D, point4)));
+                    double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                    double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
 
-                if (areaAdded <= (areaActual + 1))
-                    inZone = true;
-            }
-            foreach (KeyValuePair<string, Zone> kv in warZones)
-            {
-                Zone zone = kv.Value;
-                Vector2 point1 = zone.firstPoint;
-                Vector2 point2 = zone.secondPoint;
-                Vector2 point3 = zone.thirdPoint;
-                Vector2 point4 = zone.forthPoint;
-                float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, origin2D) + Vector2.Distance(origin2D, point1)) / 2;
-                float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, origin2D) + Vector2.Distance(origin2D, point2)) / 2;
-                float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, origin2D) + Vector2.Distance(origin2D, point3)) / 2;
-                float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, origin2D) + Vector2.Distance(origin2D, point4)) / 2;
-                double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, origin2D)) * (s1 - Vector2.Distance(origin2D, point1)));
-                double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, origin2D)) * (s2 - Vector2.Distance(origin2D, point2)));
-                double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, origin2D)) * (s3 - Vector2.Distance(origin2D, point3)));
-                double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, origin2D)) * (s4 - Vector2.Distance(origin2D, point4)));
-                double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+                    if (areaAdded <= (areaActual + 1))
+                        inZone = true;
+                }
+                foreach (KeyValuePair<string, Zone> kv in warZones)
+                {
+                    Zone zone = kv.Value;
+                    Vector2 point1 = zone.firstPoint;
+                    Vector2 point2 = zone.secondPoint;
+                    Vector2 point3 = zone.thirdPoint;
+                    Vector2 point4 = zone.forthPoint;
+                    float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, origin2D) + Vector2.Distance(origin2D, point1)) / 2;
+                    float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, origin2D) + Vector2.Distance(origin2D, point2)) / 2;
+                    float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, origin2D) + Vector2.Distance(origin2D, point3)) / 2;
+                    float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, origin2D) + Vector2.Distance(origin2D, point4)) / 2;
+                    double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, origin2D)) * (s1 - Vector2.Distance(origin2D, point1)));
+                    double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, origin2D)) * (s2 - Vector2.Distance(origin2D, point2)));
+                    double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, origin2D)) * (s3 - Vector2.Distance(origin2D, point3)));
+                    double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, origin2D)) * (s4 - Vector2.Distance(origin2D, point4)));
+                    double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                    double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
 
-                if (areaAdded <= (areaActual + 1))
-                    inZone = true;
-            }
+                    if (areaAdded <= (areaActual + 1))
+                        inZone = true;
+                }
 
             return inZone;
         }
@@ -2131,191 +2325,191 @@ namespace RustEssentials.Util
             Vector2 originTop = new Vector2(origin.x, origin.z + 15);
 
             bool inZone = false;
-            foreach (KeyValuePair<string, Zone> kv in safeZones)
-            {
-                Zone zone = kv.Value;
-                Vector2 point1 = zone.firstPoint;
-                Vector2 point2 = zone.secondPoint;
-                Vector2 point3 = zone.thirdPoint;
-                Vector2 point4 = zone.forthPoint;
-                float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, origin2D) + Vector2.Distance(origin2D, point1)) / 2;
-                float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, origin2D) + Vector2.Distance(origin2D, point2)) / 2;
-                float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, origin2D) + Vector2.Distance(origin2D, point3)) / 2;
-                float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, origin2D) + Vector2.Distance(origin2D, point4)) / 2;
-                double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, origin2D)) * (s1 - Vector2.Distance(origin2D, point1)));
-                double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, origin2D)) * (s2 - Vector2.Distance(origin2D, point2)));
-                double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, origin2D)) * (s3 - Vector2.Distance(origin2D, point3)));
-                double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, origin2D)) * (s4 - Vector2.Distance(origin2D, point4)));
-                double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
-
-                if (areaAdded <= (areaActual + 1))
+                foreach (KeyValuePair<string, Zone> kv in safeZones)
                 {
-                    inZone = true;
-                    break;
+                    Zone zone = kv.Value;
+                    Vector2 point1 = zone.firstPoint;
+                    Vector2 point2 = zone.secondPoint;
+                    Vector2 point3 = zone.thirdPoint;
+                    Vector2 point4 = zone.forthPoint;
+                    float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, origin2D) + Vector2.Distance(origin2D, point1)) / 2;
+                    float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, origin2D) + Vector2.Distance(origin2D, point2)) / 2;
+                    float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, origin2D) + Vector2.Distance(origin2D, point3)) / 2;
+                    float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, origin2D) + Vector2.Distance(origin2D, point4)) / 2;
+                    double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, origin2D)) * (s1 - Vector2.Distance(origin2D, point1)));
+                    double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, origin2D)) * (s2 - Vector2.Distance(origin2D, point2)));
+                    double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, origin2D)) * (s3 - Vector2.Distance(origin2D, point3)));
+                    double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, origin2D)) * (s4 - Vector2.Distance(origin2D, point4)));
+                    double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                    double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                    if (areaAdded <= (areaActual + 1))
+                    {
+                        inZone = true;
+                        break;
+                    }
+
+                    s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originLeft) + Vector2.Distance(originLeft, point1)) / 2;
+                    s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originLeft) + Vector2.Distance(originLeft, point2)) / 2;
+                    s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originLeft) + Vector2.Distance(originLeft, point3)) / 2;
+                    s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originLeft) + Vector2.Distance(originLeft, point4)) / 2;
+                    areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originLeft)) * (s1 - Vector2.Distance(originLeft, point1)));
+                    areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originLeft)) * (s2 - Vector2.Distance(originLeft, point2)));
+                    areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originLeft)) * (s3 - Vector2.Distance(originLeft, point3)));
+                    areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originLeft)) * (s4 - Vector2.Distance(originLeft, point4)));
+                    areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                    areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                    if (areaAdded <= (areaActual + 1))
+                    {
+                        inZone = true;
+                        break;
+                    }
+
+                    s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originRight) + Vector2.Distance(originRight, point1)) / 2;
+                    s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originRight) + Vector2.Distance(originRight, point2)) / 2;
+                    s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originRight) + Vector2.Distance(originRight, point3)) / 2;
+                    s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originRight) + Vector2.Distance(originRight, point4)) / 2;
+                    areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originRight)) * (s1 - Vector2.Distance(originRight, point1)));
+                    areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originRight)) * (s2 - Vector2.Distance(originRight, point2)));
+                    areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originRight)) * (s3 - Vector2.Distance(originRight, point3)));
+                    areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originRight)) * (s4 - Vector2.Distance(originRight, point4)));
+                    areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                    areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                    if (areaAdded <= (areaActual + 1))
+                    {
+                        inZone = true;
+                        break;
+                    }
+
+                    s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originTop) + Vector2.Distance(originTop, point1)) / 2;
+                    s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originTop) + Vector2.Distance(originTop, point2)) / 2;
+                    s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originTop) + Vector2.Distance(originTop, point3)) / 2;
+                    s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originTop) + Vector2.Distance(originTop, point4)) / 2;
+                    areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originTop)) * (s1 - Vector2.Distance(originTop, point1)));
+                    areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originTop)) * (s2 - Vector2.Distance(originTop, point2)));
+                    areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originTop)) * (s3 - Vector2.Distance(originTop, point3)));
+                    areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originTop)) * (s4 - Vector2.Distance(originTop, point4)));
+                    areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                    areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                    if (areaAdded <= (areaActual + 1))
+                    {
+                        inZone = true;
+                        break;
+                    }
+
+                    s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originBottom) + Vector2.Distance(originBottom, point1)) / 2;
+                    s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originBottom) + Vector2.Distance(originBottom, point2)) / 2;
+                    s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originBottom) + Vector2.Distance(originBottom, point3)) / 2;
+                    s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originBottom) + Vector2.Distance(originBottom, point4)) / 2;
+                    areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originBottom)) * (s1 - Vector2.Distance(originBottom, point1)));
+                    areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originBottom)) * (s2 - Vector2.Distance(originBottom, point2)));
+                    areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originBottom)) * (s3 - Vector2.Distance(originBottom, point3)));
+                    areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originBottom)) * (s4 - Vector2.Distance(originBottom, point4)));
+                    areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                    areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                    if (areaAdded <= (areaActual + 1))
+                    {
+                        inZone = true;
+                        break;
+                    }
                 }
 
-                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originLeft) + Vector2.Distance(originLeft, point1)) / 2;
-                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originLeft) + Vector2.Distance(originLeft, point2)) / 2;
-                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originLeft) + Vector2.Distance(originLeft, point3)) / 2;
-                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originLeft) + Vector2.Distance(originLeft, point4)) / 2;
-                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originLeft)) * (s1 - Vector2.Distance(originLeft, point1)));
-                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originLeft)) * (s2 - Vector2.Distance(originLeft, point2)));
-                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originLeft)) * (s3 - Vector2.Distance(originLeft, point3)));
-                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originLeft)) * (s4 - Vector2.Distance(originLeft, point4)));
-                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
-
-                if (areaAdded <= (areaActual + 1))
+                foreach (KeyValuePair<string, Zone> kv in warZones)
                 {
-                    inZone = true;
-                    break;
+                    Zone zone = kv.Value;
+                    Vector2 point1 = zone.firstPoint;
+                    Vector2 point2 = zone.secondPoint;
+                    Vector2 point3 = zone.thirdPoint;
+                    Vector2 point4 = zone.forthPoint;
+                    float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, origin2D) + Vector2.Distance(origin2D, point1)) / 2;
+                    float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, origin2D) + Vector2.Distance(origin2D, point2)) / 2;
+                    float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, origin2D) + Vector2.Distance(origin2D, point3)) / 2;
+                    float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, origin2D) + Vector2.Distance(origin2D, point4)) / 2;
+                    double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, origin2D)) * (s1 - Vector2.Distance(origin2D, point1)));
+                    double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, origin2D)) * (s2 - Vector2.Distance(origin2D, point2)));
+                    double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, origin2D)) * (s3 - Vector2.Distance(origin2D, point3)));
+                    double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, origin2D)) * (s4 - Vector2.Distance(origin2D, point4)));
+                    double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                    double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                    if (areaAdded <= (areaActual + 1))
+                    {
+                        inZone = true;
+                        break;
+                    }
+
+                    s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originLeft) + Vector2.Distance(originLeft, point1)) / 2;
+                    s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originLeft) + Vector2.Distance(originLeft, point2)) / 2;
+                    s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originLeft) + Vector2.Distance(originLeft, point3)) / 2;
+                    s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originLeft) + Vector2.Distance(originLeft, point4)) / 2;
+                    areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originLeft)) * (s1 - Vector2.Distance(originLeft, point1)));
+                    areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originLeft)) * (s2 - Vector2.Distance(originLeft, point2)));
+                    areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originLeft)) * (s3 - Vector2.Distance(originLeft, point3)));
+                    areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originLeft)) * (s4 - Vector2.Distance(originLeft, point4)));
+                    areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                    areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                    if (areaAdded <= (areaActual + 1))
+                    {
+                        inZone = true;
+                        break;
+                    }
+
+                    s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originRight) + Vector2.Distance(originRight, point1)) / 2;
+                    s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originRight) + Vector2.Distance(originRight, point2)) / 2;
+                    s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originRight) + Vector2.Distance(originRight, point3)) / 2;
+                    s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originRight) + Vector2.Distance(originRight, point4)) / 2;
+                    areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originRight)) * (s1 - Vector2.Distance(originRight, point1)));
+                    areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originRight)) * (s2 - Vector2.Distance(originRight, point2)));
+                    areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originRight)) * (s3 - Vector2.Distance(originRight, point3)));
+                    areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originRight)) * (s4 - Vector2.Distance(originRight, point4)));
+                    areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                    areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                    if (areaAdded <= (areaActual + 1))
+                    {
+                        inZone = true;
+                        break;
+                    }
+
+                    s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originTop) + Vector2.Distance(originTop, point1)) / 2;
+                    s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originTop) + Vector2.Distance(originTop, point2)) / 2;
+                    s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originTop) + Vector2.Distance(originTop, point3)) / 2;
+                    s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originTop) + Vector2.Distance(originTop, point4)) / 2;
+                    areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originTop)) * (s1 - Vector2.Distance(originTop, point1)));
+                    areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originTop)) * (s2 - Vector2.Distance(originTop, point2)));
+                    areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originTop)) * (s3 - Vector2.Distance(originTop, point3)));
+                    areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originTop)) * (s4 - Vector2.Distance(originTop, point4)));
+                    areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                    areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                    if (areaAdded <= (areaActual + 1))
+                    {
+                        inZone = true;
+                        break;
+                    }
+
+                    s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originBottom) + Vector2.Distance(originBottom, point1)) / 2;
+                    s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originBottom) + Vector2.Distance(originBottom, point2)) / 2;
+                    s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originBottom) + Vector2.Distance(originBottom, point3)) / 2;
+                    s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originBottom) + Vector2.Distance(originBottom, point4)) / 2;
+                    areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originBottom)) * (s1 - Vector2.Distance(originBottom, point1)));
+                    areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originBottom)) * (s2 - Vector2.Distance(originBottom, point2)));
+                    areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originBottom)) * (s3 - Vector2.Distance(originBottom, point3)));
+                    areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originBottom)) * (s4 - Vector2.Distance(originBottom, point4)));
+                    areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                    areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                    if (areaAdded <= (areaActual + 1))
+                    {
+                        inZone = true;
+                        break;
+                    }
                 }
-
-                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originRight) + Vector2.Distance(originRight, point1)) / 2;
-                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originRight) + Vector2.Distance(originRight, point2)) / 2;
-                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originRight) + Vector2.Distance(originRight, point3)) / 2;
-                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originRight) + Vector2.Distance(originRight, point4)) / 2;
-                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originRight)) * (s1 - Vector2.Distance(originRight, point1)));
-                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originRight)) * (s2 - Vector2.Distance(originRight, point2)));
-                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originRight)) * (s3 - Vector2.Distance(originRight, point3)));
-                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originRight)) * (s4 - Vector2.Distance(originRight, point4)));
-                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
-
-                if (areaAdded <= (areaActual + 1))
-                {
-                    inZone = true;
-                    break;
-                }
-
-                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originTop) + Vector2.Distance(originTop, point1)) / 2;
-                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originTop) + Vector2.Distance(originTop, point2)) / 2;
-                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originTop) + Vector2.Distance(originTop, point3)) / 2;
-                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originTop) + Vector2.Distance(originTop, point4)) / 2;
-                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originTop)) * (s1 - Vector2.Distance(originTop, point1)));
-                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originTop)) * (s2 - Vector2.Distance(originTop, point2)));
-                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originTop)) * (s3 - Vector2.Distance(originTop, point3)));
-                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originTop)) * (s4 - Vector2.Distance(originTop, point4)));
-                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
-
-                if (areaAdded <= (areaActual + 1))
-                {
-                    inZone = true;
-                    break;
-                }
-
-                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originBottom) + Vector2.Distance(originBottom, point1)) / 2;
-                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originBottom) + Vector2.Distance(originBottom, point2)) / 2;
-                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originBottom) + Vector2.Distance(originBottom, point3)) / 2;
-                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originBottom) + Vector2.Distance(originBottom, point4)) / 2;
-                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originBottom)) * (s1 - Vector2.Distance(originBottom, point1)));
-                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originBottom)) * (s2 - Vector2.Distance(originBottom, point2)));
-                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originBottom)) * (s3 - Vector2.Distance(originBottom, point3)));
-                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originBottom)) * (s4 - Vector2.Distance(originBottom, point4)));
-                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
-
-                if (areaAdded <= (areaActual + 1))
-                {
-                    inZone = true;
-                    break;
-                }
-            }
-
-            foreach (KeyValuePair<string, Zone> kv in warZones)
-            {
-                Zone zone = kv.Value;
-                Vector2 point1 = zone.firstPoint;
-                Vector2 point2 = zone.secondPoint;
-                Vector2 point3 = zone.thirdPoint;
-                Vector2 point4 = zone.forthPoint;
-                float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, origin2D) + Vector2.Distance(origin2D, point1)) / 2;
-                float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, origin2D) + Vector2.Distance(origin2D, point2)) / 2;
-                float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, origin2D) + Vector2.Distance(origin2D, point3)) / 2;
-                float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, origin2D) + Vector2.Distance(origin2D, point4)) / 2;
-                double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, origin2D)) * (s1 - Vector2.Distance(origin2D, point1)));
-                double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, origin2D)) * (s2 - Vector2.Distance(origin2D, point2)));
-                double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, origin2D)) * (s3 - Vector2.Distance(origin2D, point3)));
-                double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, origin2D)) * (s4 - Vector2.Distance(origin2D, point4)));
-                double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
-
-                if (areaAdded <= (areaActual + 1))
-                {
-                    inZone = true;
-                    break;
-                }
-
-                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originLeft) + Vector2.Distance(originLeft, point1)) / 2;
-                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originLeft) + Vector2.Distance(originLeft, point2)) / 2;
-                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originLeft) + Vector2.Distance(originLeft, point3)) / 2;
-                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originLeft) + Vector2.Distance(originLeft, point4)) / 2;
-                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originLeft)) * (s1 - Vector2.Distance(originLeft, point1)));
-                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originLeft)) * (s2 - Vector2.Distance(originLeft, point2)));
-                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originLeft)) * (s3 - Vector2.Distance(originLeft, point3)));
-                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originLeft)) * (s4 - Vector2.Distance(originLeft, point4)));
-                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
-
-                if (areaAdded <= (areaActual + 1))
-                {
-                    inZone = true;
-                    break;
-                }
-
-                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originRight) + Vector2.Distance(originRight, point1)) / 2;
-                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originRight) + Vector2.Distance(originRight, point2)) / 2;
-                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originRight) + Vector2.Distance(originRight, point3)) / 2;
-                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originRight) + Vector2.Distance(originRight, point4)) / 2;
-                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originRight)) * (s1 - Vector2.Distance(originRight, point1)));
-                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originRight)) * (s2 - Vector2.Distance(originRight, point2)));
-                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originRight)) * (s3 - Vector2.Distance(originRight, point3)));
-                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originRight)) * (s4 - Vector2.Distance(originRight, point4)));
-                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
-
-                if (areaAdded <= (areaActual + 1))
-                {
-                    inZone = true;
-                    break;
-                }
-
-                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originTop) + Vector2.Distance(originTop, point1)) / 2;
-                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originTop) + Vector2.Distance(originTop, point2)) / 2;
-                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originTop) + Vector2.Distance(originTop, point3)) / 2;
-                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originTop) + Vector2.Distance(originTop, point4)) / 2;
-                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originTop)) * (s1 - Vector2.Distance(originTop, point1)));
-                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originTop)) * (s2 - Vector2.Distance(originTop, point2)));
-                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originTop)) * (s3 - Vector2.Distance(originTop, point3)));
-                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originTop)) * (s4 - Vector2.Distance(originTop, point4)));
-                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
-
-                if (areaAdded <= (areaActual + 1))
-                {
-                    inZone = true;
-                    break;
-                }
-
-                s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, originBottom) + Vector2.Distance(originBottom, point1)) / 2;
-                s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, originBottom) + Vector2.Distance(originBottom, point2)) / 2;
-                s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, originBottom) + Vector2.Distance(originBottom, point3)) / 2;
-                s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, originBottom) + Vector2.Distance(originBottom, point4)) / 2;
-                areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, originBottom)) * (s1 - Vector2.Distance(originBottom, point1)));
-                areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, originBottom)) * (s2 - Vector2.Distance(originBottom, point2)));
-                areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, originBottom)) * (s3 - Vector2.Distance(originBottom, point3)));
-                areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, originBottom)) * (s4 - Vector2.Distance(originBottom, point4)));
-                areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
-
-                if (areaAdded <= (areaActual + 1))
-                {
-                    inZone = true;
-                    break;
-                }
-            }
 
             return inZone;
         }
@@ -2528,6 +2722,24 @@ namespace RustEssentials.Util
             //}
         }
 
+        public static void grabClient(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                int clientNumber;
+
+                if (int.TryParse(args[1], out clientNumber))
+                {
+                    PlayerClient targetClient = AllPlayerClients[clientNumber];
+
+                    Broadcast.broadcastTo(senderClient.netPlayer, "Client #: " + clientNumber);
+                    Broadcast.broadcastTo(senderClient.netPlayer, "Client String: " + targetClient.ToString());
+                    Broadcast.broadcastTo(senderClient.netPlayer, "Username: " + targetClient.userName);
+                    Broadcast.broadcastTo(senderClient.netPlayer, "UID: " + targetClient.userID);
+                }
+            }
+        }
+
         public static void showDistance(PlayerClient senderClient, string[] args)
         {
             if (args.Count() > 1)
@@ -2615,7 +2827,7 @@ namespace RustEssentials.Util
         {
             Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
 
-            for (int i = 0; i < inventory.slotCount - 1; i++)
+            for (int i = 0; i < inventory.slotCount; i++)
             {
                 inventory.RemoveItem(i);
             }
@@ -2641,13 +2853,20 @@ namespace RustEssentials.Util
         {
             Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
 
-            if (inventory.vacantSlotCount > 0)
+            if (addArmor(playerClient, itemName))
             {
-                inventory.AddItemAmount(DatablockDictionary.GetByName(itemName), amount);
                 return true;
             }
             else
-                return false;
+            {
+                if (inventory.vacantSlotCount > 0)
+                {
+                    inventory.AddItemAmount(DatablockDictionary.GetByName(itemName), amount);
+                    return true;
+                }
+                else
+                    return false;
+            }
         }
 
         public static bool addArmor(PlayerClient playerClient, string itemName, bool replaceCurrent = false)
@@ -2668,7 +2887,11 @@ namespace RustEssentials.Util
             {
                 if (replaceCurrent)
                     inventory.RemoveItem(slot);
-                inventory.AddItemAmount(DatablockDictionary.GetByName(itemName), 1, Inventory.Slot.Preference.Define(Inventory.Slot.Kind.Armor, false, Inventory.Slot.KindFlags.Armor));
+
+                if (!inventory.IsSlotOccupied(slot))
+                    inventory.AddItemAmount(DatablockDictionary.GetByName(itemName), 1, Inventory.Slot.Preference.Define(Inventory.Slot.Kind.Armor, false, Inventory.Slot.KindFlags.Armor));
+                else
+                    inventory.AddItemAmount(DatablockDictionary.GetByName(itemName), 1);
                 return true;
             }
             else
@@ -2893,6 +3116,45 @@ namespace RustEssentials.Util
                         }
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You are not currently hidden from AI.");
+                        break;
+                }
+            }
+        }
+
+        public static void removerAllTool(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                string mode = args[1];
+                string UID = senderClient.userID.ToString();
+
+                switch (mode)
+                {
+                    case "on":
+                        if (!destroyerAllList.Contains(UID))
+                        {
+                            if (ownershipList.Contains(UID))
+                            {
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Ownership tool deactivated.");
+                                ownershipList.Remove(UID);
+                            }
+
+                            if (destroyerList.Contains(UID))
+                                destroyerList.Remove(UID);
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Remover tool activated. Hit AI or structures to delete them and their connected structures.");
+                            destroyerAllList.Add(UID);
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You already have the remover tool activated.");
+                        break;
+                    case "off":
+                        if (destroyerAllList.Contains(UID))
+                        {
+                            Broadcast.broadcastTo(senderClient.netPlayer, "Remover tool deactivated.");
+                            destroyerAllList.Remove(UID);
+                        }
+                        else
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You do not have the remover tool activated.");
                         break;
                 }
             }
@@ -3129,6 +3391,34 @@ namespace RustEssentials.Util
                                 beingDestroyed.Add(damage.victim.idMain.gameObject);
                                 NetCull.Destroy(damage.victim.idMain.gameObject);
                             }
+                            else if (destroyerAllList.Contains(damage.attacker.userID.ToString()))
+                            {
+                                if (damage.victim.idMain is StructureComponent)
+                                {
+                                    HashSet<StructureComponent> structureComponents = damage.victim.idMain.gameObject.GetComponent<StructureComponent>()._master._structureComponents;
+                                    List<GameObject> toDestroy = new List<GameObject>();
+                                    foreach (var kv in structureComponents)
+                                    {
+                                        if (kv.gameObject != null)
+                                        {
+                                            toDestroy.Add(kv.gameObject);
+                                        }
+                                    }
+                                    foreach (GameObject GO in toDestroy)
+                                    {
+                                        if (GO != null)
+                                        {
+                                            beingDestroyed.Add(GO);
+                                            NetCull.Destroy(GO);
+                                        }
+                                    }
+                                }
+                                if (damage.victim.idMain is DeployableObject)
+                                {
+                                    beingDestroyed.Add(damage.victim.idMain.gameObject);
+                                    NetCull.Destroy(damage.victim.idMain.gameObject);
+                                }
+                            }
                             else
                             {
                                 if (inZone(damage.victim.idMain.transform.position))
@@ -3148,9 +3438,11 @@ namespace RustEssentials.Util
                                     if (damage.victim.idMain is DeployableObject)
                                         ownerUID = (damage.victim.idMain as DeployableObject).ownerID.ToString();
 
-                                    string userName = grabNameByUID(ownerUID);
-
-                                    Broadcast.noticeTo(damage.attacker.client.netPlayer, "✲", "This is owned by " + userName + "!");
+                                    Thread t = new Thread((DE) =>
+                                        {
+                                            Broadcast.noticeTo(((DamageEvent)DE).attacker.client.netPlayer, "✲", "This is owned by " + grabNameByUID(ownerUID) + "!");
+                                        });
+                                    t.Start(damage);
                                 }
                             }
                         }
@@ -3332,11 +3624,7 @@ namespace RustEssentials.Util
                     }
                 }
 
-                if (takeDamage.dead)
-                {
-                    damage.status = LifeStatus.IsDead;
-                }
-                else if (takeDamage.health > damage.amount)
+                if (takeDamage.health > damage.amount)
                 {
                     damage.status = LifeStatus.IsAlive;
                 }
@@ -3475,7 +3763,7 @@ namespace RustEssentials.Util
                     List<string> illegalChars = new List<string>();
                     foreach (char c in user.displayName)
                     {
-                        if (!allowedChars.Contains(c.ToString().ToLower()) && !allowedChars.Contains(c.ToString()) && c != ' ')
+                        if (!allowedChars.Contains(c.ToString().ToLower()) && !allowedChars.Contains(c.ToString()) && c != ' ' && c != ',')
                         {
                             illegalChars.Add(c.ToString());
                             containsIllegalChar = true;
@@ -3618,29 +3906,49 @@ namespace RustEssentials.Util
         {
             try
             {
-                string userName = user.playerClient.userName;
-                if (userName.Length == 0)
-                    userName = user.playerClient.userID.ToString();
+                if (user != null)
+                {
+                    string userName = user.displayName;
 
-                RustProto.Avatar objB = user.LoadAvatar();
-                RustServerManagement RSM = RustServerManagement.Get();
-                RSM.UpdateConnectingUserAvatar(user, ref user.avatar);
-                if (!object.ReferenceEquals(user.avatar, objB))
-                {
-                    user.SaveAvatar();
-                }
-                if (RSM.SpawnPlayer(user.playerClient, false, user.avatar) != null)
-                {
-                    user.did_join = true;
-                    conLog.Info(userName + " (" + user.userID + ") has joined the game world. Avatar loaded.");
-                    if (vanishedList.Contains(user.userID.ToString()))
+                    RustProto.Avatar objB = user.LoadAvatar();
+                    if (objB != null)
                     {
-                        addArmor(user.playerClient, "Invisible Helmet", true);
-                        addArmor(user.playerClient, "Invisible Vest", true);
-                        addArmor(user.playerClient, "Invisible Pants", true);
-                        addArmor(user.playerClient, "Invisible Boots", true);
+                        RustServerManagement RSM = RustServerManagement.Get();
+                        if (RSM != null)
+                        {
+                            RSM.UpdateConnectingUserAvatar(user, ref user.avatar);
+                            if (!object.ReferenceEquals(user.avatar, objB))
+                            {
+                                user.SaveAvatar();
+                            }
+                            if (user.playerClient != null)
+                            {
+                                if (RSM.SpawnPlayer(user.playerClient, false, user.avatar) != null)
+                                {
+                                    user.did_join = true;
+                                    conLog.Info((vanishedList.Contains(user.userID.ToString()) ? "Vanished user" : userName) + " (" + user.userID + ") has joined the game world. Avatar loaded.");
+                                    if (vanishedList.Contains(user.userID.ToString()))
+                                    {
+                                        addArmor(user.playerClient, "Invisible Helmet", true);
+                                        addArmor(user.playerClient, "Invisible Vest", true);
+                                        addArmor(user.playerClient, "Invisible Pants", true);
+                                        addArmor(user.playerClient, "Invisible Boots", true);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                               conLog.Info("User " + userName + " (" + user.userID.ToString() + ") joined but the instance of PlayerClient is null! DO NOT IGNORE THIS!");
+                            }
+                        }
+                        else
+                            conLog.Info("User " + userName + " (" + user.userID.ToString() + ") joined but the RSM is null!");
                     }
+                    else
+                        conLog.Info("User " + userName + " (" + user.userID.ToString() + ") joined but the avatar could not be loaded!");
                 }
+                else
+                    conLog.Info("User was null when joining! DO NOT IGNORE THIS!");
             }
             catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
         }
@@ -3649,116 +3957,347 @@ namespace RustEssentials.Util
         {
             try
             {
-                object localData = player.GetLocalData();
-                RustServerManagement RSM = RustServerManagement.Get();
-                if (localData is NetUser)
+                if (CA != null)
                 {
-                    NetUser user = (NetUser)localData;
-                    PlayerClient playerClient = user.playerClient;
-
-                    if (latestPM.ContainsKey(playerClient))
-                        latestPM.Remove(playerClient);
-
-                    if (latestRequests.ContainsKey(playerClient))
-                        latestRequests.Remove(playerClient);
-
-                    if (latestFactionRequests.ContainsKey(playerClient))
-                        latestFactionRequests.Remove(playerClient);
-
-                    if (killList.Contains(playerClient))
-                        killList.Remove(playerClient);
-
-                    if (isTeleporting.Contains(playerClient))
-                        isTeleporting.Remove(playerClient);
-
-                    if (isAccepting.Contains(playerClient))
-                        isAccepting.Remove(playerClient);
-
-                    if (wasHit.Contains(playerClient))
-                        wasHit.Remove(playerClient);
-
-                    if (inSafeZone.ContainsKey(playerClient))
-                        inSafeZone.Remove(playerClient);
-
-                    if (inWarZone.ContainsKey(playerClient))
-                        inWarZone.Remove(playerClient);
-
-                    if (firstPoints.ContainsKey(playerClient))
-                        firstPoints.Remove(playerClient);
-
-                    if (secondPoints.ContainsKey(playerClient))
-                        secondPoints.Remove(playerClient);
-
-                    if (blockedRequestsPer.ContainsKey(playerClient.userID.ToString()))
+                    if (player != null)
                     {
-                        if (blockedRequestsPer[playerClient.userID.ToString()].Count < 1)
-                            blockedRequestsPer.Remove(playerClient.userID.ToString());
-                    }
-
-                    if (teleportRequests.ContainsKey(playerClient))
-                        teleportRequests.Remove(playerClient);
-
-                    string leaveMessage = "";
-                    if (Vars.enableLeave && !Vars.kickQueue.Contains(playerClient.userID.ToString()) && playerClient.userName.Length > 0)
-                    {
-                        leaveMessage = Vars.leaveMessage.Replace("$USER$", Vars.filterFullNames(playerClient.userName, playerClient.userID.ToString()));
-                        Broadcast.broadcastJoinLeave(leaveMessage);
-                        Vars.conLog.Chat("<BROADCAST ALL> " + Vars.botName + ": " + leaveMessage);
-                    }
-
-                    if (AllPlayerClients.Contains(playerClient))
-                        AllPlayerClients.Remove(playerClient);
-
-                    user.connection.netUser = null;
-                    CA.m_Connections.Remove(user.connection);
-                    bool b = true;
-                    if (Vars.kickQueue.Contains(playerClient.userID.ToString()) || playerClient.userName.Length == 0)
-                    {
-                        if (Vars.kickQueue.Contains(playerClient.userID.ToString()))
-                            Vars.kickQueue.Remove(playerClient.userID.ToString());
-                        b = false;
-                    }
-                    try
-                    {
-                        if (playerClient != null)
+                        object localData = player.GetLocalData();
+                        if (localData != null)
                         {
-                            RSM.EraseCharactersForClient(playerClient, true, user);
-                        }
-                        NetCull.DestroyPlayerObjects(player);
-                        CullGrid.ClearPlayerCulling(user);
-                        NetCull.RemoveRPCs(player);
-                    }
-                    catch (Exception exception)
-                    {
-                        conLog.Error(exception.ToString());
-                        conLog.Error("DO NOT IGNORE THE ERROR ABOVE. THESE THINGS SHOULD NOT BE FAILING. EVER.");
-                    }
-                    if (b)
-                        conLog.Info("Player " + user.displayName + " (" + user.userID + ") disconnected. Data unloaded.");
-                    Rust.Steam.Server.OnUserLeave(user.connection.UserID);
-                    try
-                    {
-                        user.Dispose();
-                    }
-                    catch (Exception exception2)
-                    {
-                        conLog.Error(exception2.ToString());
-                        conLog.Error("DO NOT IGNORE THE ERROR ABOVE. THESE THINGS SHOULD NOT BE FAILING. EVER.");
-                    }
-                }
-                else if (localData is ClientConnection)
-                {
-                    ClientConnection item = (ClientConnection)localData;
-                    CA.m_Connections.Remove(item);
-                    ConsoleSystem.Print("User Disconnected: (unconnected " + player.ipAddress + ")", false);
-                }
+                            RustServerManagement RSM = RustServerManagement.Get();
+                            if (localData is NetUser)
+                            {
+                                NetUser user = (NetUser)localData;
+                                PlayerClient playerClient = user.playerClient;
+                                List<PlayerClient> possibleClient = new List<PlayerClient>();
+                                try
+                                {
+                                    if (playerClient == null || playerClient.netUser == null || playerClient.netPlayer == null || playerClient.userName == null)
+                                        possibleClient = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netUser == user || pc.userID == user.userID || pc.netPlayer == user.networkPlayer || pc.netPlayer == player).ToList();
 
-                player.SetLocalData(null);
-                Rust.Steam.Server.OnPlayerCountChanged();
+                                    if (possibleClient.Count() == 1)
+                                        playerClient = possibleClient[0];
+
+                                    if (possibleClient.Count == 0 || playerClient == null || playerClient.netUser == null || playerClient.netPlayer == null || playerClient.userName == null)
+                                    {
+                                        possibleClient.Clear();
+                                        LockedList<PlayerClient> playerClients = PlayerClient.All;
+                                        possibleClient = Array.FindAll(playerClients.ToArray(), (PlayerClient pc) => pc.netUser == user || pc.userID == user.userID || pc.netPlayer == user.networkPlayer || pc.netPlayer == player).ToList();
+                                    }
+
+                                    if (possibleClient.Count() == 1)
+                                        playerClient = possibleClient[0];
+
+                                    if (possibleClient.Count == 0 || playerClient == null || playerClient.netUser == null || playerClient.netPlayer == null || playerClient.userName == null)
+                                    {
+                                        possibleClient.Clear();
+                                        List<PlayerClient> playerClients = RSM._playerClientList;
+                                        possibleClient = Array.FindAll(playerClients.ToArray(), (PlayerClient pc) => pc.netUser == user || pc.userID == user.userID || pc.netPlayer == user.networkPlayer || pc.netPlayer == player).ToList();
+                                    }
+
+                                    if (possibleClient.Count() == 1)
+                                        playerClient = possibleClient[0];
+
+                                    if (possibleClient.Count == 0 || playerClient == null || playerClient.netUser == null || playerClient.netPlayer == null || playerClient.userName == null)
+                                        playerClient = null;
+
+                                    if (playerClient == null)
+                                        conLog.Error("Could not find a proper playerclient after many tries!");
+                                }
+                                catch (Exception ex)
+                                {
+                                    conLog.Error("Could not find a proper playerclient: " + ex.ToString());
+                                }
+
+                                if (user != null && playerClient != null)
+                                {
+                                    if (latestPM.ContainsKey(playerClient))
+                                        latestPM.Remove(playerClient);
+
+                                    if (latestRequests.ContainsKey(playerClient))
+                                        latestRequests.Remove(playerClient);
+
+                                    if (latestFactionRequests.ContainsKey(playerClient))
+                                        latestFactionRequests.Remove(playerClient);
+
+                                    if (killList.Contains(playerClient))
+                                        killList.Remove(playerClient);
+
+                                    if (isTeleporting.Contains(playerClient))
+                                        isTeleporting.Remove(playerClient);
+
+                                    if (isAccepting.Contains(playerClient))
+                                        isAccepting.Remove(playerClient);
+
+                                    if (wasHit.Contains(playerClient))
+                                        wasHit.Remove(playerClient);
+
+                                    if (inSafeZone.ContainsKey(playerClient))
+                                        inSafeZone.Remove(playerClient);
+
+                                    if (inWarZone.ContainsKey(playerClient))
+                                        inWarZone.Remove(playerClient);
+
+                                    if (firstPoints.ContainsKey(playerClient))
+                                        firstPoints.Remove(playerClient);
+
+                                    if (secondPoints.ContainsKey(playerClient))
+                                        secondPoints.Remove(playerClient);
+
+                                    if (blockedRequestsPer.ContainsKey(playerClient.userID.ToString()))
+                                    {
+                                        if (blockedRequestsPer[playerClient.userID.ToString()].Count < 1)
+                                            blockedRequestsPer.Remove(playerClient.userID.ToString());
+                                    }
+
+                                    if (teleportRequests.ContainsKey(playerClient))
+                                        teleportRequests.Remove(playerClient);
+
+                                    if (AllPlayerClients.Contains(playerClient))
+                                        AllPlayerClients.Remove(playerClient);
+
+                                    string leaveMessage = "";
+                                    if (Vars.enableLeave && !Vars.kickQueue.Contains(playerClient.userID.ToString()) && playerClient.userName.Length > 0)
+                                    {
+                                        leaveMessage = Vars.leaveMessage.Replace("$USER$", Vars.filterFullNames(playerClient.userName, playerClient.userID.ToString()));
+                                        Broadcast.broadcastJoinLeave(leaveMessage);
+                                        Vars.conLog.Chat("<BROADCAST ALL> " + Vars.botName + ": " + leaveMessage);
+                                    }
+
+                                    user.connection.netUser = null;
+                                    CA.m_Connections.Remove(user.connection);
+                                    bool b = true;
+                                    if (Vars.kickQueue.Contains(playerClient.userID.ToString()) || playerClient.userName.Length == 0)
+                                    {
+                                        if (Vars.kickQueue.Contains(playerClient.userID.ToString()))
+                                            Vars.kickQueue.Remove(playerClient.userID.ToString());
+                                        b = false;
+                                    }
+                                    try
+                                    {
+                                        if (playerClient != null)
+                                        {
+                                            if (user == null)
+                                                user = playerClient.netUser;
+                                            if (user != null)
+                                            {
+                                                try
+                                                {
+                                                    Controllable controllable = playerClient.controllable;
+                                                    if (controllable != null)
+                                                    {
+                                                        Character forCharacter = controllable.character;
+                                                        try
+                                                        {
+                                                            RSM.SaveAvatar(forCharacter);
+                                                        }
+                                                        catch (Exception exception)
+                                                        {
+                                                            conLog.Error("SA: " + exception);
+                                                        }
+                                                        if (forCharacter != null)
+                                                        {
+                                                            try
+                                                            {
+                                                                RSM.ShutdownAvatar(forCharacter);
+                                                            }
+                                                            catch (Exception exception)
+                                                            {
+                                                                conLog.Error("SDA: " + exception);
+                                                            }
+                                                            try
+                                                            {
+                                                                Character.DestroyCharacter(forCharacter);
+                                                            }
+                                                            catch (Exception exception)
+                                                            {
+                                                                conLog.Error("CDC: " + exception);
+                                                            }
+                                                        }
+                                                    }
+                                                    try
+                                                    {
+                                                        RSM._playerClientList.Remove(playerClient);
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        conLog.Error("COULD NOT REMOEVE PLAYERCLIENT FROM LIST: " + ex.ToString());
+                                                    }
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    conLog.Error("ECFC: " + ex.ToString());
+                                                }
+                                            }
+                                            else
+                                                conLog.Info("COULD NOT EARSE CHARACTERS FOR CLIENT!");
+                                        }
+                                        if (player == null)
+                                            player = playerClient.netPlayer;
+                                        if (player != null)
+                                            NetCull.DestroyPlayerObjects(player);
+                                        else
+                                            conLog.Info("COULD NOT DESTROY PLAYER OBJECTS!");
+                                        if (user == null)
+                                            user = playerClient.netUser;
+                                        if (user != null)
+                                            CullGrid.ClearPlayerCulling(user);
+                                        else
+                                            conLog.Info("COULD NOT CLEAR PLAYER CULLING!");
+                                        if (player == null)
+                                            player = playerClient.netPlayer;
+                                        if (player != null)
+                                            NetCull.RemoveRPCs(player);
+                                        else
+                                            conLog.Info("COULD NOT REMOVE RPCS!");
+                                    }
+                                    catch (Exception exception)
+                                    {
+                                        conLog.Error("#1: " + exception.ToString());
+                                        conLog.Error("DO NOT IGNORE THE ERROR ABOVE. THESE THINGS SHOULD NOT BE FAILING. EVER.");
+                                    }
+                                    if (b)
+                                        conLog.Info("Player " + user.displayName + " (" + user.userID + ") disconnected. Data unloaded.");
+                                    Rust.Steam.Server.OnUserLeave(user.connection.UserID);
+                                    try
+                                    {
+                                        user.Dispose();
+                                    }
+                                    catch (Exception exception2)
+                                    {
+                                        conLog.Error("#2: " + exception2.ToString());
+                                        conLog.Error("DO NOT IGNORE THE ERROR ABOVE. THESE THINGS SHOULD NOT BE FAILING. EVER.");
+                                    }
+                                }
+                                else
+                                {
+                                    conLog.Error("So... A user disconnected but his/her NetUser/PlayerClient was null... Shit. Things will break due to this.");
+                                    LockedList<PlayerClient> playerClients = PlayerClient.All;
+                                    foreach (PlayerClient pc in playerClients)
+                                    {
+                                        if (!AllPlayerClients.Contains(pc))
+                                        {
+                                            conLog.Error("Fixing the issue with the PlayerClient...");
+                                            try
+                                            {
+                                                if (latestPM.ContainsKey(playerClient))
+                                                    latestPM.Remove(playerClient);
+
+                                                if (latestRequests.ContainsKey(playerClient))
+                                                    latestRequests.Remove(playerClient);
+
+                                                if (latestFactionRequests.ContainsKey(playerClient))
+                                                    latestFactionRequests.Remove(playerClient);
+
+                                                if (killList.Contains(playerClient))
+                                                    killList.Remove(playerClient);
+
+                                                if (isTeleporting.Contains(playerClient))
+                                                    isTeleporting.Remove(playerClient);
+
+                                                if (isAccepting.Contains(playerClient))
+                                                    isAccepting.Remove(playerClient);
+
+                                                if (wasHit.Contains(playerClient))
+                                                    wasHit.Remove(playerClient);
+
+                                                if (inSafeZone.ContainsKey(playerClient))
+                                                    inSafeZone.Remove(playerClient);
+
+                                                if (inWarZone.ContainsKey(playerClient))
+                                                    inWarZone.Remove(playerClient);
+
+                                                if (firstPoints.ContainsKey(playerClient))
+                                                    firstPoints.Remove(playerClient);
+
+                                                if (secondPoints.ContainsKey(playerClient))
+                                                    secondPoints.Remove(playerClient);
+
+                                                if (blockedRequestsPer.ContainsKey(playerClient.userID.ToString()))
+                                                {
+                                                    if (blockedRequestsPer[playerClient.userID.ToString()].Count < 1)
+                                                        blockedRequestsPer.Remove(playerClient.userID.ToString());
+                                                }
+
+                                                if (teleportRequests.ContainsKey(playerClient))
+                                                    teleportRequests.Remove(playerClient);
+
+                                                if (AllPlayerClients.Contains(playerClient))
+                                                    AllPlayerClients.Remove(playerClient);
+
+                                                string leaveMessage = "";
+                                                if (Vars.enableLeave && !Vars.kickQueue.Contains(playerClient.userID.ToString()) && playerClient.userName.Length > 0)
+                                                {
+                                                    leaveMessage = Vars.leaveMessage.Replace("$USER$", Vars.filterFullNames(playerClient.userName, playerClient.userID.ToString()));
+                                                    Broadcast.broadcastJoinLeave(leaveMessage);
+                                                    Vars.conLog.Chat("<BROADCAST ALL> " + Vars.botName + ": " + leaveMessage);
+                                                }
+
+                                                user.connection.netUser = null;
+                                                CA.m_Connections.Remove(user.connection);
+                                                bool b = true;
+                                                if (Vars.kickQueue.Contains(playerClient.userID.ToString()) || playerClient.userName.Length == 0)
+                                                {
+                                                    if (Vars.kickQueue.Contains(playerClient.userID.ToString()))
+                                                        Vars.kickQueue.Remove(playerClient.userID.ToString());
+                                                    b = false;
+                                                }
+                                                try
+                                                {
+                                                    if (playerClient != null)
+                                                    {
+                                                        RSM.EraseCharactersForClient(playerClient, true, user);
+                                                    }
+                                                    NetCull.DestroyPlayerObjects(player);
+                                                    CullGrid.ClearPlayerCulling(user);
+                                                    NetCull.RemoveRPCs(player);
+                                                }
+                                                catch (Exception exception)
+                                                {
+                                                    conLog.Error("#3: " + exception.ToString());
+                                                    conLog.Error("DO NOT IGNORE THE ERROR ABOVE. THESE THINGS SHOULD NOT BE FAILING. EVER.");
+                                                }
+                                                if (b)
+                                                    conLog.Info("Player " + user.displayName + " (" + user.userID + ") disconnected. Data unloaded.");
+                                                Rust.Steam.Server.OnUserLeave(user.connection.UserID);
+                                                try
+                                                {
+                                                    user.Dispose();
+                                                }
+                                                catch (Exception exception2)
+                                                {
+                                                    conLog.Error("#4: " + exception2.ToString());
+                                                    conLog.Error("DO NOT IGNORE THE ERROR ABOVE. THESE THINGS SHOULD NOT BE FAILING. EVER.");
+                                                }
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                conLog.Error("Something went TERRIBLY TERRIBLY wrong. Contact MistaD ASAP. Send him this: " + ex.ToString());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            else if (localData is ClientConnection)
+                            {
+                                ClientConnection item = (ClientConnection)localData;
+                                CA.m_Connections.Remove(item);
+                                ConsoleSystem.Print("User Disconnected: (unconnected " + player.ipAddress + ")", false);
+                            }
+
+                            player.SetLocalData(null);
+                            Rust.Steam.Server.OnPlayerCountChanged();
+                        }
+                        else
+                            conLog.Error("User attempted to disconnect but the localData was corrupted.");
+                    }
+                    else
+                        conLog.Error("User attempted to disconnect but the NetworkPlayer was corrupted.");
+                }
             }
             catch (Exception ex)
             {
-                Vars.conLog.Error(ex.ToString());
+                Vars.conLog.Error("OUD: " + ex.ToString());
             }
         }
 
@@ -4326,7 +4865,7 @@ namespace RustEssentials.Util
                 Vector3 newPos = senderChar.transform.position;
                 if (Vector3.Distance(oldPos, newPos) > 3)
                 {
-                    Broadcast.broadcastTo(senderClient.netPlayer, "You moved. Warp canceled.");
+                    Broadcast.broadcastTo(senderClient.netPlayer, "You moved. Warp cancelled.");
                     isTeleporting.Remove(senderClient);
                     b = false;
                     break;
@@ -4407,8 +4946,8 @@ namespace RustEssentials.Util
                 Vector3 newPos = targetChar.transform.position;
                 if (Vector3.Distance(oldPos, newPos) > 3)
                 {
-                    Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " moved. Teleportation canceled.");
-                    Broadcast.broadcastTo(targetClient.netPlayer, "Teleportation canceled.");
+                    Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " moved. Teleportation cancelled.");
+                    Broadcast.broadcastTo(targetClient.netPlayer, "Teleportation cancelled.");
                     teleportRequests[senderClient][targetClient].Close();
                     teleportRequests[senderClient].Remove(targetClient);
                     latestRequests[senderClient] = null;
@@ -5691,18 +6230,24 @@ namespace RustEssentials.Util
                 try
                 {
                     string profileURL = "http://steamcommunity.com/profiles/" + UID + "/?xml=1\\";
-                    using (XmlTextReader reader = new XmlTextReader(profileURL))
+                    WebRequest request = WebRequest.Create(profileURL);
+                    request.Timeout = 3000;
+
+                    using (WebResponse response = request.GetResponse())
                     {
-                        string currentElement = "";
-                        while (reader.Read())
+                        using (XmlTextReader reader = new XmlTextReader(response.GetResponseStream()))
                         {
-                            if (reader.NodeType == XmlNodeType.Element && reader.Name == "steamID")
+                            string currentElement = "";
+                            while (reader.Read())
                             {
-                                currentElement = "steamID";
-                            }
-                            if (reader.NodeType == XmlNodeType.CDATA && currentElement == "steamID")
-                            {
-                                return reader.Value;
+                                if (reader.NodeType == XmlNodeType.Element && reader.Name == "steamID")
+                                {
+                                    currentElement = "steamID";
+                                }
+                                if (reader.NodeType == XmlNodeType.CDATA && currentElement == "steamID")
+                                {
+                                    return reader.Value;
+                                }
                             }
                         }
                     }
@@ -5781,8 +6326,10 @@ namespace RustEssentials.Util
             sb.AppendLine("[Environment]");
             sb.AppendLine("# Set the time of day upon server start");
             sb.AppendLine("startTime=12");
-            sb.AppendLine("# Set the time scale upon server start (Default 0.01)");
-            sb.AppendLine("timeScale=0.01");
+            sb.AppendLine("# Set the day length in minutes upon server start (Default 45 minutes)");
+            sb.AppendLine("dayLength=45");
+            sb.AppendLine("# Set the night length in minutes upon server start (Default 15 minutes)");
+            sb.AppendLine("nightLength=15");
             sb.AppendLine("# Freeze time upon server start");
             sb.AppendLine("freezeTime=false");
             sb.AppendLine("# Set fall damage server-wide");
@@ -5798,11 +6345,11 @@ namespace RustEssentials.Util
             sb.AppendLine("");
             sb.AppendLine("[Chat]");
             sb.AppendLine("# Enables or disables direct chat. ATLEAST ONE MUST BE ENABLED!");
-            sb.AppendLine("directChat=true");
+            sb.AppendLine("directChat=false");
             sb.AppendLine("# Enables or disables global chat. ATLEAST ONE MUST BE ENABLED!");
             sb.AppendLine("globalChat=true");
             sb.AppendLine("# Toggles the display of the <g> tag if global is the only channel enabled");
-            sb.AppendLine("removeTag=false");
+            sb.AppendLine("removeTag=true");
             sb.AppendLine("# Sets the default chat players will talk in upon join. (global or direct)");
             sb.AppendLine("defaultChat=direct");
             sb.AppendLine("# Sets the distance the radius of possible text communication when in direct chat");
@@ -6190,11 +6737,13 @@ namespace RustEssentials.Util
             sb.AppendLine("/give");
             sb.AppendLine("/giveall");
             sb.AppendLine("/reload");
-            sb.AppendLine("/timescale");
+            sb.AppendLine("/daylength");
+            sb.AppendLine("/nightlength");
             sb.AppendLine("/kill");
             sb.AppendLine("/stop");
             sb.AppendLine("/access");
             sb.AppendLine("/remove");
+            sb.AppendLine("/removeall");
             sb.AppendLine("/craft");
             sb.AppendLine("");
             sb.AppendLine("[Administrator]");
@@ -6282,33 +6831,52 @@ namespace RustEssentials.Util
 
         public static void sendNudity()
         {
-            foreach (PlayerClient playerClient in AllPlayerClients)
+            try
             {
-                if (forceNudity)
-                    ConsoleNetworker.SendClientCommand(playerClient.netPlayer, "censor.nudity false");
+                List<PlayerClient> playerClients = AllPlayerClients;
+                foreach (PlayerClient playerClient in playerClients)
+                {
+                    if (forceNudity && playerClient != null && playerClient.netPlayer != null)
+                        ConsoleNetworker.SendClientCommand(playerClient.netPlayer, "censor.nudity false");
+                }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error("SN: " + ex.ToString());
             }
         }
 
         public static void checkItems()
         {
-            foreach (PlayerClient playerClient in AllPlayerClients)
+            try
             {
-                if (!craftList.Contains(playerClient.userID.ToString()))
+                List<PlayerClient> playerClients = AllPlayerClients;
+                foreach (PlayerClient playerClient in playerClients)
                 {
-                    foreach (string itemName in restrictItems)
+                    if (playerClient != null && playerClient.netPlayer != null)
                     {
-                        if (hasItem(playerClient, itemName))
+                        if (!craftList.Contains(playerClient.userID.ToString()))
                         {
-                            Broadcast.broadcastTo(playerClient.netPlayer, "Illegal item \"" + itemName + "\" found. Item removed.");
-                            List<IInventoryItem> items;
-                            grabItem(playerClient, itemName, out items);
-                            foreach (IInventoryItem item in items)
+                            foreach (string itemName in restrictItems)
                             {
-                                removeItem(playerClient, item);
+                                if (hasItem(playerClient, itemName))
+                                {
+                                    Broadcast.broadcastTo(playerClient.netPlayer, "Illegal item \"" + itemName + "\" found. Item removed.");
+                                    List<IInventoryItem> items;
+                                    grabItem(playerClient, itemName, out items);
+                                    foreach (IInventoryItem item in items)
+                                    {
+                                        removeItem(playerClient, item);
+                                    }
+                                }
                             }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error("CI: " + ex.ToString());
             }
         }
 
@@ -6593,54 +7161,68 @@ namespace RustEssentials.Util
 
         public static void saveCooldowns()
         {
-            Dictionary<string, List<string>> kits = new Dictionary<string, List<string>>();
-            foreach (KeyValuePair<string, Dictionary<TimerPlus, string>> kv in playerCooldowns)
+            try
             {
-                string UID = kv.Key;
-                if (!kits.ContainsKey(UID))
-                    kits.Add(UID, new List<string>());
-                foreach (KeyValuePair<TimerPlus, string> kv2 in kv.Value)
+                Dictionary<string, List<string>> kits = new Dictionary<string, List<string>>();
+                foreach (KeyValuePair<string, Dictionary<TimerPlus, string>> kv in playerCooldowns)
                 {
-                    string kitName = kv2.Value;
-                    kits[UID].Add(kitName);
-                    string cooldown = kitCooldowns[kitName].ToString();
-                    updateCooldownData(UID, kitName, cooldown, kv2.Key);
+                    string UID = kv.Key;
+                    if (!kits.ContainsKey(UID))
+                        kits.Add(UID, new List<string>());
+                    foreach (KeyValuePair<TimerPlus, string> kv2 in kv.Value)
+                    {
+                        string kitName = kv2.Value;
+                        kits[UID].Add(kitName);
+                        string cooldown = kitCooldowns[kitName].ToString();
+                        updateCooldownData(UID, kitName, cooldown, kv2.Key);
+                    }
                 }
+                remOldCooldowns(kits);
             }
-            remOldCooldowns(kits);
+            catch (Exception ex)
+            {
+                conLog.Error("SCD: " + ex.ToString());
+            }
         }
 
         public static void readCooldownData()
         {
-            List<string> cooldownFileData = File.ReadAllLines(cooldownsFile).ToList();
-            foreach (string s in cooldownFileData)
+            try
             {
-                string UID = s.Split('=')[0];
-                string kitsString = s.Split('=')[1];
-
-                foreach (string s2 in kitsString.Split(';'))
+                List<string> cooldownFileData = File.ReadAllLines(cooldownsFile).ToList();
+                foreach (string s in cooldownFileData)
                 {
-                    string kitName = s2.Split(':')[0].ToLower();
-                    string cooldown = s2.Split(':')[1];
-                    if (!cooldown.Contains("-"))
-                    {
-                        TimerPlus t = new TimerPlus();
-                        t.AutoReset = false;
-                        t.Interval = Convert.ToInt32(cooldown);
-                        t.Elapsed += (sender, e) => restoreKit(sender, e, kitName, UID);
-                        t.Start();
+                    string UID = s.Split('=')[0];
+                    string kitsString = s.Split('=')[1];
 
-                        if (!playerCooldowns.ContainsKey(UID))
+                    foreach (string s2 in kitsString.Split(';'))
+                    {
+                        string kitName = s2.Split(':')[0].ToLower();
+                        string cooldown = s2.Split(':')[1];
+                        if (!cooldown.Contains("-"))
                         {
-                            playerCooldowns.Add(UID, new Dictionary<TimerPlus, string>() { { t, kitName } });
-                        }
-                        else
-                        {
-                            if (!playerCooldowns[UID].ContainsValue(kitName))
-                                playerCooldowns[UID].Add(t, kitName);
+                            TimerPlus t = new TimerPlus();
+                            t.AutoReset = false;
+                            t.Interval = Convert.ToInt32(cooldown);
+                            t.Elapsed += (sender, e) => restoreKit(sender, e, kitName, UID);
+                            t.Start();
+
+                            if (!playerCooldowns.ContainsKey(UID))
+                            {
+                                playerCooldowns.Add(UID, new Dictionary<TimerPlus, string>() { { t, kitName } });
+                            }
+                            else
+                            {
+                                if (!playerCooldowns[UID].ContainsValue(kitName))
+                                    playerCooldowns[UID].Add(t, kitName);
+                            }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error("RCDD: " + ex.ToString());
             }
         }
 
@@ -6649,15 +7231,15 @@ namespace RustEssentials.Util
             try
             {
                 List<string> cooldownFileData = File.ReadAllLines(cooldownsFile).ToList();
-                List<int> removeQueue1 = new List<int>();
-                Dictionary<string, int> removeQueue2 = new Dictionary<string, int>();
+                List<string> removeQueue1 = new List<string>();
+                Dictionary<string, string> removeQueue2 = new Dictionary<string, string>();
                 foreach (string str in cooldownFileData)
                 {
                     string UID = str.Split('=')[0];
                     if (!oldKits.ContainsKey(UID)) // If all my cooldowns are completed but the file still has me cooling down
                     {
-                        int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID));
-                        removeQueue1.Add(indexOfUID);
+                        if (!removeQueue1.Contains(UID))
+                            removeQueue1.Add(UID);
                     }
                     else // If I still have some cooldowns running
                     {
@@ -6678,27 +7260,98 @@ namespace RustEssentials.Util
                                     currentKits.Replace(";" + combinedStr, "");
 
                                 if (currentKits.Split(';').Count() == 1)
-                                    currentKits.Replace(combinedStr, "");
+                                {
+                                    combinedStr = "";
+                                    if (!removeQueue1.Contains(UID))
+                                        removeQueue1.Add(UID);
+                                }
 
-                                string fullString = UID + "=" + currentKits;
+                                if (combinedStr.Length > 0)
+                                {
+                                    string fullString = UID + "=" + currentKits;
 
-                                int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string st) => st.StartsWith(UID));
-                                removeQueue2.Add(fullString, indexOfUID);
+                                    if (!removeQueue2.ContainsKey(UID))
+                                        removeQueue2.Add(UID, fullString);
+                                }
                             }
                         }
                     }
                 }
                 try
                 {
-                    foreach (int i in removeQueue1)
+                    foreach (string s in removeQueue1)
                     {
-                        cooldownFileData.RemoveAt(i);
+                        int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string str) => str.StartsWith(s));
+                        cooldownFileData.RemoveAt(indexOfUID);
                     }
                 }
                 catch { }
-                foreach (KeyValuePair<string, int> kv in removeQueue2)
+                try
                 {
-                    cooldownFileData[kv.Value] = kv.Key;
+                    foreach (KeyValuePair<string, string> kv in removeQueue2)
+                    {
+                        int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string st) => st.StartsWith(kv.Key));
+                        cooldownFileData[indexOfUID] = kv.Value;
+                    }
+                }
+                catch { }
+                using (StreamWriter sw = new StreamWriter(cooldownsFile, false))
+                {
+                    foreach (string s in cooldownFileData)
+                    {
+                        sw.WriteLine(s);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error("ROCD: " + ex.ToString());
+            }
+        }
+
+        public static void updateCooldownData(string UID, string kitName, string cooldown, TimerPlus t)
+        {
+            try
+            {
+                List<string> cooldownFileData = File.ReadAllLines(cooldownsFile).ToList();
+                List<string> UIDs = new List<string>();
+                foreach (string str in cooldownFileData)
+                {
+                    UIDs.Add(str.Split('=')[0]);
+                }
+                if (UIDs.Contains(UID)) // If I have any kits currenty cooling down
+                {
+                    string fullString = "";
+                    string currentKits = Array.Find(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID)).Split('=')[1];
+                    if (currentKits.Contains(kitName)) // If the kit I am updating is currently cooling down, update the cooldown
+                    {
+                        List<string> allKits = currentKits.Split(';').ToList();
+                        int index = Array.FindIndex(allKits.ToArray(), (string s) => s.StartsWith(kitName));
+
+                        if (t.TimeLeft > 0)
+                            allKits[index] = kitName + ":" + t.TimeLeft;
+                        else
+                            allKits.RemoveAt(index);
+
+                        if (allKits.Count > 0)
+                            fullString = UID + "=" + string.Join(";", allKits.ToArray());
+                    }
+                    else
+                    {
+                        fullString = UID + "=" + currentKits;
+
+                        fullString += ";" + kitName + ":" + cooldown;
+                    }
+
+                    int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID));
+                    if (fullString.Length > 0)
+                        cooldownFileData[indexOfUID] = fullString;
+                    else
+                        cooldownFileData.RemoveAt(indexOfUID);
+                }
+                else
+                {
+                    cooldownFileData.Add(UID + "=" + kitName + ":" + cooldown);
                 }
                 using (StreamWriter sw = new StreamWriter(cooldownsFile, false))
                 {
@@ -6710,250 +7363,411 @@ namespace RustEssentials.Util
             }
             catch (Exception ex)
             {
-                conLog.Error(ex.ToString());
+                conLog.Error("UCDD: " + ex.ToString());
             }
         }
 
-        public static void updateCooldownData(string UID, string kitName, string cooldown, TimerPlus t)
+        public static void readAlliesData()
         {
-            List<string> cooldownFileData = File.ReadAllLines(cooldownsFile).ToList();
-            List<string> UIDs = new List<string>();
-            foreach (string str in cooldownFileData)
+            try
             {
-                UIDs.Add(str.Split('=')[0]);
-            }
-            if (UIDs.Contains(UID)) // If I have any kits currenty cooling down
-            {
-                string fullString = "";
-                string currentKits = Array.Find(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID)).Split('=')[1];
-                if (currentKits.Contains(kitName)) // If the kit I am updating is currently cooling down, update the cooldown
+                List<string> alliesFileData = File.ReadAllLines(alliesFile).ToList();
+                foreach (string s in alliesFileData)
                 {
-                    List<string> allKits = currentKits.Split(';').ToList();
-                    int index = Array.FindIndex(allKits.ToArray(), (string s) => s.StartsWith(kitName));
+                    if (s.Contains("="))
+                    {
+                        string factionName = s.Split('=')[0];
+                        string alliesString = s.Split('=')[1];
 
-                    if (t.TimeLeft > 0)
-                        allKits[index] = kitName + ":" + t.TimeLeft;
-                    else
-                        allKits.RemoveAt(index);
+                        if (!alliances.ContainsKey(factionName))
+                            alliances.Add(factionName, new List<string>());
+                        else
+                            conLog.Error("Faction [" + factionName + "] and their alliances are already loaded!");
 
-                    if (allKits.Count > 0)
-                        fullString = UID + "=" + string.Join(";", allKits.ToArray());
+                        foreach (string s2 in alliesString.Split(';'))
+                        {
+                            string alliedFactionName = s2;
+
+                            if (!alliances[factionName].Contains(alliedFactionName))
+                                alliances[factionName].Add(alliedFactionName);
+                            else
+                                conLog.Error("Faction [" + factionName + "] already allied with faction [" + alliedFactionName + "]!");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error("RAD #1: " + ex.ToString());
+            }
+        }
+
+        public static void addAlliesData(string factionName, string alliedFactionName)
+        {
+            try
+            {
+                List<string> alliesFileData = File.ReadAllLines(alliesFile).ToList();
+                List<string> factionNames = new List<string>();
+                foreach (string str in alliesFileData)
+                {
+                    factionNames.Add(str.Split('=')[0]);
+                }
+                if (factionNames.Contains(factionName))
+                {
+                    string currentAlliances = Array.Find(alliesFileData.ToArray(), (string s) => s.StartsWith(factionName)).Split('=')[1];
+                    string fullString = factionName + "=" + currentAlliances;
+
+                    fullString += ";" + alliedFactionName;
+
+                    int index = Array.FindIndex(alliesFileData.ToArray(), (string s) => s.StartsWith(factionName));
+                    alliesFileData[index] = fullString;
                 }
                 else
                 {
-                    fullString = UID + "=" + currentKits;
-
-                    fullString += ";" + kitName + ":" + cooldown;
+                    alliesFileData.Add(factionName + "=" + alliedFactionName);
                 }
-
-                int indexOfUID = Array.FindIndex(cooldownFileData.ToArray(), (string s) => s.StartsWith(UID));
-                if (fullString.Length > 0)
-                    cooldownFileData[indexOfUID] = fullString;
-                else
-                    cooldownFileData.RemoveAt(indexOfUID);
-            }
-            else
-            {
-                cooldownFileData.Add(UID + "=" + kitName + ":" + cooldown);
-            }
-            using (StreamWriter sw = new StreamWriter(cooldownsFile, false))
-            {
-                foreach (string s in cooldownFileData)
+                if (factionNames.Contains(alliedFactionName))
                 {
-                    sw.WriteLine(s);
+                    string currentAlliances = Array.Find(alliesFileData.ToArray(), (string s) => s.StartsWith(alliedFactionName)).Split('=')[1];
+                    string fullString = alliedFactionName + "=" + currentAlliances;
+
+                    fullString += ";" + factionName;
+
+                    int index = Array.FindIndex(alliesFileData.ToArray(), (string s) => s.StartsWith(alliedFactionName));
+                    alliesFileData[index] = fullString;
                 }
+                else
+                {
+                    alliesFileData.Add(alliedFactionName + "=" + factionName);
+                }
+                using (StreamWriter sw = new StreamWriter(alliesFile, false))
+                {
+                    foreach (string s in alliesFileData)
+                    {
+                        sw.WriteLine(s);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error("AAD: " + ex.ToString());
+            }
+        }
+
+        public static void remAlliesData(string factionName, string alliedFactionName)
+        {
+            try
+            {
+                List<string> alliesFileData = File.ReadAllLines(alliesFile).ToList();
+                if (alliedFactionName == "disband")
+                {
+                    string fullLine = Array.Find(alliesFileData.ToArray(), (string s) => s.StartsWith(factionName));
+                    alliesFileData.Remove(fullLine);
+                    foreach (string line in alliesFileData)
+                    {
+                        if (line.Contains(factionName))
+                        {
+                            string currentAlliesString = line.Split('=')[1];
+                            List<string> newAllies = new List<string>();
+                            foreach (string s in currentAlliesString.Split(';'))
+                            {
+                                if (s != factionName)
+                                    newAllies.Add(s);
+                            }
+                            string fullString = line.Split('=')[0] + "=" + string.Join(";", newAllies.ToArray());
+                            alliesFileData[alliesFileData.IndexOf(line)] = fullString;
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (string line in alliesFileData)
+                    {
+                        if (line.StartsWith(factionName))
+                        {
+                            string currentAlliesString = Array.Find(alliesFileData.ToArray(), (string s) => s.StartsWith(factionName)).Split('=')[1];
+                            List<string> newAllies = new List<string>();
+                            foreach (string s in currentAlliesString.Split(';'))
+                            {
+                                if (s != alliedFactionName)
+                                    newAllies.Add(s);
+                            }
+                            string fullString = factionName + "=" + string.Join(";", newAllies.ToArray());
+                            alliesFileData[alliesFileData.IndexOf(line)] = fullString;
+                        }
+                        if (line.StartsWith(alliedFactionName))
+                        {
+                            string currentAlliesString = Array.Find(alliesFileData.ToArray(), (string s) => s.StartsWith(alliedFactionName)).Split('=')[1];
+                            List<string> newAllies = new List<string>();
+                            foreach (string s in currentAlliesString.Split(';'))
+                            {
+                                if (s != factionName)
+                                    newAllies.Add(s);
+                            }
+                            string fullString = alliedFactionName + "=" + string.Join(";", newAllies.ToArray());
+                            alliesFileData[alliesFileData.IndexOf(line)] = fullString;
+                        }
+                    }
+                }
+                using (StreamWriter sw = new StreamWriter(alliesFile, false))
+                {
+                    foreach (string s in alliesFileData)
+                    {
+                        sw.WriteLine(s);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error("RAD #2: " + ex.ToString());
             }
         }
 
         public static void readFactionData()
         {
-            List<string> factionFileData = File.ReadAllLines(factionsFile).ToList();
-            foreach (string s in factionFileData)
+            try
             {
-                string factionName = s.Split('=')[0];
-                string membersString = s.Split('=')[1];
-
-                factions.Add(factionName, new Dictionary<string, string>());
-                factionsByNames.Add(factionName, new Dictionary<string, string>());
-                alliances.Add(factionName, new List<string>());
-
-                foreach (string s2 in membersString.Split(';'))
+                List<string> factionFileData = File.ReadAllLines(factionsFile).ToList();
+                foreach (string s in factionFileData)
                 {
-                    string nameAndUID = s2.Split(':')[0];
-                    string rank = s2.Split(':')[1];
-                    string name = nameAndUID.Substring(1, nameAndUID.IndexOf(')') - 1);
-                    string UID = nameAndUID.Substring(nameAndUID.LastIndexOf(')') + 1);
+                    if (s.Contains("="))
+                    {
+                        string factionName = s.Split('=')[0];
+                        string membersString = s.Split('=')[1];
 
-                    factions[factionName].Add(UID, rank);
-                    factionsByNames[factionName].Add(UID, name);
+                        if (!factions.ContainsKey(factionName))
+                            factions.Add(factionName, new Dictionary<string, string>());
+                        else
+                            conLog.Error("#1: Faction [" + factionName + "] already loaded!");
+                        if (!factionsByNames.ContainsKey(factionName))
+                            factionsByNames.Add(factionName, new Dictionary<string, string>());
+                        else
+                            conLog.Error("#2: Faction [" + factionName + "] already loaded!");
+
+                        foreach (string s2 in membersString.Split(';'))
+                        {
+                            string nameAndUID = s2.Split(':')[0];
+                            string rank = s2.Split(':')[1];
+                            string name = nameAndUID.Substring(1, nameAndUID.IndexOf(')') - 1);
+                            string UID = nameAndUID.Substring(nameAndUID.LastIndexOf(')') + 1);
+
+                            if (!factions[factionName].ContainsKey(UID))
+                                factions[factionName].Add(UID, rank);
+                            else
+                                conLog.Error("A: Faction [" + factionName + "] already includes UID \"" + UID + "\"!");
+                            if (!factionsByNames[factionName].ContainsKey(UID))
+                                factionsByNames[factionName].Add(UID, name);
+                            else
+                                conLog.Error("B: Faction [" + factionName + "] already includes UID \"" + UID + "\"!");
+                        }
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error("RFD #1: " + ex.ToString());
             }
         }
 
         public static void addFactionData(string factionName, string userName, string userID, string rank)
         {
-            List<string> factionFileData = File.ReadAllLines(factionsFile).ToList();
-            List<string> factionNames = new List<string>();
-            foreach (string str in factionFileData)
+            try
             {
-                factionNames.Add(str.Split('=')[0]);
-            }
-            if (factionNames.Contains(factionName))
-            {
-                string currentMembers = Array.Find(factionFileData.ToArray(), (string s) => s.StartsWith(factionName)).Split('=')[1];
-                string fullString = factionName + "=" + currentMembers;
-
-                fullString += ";(" + userName + ")" + userID + ":" + rank;
-
-                int index = Array.FindIndex(factionFileData.ToArray(), (string s) => s.StartsWith(factionName));
-                factionFileData[index] = fullString;
-            }
-            else
-            {
-                factionFileData.Add(factionName + "=(" + userName + ")" + userID + ":" + rank);
-            }
-            using (StreamWriter sw = new StreamWriter(factionsFile, false))
-            {
-                foreach (string s in factionFileData)
+                List<string> factionFileData = File.ReadAllLines(factionsFile).ToList();
+                List<string> factionNames = new List<string>();
+                foreach (string str in factionFileData)
                 {
-                    sw.WriteLine(s);
+                    factionNames.Add(str.Split('=')[0]);
                 }
+                if (factionNames.Contains(factionName))
+                {
+                    string currentMembers = Array.Find(factionFileData.ToArray(), (string s) => s.StartsWith(factionName)).Split('=')[1];
+                    string fullString = factionName + "=" + currentMembers;
+
+                    fullString += ";(" + userName + ")" + userID + ":" + rank;
+
+                    int index = Array.FindIndex(factionFileData.ToArray(), (string s) => s.StartsWith(factionName));
+                    factionFileData[index] = fullString;
+                }
+                else
+                {
+                    factionFileData.Add(factionName + "=(" + userName + ")" + userID + ":" + rank);
+                }
+                using (StreamWriter sw = new StreamWriter(factionsFile, false))
+                {
+                    foreach (string s in factionFileData)
+                    {
+                        sw.WriteLine(s);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error("AFD: " + ex.ToString());
             }
         }
 
         public static void remFactionData(string factionName, string userName, string rank)
         {
-            List<string> factionFileData = File.ReadAllLines(factionsFile).ToList();
-            if (userName == "disband")
+            try
             {
-                string fullLine = Array.Find(factionFileData.ToArray(), (string s) => s.StartsWith(factionName));
-                factionFileData.Remove(fullLine);
-            }
-            else
-            {
-                foreach (string line in factionFileData)
+                List<string> factionFileData = File.ReadAllLines(factionsFile).ToList();
+                if (userName == "disband")
                 {
-                    if (line.StartsWith(factionName))
+                    string fullLine = Array.Find(factionFileData.ToArray(), (string s) => s.StartsWith(factionName));
+                    factionFileData.Remove(fullLine);
+                }
+                else
+                {
+                    foreach (string line in factionFileData)
                     {
-                        string currentMembersString = Array.Find(factionFileData.ToArray(), (string s) => s.StartsWith(factionName)).Split('=')[1];
-                        Dictionary<string, string> currentMembers = new Dictionary<string,string>();
-                        foreach (string s in currentMembersString.Split(';'))
+                        if (line.StartsWith(factionName))
                         {
-                            string name = s.Substring(1, s.LastIndexOf(')') - 1);
-                            string UID = s.Substring(s.LastIndexOf(')') + 1, 17);
-                            currentMembers.Add(name, UID);
-                        }
-                        string fullString = factionName + "=" + currentMembersString;
+                            string currentMembersString = Array.Find(factionFileData.ToArray(), (string s) => s.StartsWith(factionName)).Split('=')[1];
+                            Dictionary<string, string> currentMembers = new Dictionary<string, string>();
+                            foreach (string s in currentMembersString.Split(';'))
+                            {
+                                string name = s.Substring(1, s.LastIndexOf(')') - 1);
+                                string UID = s.Substring(s.LastIndexOf(')') + 1, 17);
+                                currentMembers.Add(name, UID);
+                            }
+                            string fullString = factionName + "=" + currentMembersString;
 
-                        if (currentMembersString.StartsWith("(" + userName + ")"))
-                        {
-                            fullString = fullString.Replace("(" + userName + ")" + currentMembers[userName] + ":" + rank + ";", "");
-                            factionFileData[factionFileData.IndexOf(line)] = fullString;
+                            if (currentMembersString.StartsWith("(" + userName + ")"))
+                            {
+                                fullString = fullString.Replace("(" + userName + ")" + currentMembers[userName] + ":" + rank + ";", "");
+                                factionFileData[factionFileData.IndexOf(line)] = fullString;
+                            }
+                            else
+                            {
+                                fullString = fullString.Replace(";(" + userName + ")" + currentMembers[userName] + ":" + rank, "");
+                                factionFileData[factionFileData.IndexOf(line)] = fullString;
+                            }
+                            break;
                         }
-                        else
-                        {
-                            fullString = fullString.Replace(";(" + userName + ")" + currentMembers[userName] + ":" + rank, "");
-                            factionFileData[factionFileData.IndexOf(line)] = fullString;
-                        }
-                        break;
+                    }
+                }
+                using (StreamWriter sw = new StreamWriter(factionsFile, false))
+                {
+                    foreach (string s in factionFileData)
+                    {
+                        sw.WriteLine(s);
                     }
                 }
             }
-            using (StreamWriter sw = new StreamWriter(factionsFile, false))
+            catch (Exception ex)
             {
-                foreach (string s in factionFileData)
-                {
-                    sw.WriteLine(s);
-                }
+                conLog.Error("RFD #2: " + ex.ToString());
             }
         }
 
         public static void readDoorData()
         {
-            List<string> doorDataFile = File.ReadAllLines(Vars.doorsFile).ToList();
-            foreach (string s in doorDataFile)
+            try
             {
-                string owner = s.Split('=')[0];
-                string partnerString = s.Split('=')[1];
-                Vars.sharingData.Add(owner, partnerString);
+                List<string> doorDataFile = File.ReadAllLines(Vars.doorsFile).ToList();
+                foreach (string s in doorDataFile)
+                {
+                    string owner = s.Split('=')[0];
+                    string partnerString = s.Split('=')[1];
+                    Vars.sharingData.Add(owner, partnerString);
+                }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error("RDD #1: " + ex.ToString());
             }
         }
 
         public static void addDoorData(string ownerID, string partnerID)
         {
-            List<string> doorDataFile = File.ReadAllLines(Vars.doorsFile).ToList();
-            List<string> owners = new List<string>();
-            foreach (string str in doorDataFile)
+            try
             {
-                owners.Add(str.Split('=')[0]);
-            }
-
-            if (owners.Contains(ownerID))
-            {
-                string previousPartners = Array.Find(doorDataFile.ToArray(), (string s) => s.StartsWith(ownerID)).Split('=')[1];
-                string fullString = ownerID + "=" + previousPartners;
-
-                fullString += ":" + partnerID;
-
-                int index = Array.FindIndex(doorDataFile.ToArray(), (string s) => s.StartsWith(ownerID));
-                doorDataFile[index] = fullString;
-            }
-            else
-            {
-                doorDataFile.Add(ownerID + "=" + partnerID);
-            }
-
-            using (StreamWriter sw = new StreamWriter(Vars.doorsFile, false))
-            {
-                foreach (string s in doorDataFile)
+                List<string> doorDataFile = File.ReadAllLines(Vars.doorsFile).ToList();
+                List<string> owners = new List<string>();
+                foreach (string str in doorDataFile)
                 {
-                    sw.WriteLine(s);
+                    owners.Add(str.Split('=')[0]);
                 }
+
+                if (owners.Contains(ownerID))
+                {
+                    string previousPartners = Array.Find(doorDataFile.ToArray(), (string s) => s.StartsWith(ownerID)).Split('=')[1];
+                    string fullString = ownerID + "=" + previousPartners;
+
+                    fullString += ":" + partnerID;
+
+                    int index = Array.FindIndex(doorDataFile.ToArray(), (string s) => s.StartsWith(ownerID));
+                    doorDataFile[index] = fullString;
+                }
+                else
+                {
+                    doorDataFile.Add(ownerID + "=" + partnerID);
+                }
+
+                using (StreamWriter sw = new StreamWriter(Vars.doorsFile, false))
+                {
+                    foreach (string s in doorDataFile)
+                    {
+                        sw.WriteLine(s);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                conLog.Error("ADD: " + ex.ToString());
             }
         }
 
         public static void remDoorData(string ownerID, string partnerID)
         {
-            List<string> doorDataFile = File.ReadAllLines(Vars.doorsFile).ToList();
-            if (partnerID == "all")
+            try
             {
-                string fullLine = Array.Find(doorDataFile.ToArray(), (string s) => s.StartsWith(ownerID));
-                doorDataFile.Remove(fullLine);
-            }
-            else
-            {
-                foreach (string line in doorDataFile)
+                List<string> doorDataFile = File.ReadAllLines(Vars.doorsFile).ToList();
+                if (partnerID == "all")
                 {
-                    if (line.StartsWith(ownerID))
+                    string fullLine = Array.Find(doorDataFile.ToArray(), (string s) => s.StartsWith(ownerID));
+                    doorDataFile.Remove(fullLine);
+                }
+                else
+                {
+                    foreach (string line in doorDataFile)
                     {
-                        string previousPartners = Array.Find(doorDataFile.ToArray(), (string s) => s.StartsWith(ownerID)).Split('=')[1];
-                        string fullString = ownerID + "=" + previousPartners;
-
-                        if (previousPartners.StartsWith(partnerID))
+                        if (line.StartsWith(ownerID))
                         {
-                            if (previousPartners.Contains(":"))
+                            string previousPartners = Array.Find(doorDataFile.ToArray(), (string s) => s.StartsWith(ownerID)).Split('=')[1];
+                            string fullString = ownerID + "=" + previousPartners;
+
+                            if (previousPartners.StartsWith(partnerID))
                             {
-                                fullString = fullString.Replace(partnerID + ":", "");
-                                doorDataFile[doorDataFile.IndexOf(line)] = fullString;
+                                if (previousPartners.Contains(":"))
+                                {
+                                    fullString = fullString.Replace(partnerID + ":", "");
+                                    doorDataFile[doorDataFile.IndexOf(line)] = fullString;
+                                }
+                                else
+                                    doorDataFile.Remove(fullString);
                             }
                             else
-                                doorDataFile.Remove(fullString);
+                            {
+                                fullString = fullString.Replace(":" + partnerID, "");
+                                doorDataFile[doorDataFile.IndexOf(line)] = fullString;
+                            }
+                            break;
                         }
-                        else
-                        {
-                            fullString = fullString.Replace(":" + partnerID, "");
-                            doorDataFile[doorDataFile.IndexOf(line)] = fullString;
-                        }
-                        break;
+                    }
+                }
+                using (StreamWriter sw = new StreamWriter(Vars.doorsFile, false))
+                {
+                    foreach (string s in doorDataFile)
+                    {
+                        sw.WriteLine(s);
                     }
                 }
             }
-            using (StreamWriter sw = new StreamWriter(Vars.doorsFile, false))
+            catch (Exception ex)
             {
-                foreach (string s in doorDataFile)
-                {
-                    sw.WriteLine(s);
-                }
+                conLog.Error("RDD #2: " + ex.ToString());
             }
         }
 
@@ -7003,6 +7817,8 @@ namespace RustEssentials.Util
             sb.AppendLine("/clearinv \"name\" (Clears the inventory of the specified player by their exact name)");
             sb.AppendLine("/craft {on} (Turns on super craft mode. Crafting, research, and blueprint restrictions nullify for the sender)");
             sb.AppendLine("/craft {off} (Turns off super craft mode. Crafting, research, and blueprint restrictions re-activate for the sender)");
+            sb.AppendLine("/daylength (Returns the amount of minutes in a full day)");
+            sb.AppendLine("/daylength [#] (Sets the amount of minutes in a full day. Default 45.)");
             sb.AppendLine("/fall {on} (Turns on server-wide fall damage)");
             sb.AppendLine("/fall {off} (Turns off server-wide fall damage)");
             sb.AppendLine("/f {admin} *player name* (Gives faction admin to the specified faction member)");
@@ -7080,6 +7896,8 @@ namespace RustEssentials.Util
             sb.AppendLine("/leave *player name* (Emulates the leaving of a fake player)");
             sb.AppendLine("/mute *player name* (Mutes the player on global chat)");
             sb.AppendLine("/mute *player name* <time[s/m/h]>(Mutes the player on global chat for a period of time (time example: 15s or 30m))");
+            sb.AppendLine("/nightlength (Returns the amount of minutes in a full night)");
+            sb.AppendLine("/nightlength [#] (Sets the amount of minutes in a full night. Default 15.)");
             sb.AppendLine("/online (Returns the amount of players currently connected)");
             sb.AppendLine("/owner {on} (Gives access to display the owner of a structure upon hit)");
             sb.AppendLine("/owner {off} (Revokes access to display the owner of a structure upon hit)");
@@ -7096,6 +7914,8 @@ namespace RustEssentials.Util
             sb.AppendLine("/reload {config/whitelist/ranks/commands/kits/motd/bans/prefix/warps/controller/tables/all} (Reloads the specified file)");
             sb.AppendLine("/remove {on} (Gives access to delete entities (structures and AI entities) upon hit)");
             sb.AppendLine("/remove {off} (Revokes access to delete entities (structures and AI entities) upon hit)");
+            sb.AppendLine("/removeall {on} (Gives access to delete entities (structures and AI entities) upon hit. If the entity is a structure, it will destroy all conntected structures too)");
+            sb.AppendLine("/removeall {off} (Revokes access to delete entities (structures and AI entities) upon hit. If the entity is a structure, it will destroy all conntected structures too)");
             sb.AppendLine("/rules (Lists the server rules)");
             sb.AppendLine("/save (Saves all world data)");
             sb.AppendLine("/say *message* (Says a message through the plugin)");
@@ -7110,8 +7930,6 @@ namespace RustEssentials.Util
             sb.AppendLine("/time {freeze} (Freezes time)");
             sb.AppendLine("/time {night} (Sets time to night)");
             sb.AppendLine("/time {unfreeze} (Unfreezes time)");
-            sb.AppendLine("/timescale (Returns the speed at which time passes)");
-            sb.AppendLine("/timescale [#] (Sets the speed at which time passes. Recommended between 0 and 1. WARNING: THIS AFFECTS AIRDROPS)");
             sb.AppendLine("/tp *player name* (Teleports the operator/sender to the designated user)");
             sb.AppendLine("/tp <player name 1> <player name 2> (Teleports player 1 to player 2)");
             sb.AppendLine("/tpa *player name* (Sends a teleport request to that user)");
@@ -7418,7 +8236,7 @@ namespace RustEssentials.Util
             }
         }
 
-        public static void setScaleServer(string[] args)
+        public static void setDayLengthServer(string[] args)
         {
             if (args.Count() > 1)
             {
@@ -7426,17 +8244,18 @@ namespace RustEssentials.Util
                 {
                     if (!timeFrozen)
                     {
-                        float time = Convert.ToSingle(args[1]);
-                        Time.setScale(time);
+                        float length = Convert.ToSingle(args[1]);
+                        Time.setDayLength(length);
                     }
                 }
                 catch (Exception ex)
                 {
+                    conLog.Error("SDLS: " + ex.ToString());
                 }
             }
         }
 
-        public static void setScale(PlayerClient senderClient, string[] args)
+        public static void setNightLengthServer(string[] args)
         {
             if (args.Count() > 1)
             {
@@ -7444,23 +8263,72 @@ namespace RustEssentials.Util
                 {
                     if (!timeFrozen)
                     {
-                        float time = Convert.ToSingle(args[1]);
-                        Time.setScale(time);
-                        Broadcast.broadcastTo(senderClient.netPlayer, "Time scale set to " + time.ToString() + ".");
-                    }
-                    else
-                    {
-                        Broadcast.broadcastTo(senderClient.netPlayer, "Time is currently frozen! Unfreeze time to change the time scale.");
+                        float length = Convert.ToSingle(args[1]);
+                        Time.setNightLength(length);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Broadcast.broadcastTo(senderClient.netPlayer, "Time scale must be a number!");
+                    conLog.Error("SNLS: " + ex.ToString());
+                }
+            }
+        }
+
+        public static void setDayLength(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                try
+                {
+                    if (!timeFrozen)
+                    {
+                        float length = Convert.ToSingle(args[1]);
+                        Time.setDayLength(length);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Day length set to " + length.ToString() + " minutes.");
+                    }
+                    else
+                    {
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Time is currently frozen! Unfreeze time to change the day length.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Broadcast.broadcastTo(senderClient.netPlayer, "Day length must be a number!");
+                    conLog.Error("SDL: " + ex.ToString());
                 }
             }
             else
             {
-                Broadcast.broadcastTo(senderClient.netPlayer, "The time scale is currently " + Math.Round(Time.getScale(), 2) + ".");
+                Broadcast.broadcastTo(senderClient.netPlayer, "The day length is currently " + Time.getDayLength() + ".");
+            }
+        }
+
+        public static void setNightLength(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                try
+                {
+                    if (!timeFrozen)
+                    {
+                        float length = Convert.ToSingle(args[1]);
+                        Time.setNightLength(length);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Night length set to " + length.ToString() + " minutes.");
+                    }
+                    else
+                    {
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Time is currently frozen! Unfreeze time to change the night length.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Broadcast.broadcastTo(senderClient.netPlayer, "Night length must be a number!");
+                    conLog.Error("SNL: " + ex.ToString());
+                }
+            }
+            else
+            {
+                Broadcast.broadcastTo(senderClient.netPlayer, "The night length is currently " + Time.getDayLength() + ".");
             }
         }
 
@@ -7470,7 +8338,7 @@ namespace RustEssentials.Util
             {
                 try
                 {
-                    double time = Convert.ToDouble(args[1]);
+                    float time = Convert.ToSingle(args[1]);
                     Time.setTime(time);
                 }
                 catch (Exception ex)
@@ -7491,6 +8359,10 @@ namespace RustEssentials.Util
                     {
                         Time.setNight();
                     }
+                    else
+                    {
+                        conLog.Error("STS: Unknown parameters \"" + string.Join(" ", args.ToArray()) + "\".");
+                    }
                 }
             }
         }
@@ -7501,7 +8373,7 @@ namespace RustEssentials.Util
             {
                 try
                 {
-                        double time = Convert.ToDouble(args[1]);
+                        float time = Convert.ToSingle(args[1]);
                         Time.setTime(time);
                         Broadcast.broadcastTo(senderClient.netPlayer, "Time set to " + time.ToString() + ".");
                 }
@@ -7526,6 +8398,10 @@ namespace RustEssentials.Util
                     {
                         Time.setNight();
                         Broadcast.broadcastTo(senderClient.netPlayer, "Time set to night.");
+                    }
+                    else
+                    {
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Unknown parameters \"" + string.Join(" ", args.ToArray()) + "\".");
                     }
                 }
             }
@@ -7665,12 +8541,12 @@ namespace RustEssentials.Util
 
                         if (targetClient.netPlayer != sender)
                         {
-                            Broadcast.noticeTo(sender, "♫", (b ? "God mode granted to " + targetClient.userName + "." : "Revoked " + targetClient.userName + "'s god mode."));
-                            Broadcast.noticeTo(targetClient.netPlayer, "♫", (b ? "God mode granted by " + senderName + "." : "God mode revoked by " + senderName + "."));
+                            Broadcast.noticeTo(sender, "♫", (b ? "God mode granted to " + targetClient.userName + "." : "Revoked " + targetClient.userName + "'s god mode."), 2, true);
+                            Broadcast.noticeTo(targetClient.netPlayer, "♫", (b ? "God mode granted by " + senderName + "." : "God mode revoked by " + senderName + "."), 2, true);
                         }
                         else
                         {
-                            Broadcast.noticeTo(sender, "♫", (b ? "God mode activated." : "God mode deactivated."));
+                            Broadcast.noticeTo(sender, "♫", (b ? "God mode activated." : "God mode deactivated."), 2, true);
                         }
                     }
                 }
@@ -7700,12 +8576,12 @@ namespace RustEssentials.Util
 
                         if (targetClient.netPlayer != sender)
                         {
-                            Broadcast.noticeTo(sender, "♫", (b ? "God mode granted to " + targetClient.userName + "." : "Revoked " + targetClient.userName + "'s god mode."));
-                            Broadcast.noticeTo(targetClient.netPlayer, "♫", (b ? "God mode granted by " + senderName + "." : "God mode revoked by " + senderName + "."));
+                            Broadcast.noticeTo(sender, "♫", (b ? "God mode granted to " + targetClient.userName + "." : "Revoked " + targetClient.userName + "'s god mode."), 2, true);
+                            Broadcast.noticeTo(targetClient.netPlayer, "♫", (b ? "God mode granted by " + senderName + "." : "God mode revoked by " + senderName + "."), 2, true);
                         }
                         else
                         {
-                            Broadcast.noticeTo(sender, "♫", (b ? "God mode activated." : "God mode deactivated."));
+                            Broadcast.noticeTo(sender, "♫", (b ? "God mode activated." : "God mode deactivated."), 2, true);
                         }
                     }
                 }
@@ -7726,7 +8602,7 @@ namespace RustEssentials.Util
                         godList.Remove(senderClient.userID.ToString());
                 }
 
-                Broadcast.noticeTo(sender, "♫", (b ? "God mode activated." : "God mode deactivated."));
+                Broadcast.noticeTo(sender, "♫", (b ? "God mode activated." : "God mode deactivated."), 2, true);
             }
         }
 
@@ -7763,54 +8639,226 @@ namespace RustEssentials.Util
         {
             try
             {
-                bool b = false;
-                try
+                if (HWAI != null)
                 {
-                    List<PlayerClient> possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.controllable.GetComponent<TakeDamage>() == damage).ToList();
-                    if (possibleClients.Count() > 0)
+                    if (damage != null)
                     {
-                        b = hiddenList.Contains(possibleClients[0].userID.ToString()) && HWAI._targetTD == possibleClients[0].controllable.GetComponent<TakeDamage>();
-                    }
-                    
-                    try
-                    {
-                        if (!b)
+                        bool b = false;
+                        try
                         {
-                            possibleClients.Clear();
-                            if (isPlayer(damage.idMain))
+                            foreach (PlayerClient pc in AllPlayerClients)
                             {
-                                Character character = damage.idMain as Character;
-                                foreach (string UID in hiddenList)
+                                if (pc.controllable != null)
                                 {
-                                    if (UID == character.playerClient.userID.ToString() && HWAI._targetTD == character.playerClient.controllable.GetComponent<TakeDamage>())
-                                        b = true;
+                                    if (pc.controllable.GetComponent<TakeDamage>() != null)
+                                    {
+                                        if (pc.controllable.GetComponent<TakeDamage>() == damage)
+                                        {
+                                            PlayerClient playerClient = pc;
+                                            if (HWAI._targetTD != null)
+                                            {
+                                                b = hiddenList.Contains(playerClient.userID.ToString()) && HWAI._targetTD == playerClient.controllable.GetComponent<TakeDamage>();
+
+                                                try
+                                                {
+                                                    if (!b)
+                                                    {
+                                                        if (isPlayer(damage.idMain))
+                                                        {
+                                                            Character character = damage.idMain as Character;
+                                                            foreach (string UID in hiddenList)
+                                                            {
+                                                                if (UID == character.playerClient.userID.ToString() && HWAI._targetTD == character.playerClient.controllable.GetComponent<TakeDamage>())
+                                                                    b = true;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    Vars.conLog.Error("HS #3: " + ex.ToString());
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Vars.conLog.Error("HS #2: " + ex.ToString());
+                        }
+
+                        if (!HWAI.IsScentBlind() && (((HWAI._state != 2) && (HWAI._state != 7)) && !HWAI.HasTarget()) && !b)
+                        {
+                            HWAI.ExitCurrentState();
+                            HWAI.SetAttackTarget(damage);
+                            HWAI.EnterState_Chase();
+                        }
+
+                        if (b && HWAI.HasTarget())
+                        {
+                            ignoringAIList.Add(HWAI);
+                            HWAI._targetTD = null;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Vars.conLog.Error("HS #1: " + ex.ToString());
+            }
+        }
+
+        public static List<HostileWildlifeAI> hadTarget = new List<HostileWildlifeAI>();
+        public static void HostileChase(ulong millis, HostileWildlifeAI HWAI)
+        {
+            try
+            {
+                if (HWAI != null)
+                {
+                    if (millis != null)
+                    {
+                        if (HWAI._targetTD == null)
+                        {
+                            if (ignoringAIList.Contains(HWAI))
+                            {
+                                HWAI.GoScentBlind(10f);
+                                HWAI.ExitCurrentState();
+                                HWAI.idleClock.ResetRandomDurationSeconds(0, 0);
+                                HWAI._state = 1;
+                                if (!HWAI.idleSoundRefireClock.once)
+                                {
+                                    HWAI.idleSoundRefireClock.ResetRandomDurationSeconds(2.0, 4.0);
+                                }
+                                ignoringAIList.Remove(HWAI);
+                            }
+                            else
+                                HWAI.LoseTarget();
+
+                            if (hadTarget.Contains(HWAI))
+                                hadTarget.Remove(HWAI);
+                        }
+                        else
+                        {
+                            bool b = false;
+                            if (!hadTarget.Contains(HWAI))
+                            {
+                                try
+                                {
+                                    foreach (PlayerClient pc in AllPlayerClients)
+                                    {
+                                        if (pc.controllable != null)
+                                        {
+                                            if (pc.controllable.GetComponent<TakeDamage>() != null)
+                                            {
+                                                if (pc.controllable.GetComponent<TakeDamage>() == HWAI._targetTD)
+                                                {
+                                                    PlayerClient playerClient = pc;
+                                                    b = hiddenList.Contains(playerClient.userID.ToString()) && HWAI._targetTD == playerClient.controllable.GetComponent<TakeDamage>();
+
+                                                    try
+                                                    {
+                                                        if (!b)
+                                                        {
+                                                            if (isPlayer(HWAI._targetTD.idMain))
+                                                            {
+                                                                Character character = HWAI._targetTD.idMain as Character;
+                                                                foreach (string UID in hiddenList)
+                                                                {
+                                                                    if (UID == character.playerClient.userID.ToString() && HWAI._targetTD == character.playerClient.controllable.GetComponent<TakeDamage>())
+                                                                        b = true;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        Vars.conLog.Error("HC #3: " + ex.ToString());
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Vars.conLog.Error("HC #2: " + ex.ToString());
+                                }
+                                hadTarget.Add(HWAI);
+                            }
+
+                            if (!b)
+                            {
+                                float num = HWAI.TargetRange();
+                                if (num > HWAI.loseTargetRange)
+                                {
+                                    HWAI.LoseTarget();
+                                }
+                                else
+                                {
+                                    Vector3 vector = HWAI._targetTD.transform.position - HWAI.transform.position;
+                                    vector.y = 0f;
+                                    if (num <= HWAI.attackRange)
+                                    {
+                                        HWAI._wildMove.SetLookDirection(vector.normalized);
+                                        HWAI.ExitCurrentState();
+                                        HWAI.EnterState_Attack();
+                                    }
+                                    else
+                                    {
+                                        if (HWAI._wildMove.IsStuck())
+                                        {
+                                            if (HWAI.wasStuck)
+                                            {
+                                                if (HWAI.stuckClock.IntegrateTime_Reached(millis))
+                                                {
+                                                    Vector3 position = HWAI._targetTD.transform.position;
+                                                    HWAI.LoseTarget();
+                                                    HWAI.ExitCurrentState();
+                                                    HWAI.EnterState_Flee(position, 0x2710L);
+                                                    return;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                HWAI.wasStuck = true;
+                                                HWAI.stuckClock.ResetRandomDurationSeconds(1.0, 2.0);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            HWAI.wasStuck = false;
+                                        }
+                                        if (HWAI.chaseSoundClock.IntegrateTime_Reached(millis))
+                                        {
+                                            BasicWildLifeAI.AISound chase = BasicWildLifeAI.AISound.Chase;
+                                            if (num < 5f)
+                                            {
+                                                chase = BasicWildLifeAI.AISound.ChaseClose;
+                                            }
+                                            HWAI.NetworkSound(chase);
+                                            HWAI.chaseSoundClock.ResetRandomDurationSeconds(1.5, 2.5);
+                                        }
+                                        HWAI._wildMove.SetMoveTarget(HWAI._targetTD.gameObject, HWAI.runSpeed);
+                                        if (HWAI.targetReachClock.IntegrateTime_Reached(millis))
+                                        {
+                                            HWAI.LoseTarget();
+                                            HWAI.ExitCurrentState();
+                                            HWAI.EnterState_Idle();
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        Vars.conLog.Error("HS #2: " + ex.ToString());
-                    }
                 }
-                catch (Exception ex)
-                {
-                    Vars.conLog.Error("HS #1: " + ex.ToString());
-                }
-
-                if (!HWAI.IsScentBlind() && (((HWAI._state != 2) && (HWAI._state != 7)) && !HWAI.HasTarget()) && !b)
-                {
-                    HWAI.ExitCurrentState();
-                    HWAI.SetAttackTarget(damage);
-                    HWAI.EnterState_Chase();
-                }
-
-                if (b && HWAI.HasTarget())
-                    HWAI._targetTD = null;
             }
             catch (Exception ex)
             {
-                Vars.conLog.Error(ex.ToString());
+                conLog.Error("HC #1: " + ex.ToString());
             }
         }
 
@@ -7859,13 +8907,19 @@ namespace RustEssentials.Util
                         Character outChar;
                         Character.FindByUser(pc.userID, out outChar);
 
-                        if (Vector3.Distance(outChar.transform.position, origin) < 1)
+                        if (outChar != null && outChar.transform != null && outChar.transform.position != null && origin != null)
                         {
-                            b = hiddenList.Contains(pc.userID.ToString());
+                            if (Vector3.Distance(outChar.transform.position, origin) < 1)
+                            {
+                                b = hiddenList.Contains(pc.userID.ToString());
+                            }
                         }
                     }
                 }
-                catch { }
+                catch (Exception ex2)
+                {
+                    conLog.Error("BHFS #2: " + ex2.ToString());
+                }
                 if (((BWAI._state != 2) && (BWAI._state != 7)) && BWAI.afraidOfFootsteps && !b)
                 {
                     BWAI.ExitCurrentState();
@@ -7874,7 +8928,7 @@ namespace RustEssentials.Util
             }
             catch (Exception ex)
             {
-                Vars.conLog.Error(ex.ToString());
+                Vars.conLog.Error("BHFS #1: " + ex.ToString());
             }
         }
 
@@ -7903,7 +8957,7 @@ namespace RustEssentials.Util
             }
             catch (Exception ex)
             {
-                Vars.conLog.Error(ex.ToString());
+                Vars.conLog.Error("BH: " + ex.ToString());
             }
         }
 
@@ -7991,12 +9045,12 @@ namespace RustEssentials.Util
 
                         if (targetClient.netPlayer != sender)
                         {
-                            Broadcast.noticeTo(sender, "♫", ("You fed " + targetClient.userName + "."));
-                            Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were fed by " + senderName + "."));
+                            Broadcast.noticeTo(sender, "♫", ("You fed " + targetClient.userName + "."), 2, true);
+                            Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were fed by " + senderName + "."), 2, true);
                         }
                         else
                         {
-                            Broadcast.noticeTo(sender, "♫", "You were fed.");
+                            Broadcast.noticeTo(sender, "♫", "You were fed.", 2, true);
                         }
                     }
                 }
@@ -8017,12 +9071,12 @@ namespace RustEssentials.Util
 
                         if (targetClient.netPlayer != sender)
                         {
-                            Broadcast.noticeTo(sender, "♫", ("You fed " + targetClient.userName + "."));
-                            Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were fed by " + senderName + "."));
+                            Broadcast.noticeTo(sender, "♫", ("You fed " + targetClient.userName + "."), 2, true);
+                            Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were fed by " + senderName + "."), 2, true);
                         }
                         else
                         {
-                            Broadcast.noticeTo(sender, "♫", "You were fed.");
+                            Broadcast.noticeTo(sender, "♫", "You were fed.", 2, true);
                         }
                     }
                 }
@@ -8036,7 +9090,7 @@ namespace RustEssentials.Util
 
                 metabolism.AddCalories(metabolism.GetRemainingCaloricSpace());
 
-                Broadcast.noticeTo(sender, "♫", "You were fed.");
+                Broadcast.noticeTo(sender, "♫", "You were fed.", 2, true);
             }
         }
 
@@ -8083,12 +9137,12 @@ namespace RustEssentials.Util
 
                         if (targetClient.netPlayer != sender)
                         {
-                            Broadcast.noticeTo(sender, "♫", "You healed " + senderName + ".");
-                            Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were healed by " + senderName + "."));
+                            Broadcast.noticeTo(sender, "♫", "You healed " + senderName + ".", 2, true);
+                            Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were healed by " + senderName + "."), 2, true);
                         }
                         else
                         {
-                            Broadcast.noticeTo(sender, "♫", "You were healed.");
+                            Broadcast.noticeTo(sender, "♫", "You were healed.", 2, true);
                         }
                     }
                 }
@@ -8116,12 +9170,12 @@ namespace RustEssentials.Util
 
                         if (targetClient.netPlayer != sender)
                         {
-                            Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were healed by " + senderName + "."));
-                            Broadcast.noticeTo(sender, "♫", "You healed " + targetClient.userName + ".");
+                            Broadcast.noticeTo(targetClient.netPlayer, "♫", ("You were healed by " + senderName + "."), 2, true);
+                            Broadcast.noticeTo(sender, "♫", "You healed " + targetClient.userName + ".", 2, true);
                         }
                         else
                         {
-                            Broadcast.noticeTo(sender, "♫", "You were healed.");
+                            Broadcast.noticeTo(sender, "♫", "You were healed.", 2, true);
                         }
                     }
                 }
@@ -8140,7 +9194,7 @@ namespace RustEssentials.Util
 
                 metabolism.AddAntiRad(metabolism.GetRadLevel());
 
-                Broadcast.noticeTo(sender, "♫", "You were healed.");
+                Broadcast.noticeTo(sender, "♫", "You were healed.", 2, true);
             }
         }
 
@@ -8219,8 +9273,6 @@ namespace RustEssentials.Util
                             if (ofLowerRank(targetClient.userID.ToString(), senderClient.userID.ToString(), false))
                             {
                                 IDBase idBase = (IDBase)targetChar;
-                                Broadcast.noticeTo(targetClient.netPlayer, "№", "You fell victim to /kill.");
-                                Broadcast.noticeTo(senderClient.netPlayer, "№", targetClient.userName + " fell victim to /kill.");
                                 killList.Add(targetClient);
 
                                 TakeDamage component = targetClient.controllable.GetComponent<TakeDamage>();
@@ -8235,7 +9287,7 @@ namespace RustEssentials.Util
                                 Broadcast.noticeTo(targetClient.netPlayer, "№", senderClient.userName + " tried to /kill you.");
                             }
                         }
-                        catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
+                        catch (Exception ex) { Vars.conLog.Error("KT #1: " + ex.ToString()); }
                     }
                 }
                 else
@@ -8273,7 +9325,7 @@ namespace RustEssentials.Util
                                 Broadcast.noticeTo(targetClient.netPlayer, "№", senderClient.userName + " tried to /kill you.");
                             }
                         }
-                        catch (Exception ex) { Vars.conLog.Error(ex.ToString()); }
+                        catch (Exception ex) { Vars.conLog.Error("KT #2: " + ex.ToString()); }
                     }
                 }
             }
@@ -8412,7 +9464,7 @@ namespace RustEssentials.Util
                     currentBanReasons.Remove(UID);
                     saveBans();
 
-                    Broadcast.noticeTo(playerClient.netPlayer, "☻", "Player " + targetName + " (" + UID + ") has been unbanned.");
+                    Broadcast.noticeTo(playerClient.netPlayer, "☻", "Player " + targetName + " (" + UID + ") has been unbanned.", 2, true);
                 }
                 else if (currentBans.ContainsKey(targetName)) // If the unban is by UID
                 {
@@ -8431,7 +9483,11 @@ namespace RustEssentials.Util
                             currentBanReasons.Remove(UID);
                             saveBans();
 
-                            Broadcast.noticeTo(playerClient.netPlayer, "☻", "Player " + playerName + " (" + UID + ") has been unbanned.");
+                            Broadcast.noticeTo(playerClient.netPlayer, "☻", "Player " + playerName + " (" + UID + ") has been unbanned.", 2, true);
+                        }
+                        else
+                        {
+                            Broadcast.noticeTo(playerClient.netPlayer, "№", "Player/UID " + targetName + " is not banned!");
                         }
                     }
                     catch (Exception ex)
@@ -9018,18 +10074,20 @@ namespace RustEssentials.Util
             try
             {
                 Time.setTime(Convert.ToSingle(Config.startTime));
-                Time.setScale(Convert.ToSingle(Config.timeScale));
+                Time.setDayLength(Convert.ToSingle(Config.dayLength));
+                Time.setNightLength(Convert.ToSingle(Config.nightLength));
                 Time.freezeTime(Convert.ToBoolean(Config.freezeTime));
                 
                 conLog.Info("Overriding time...");
-                conLog.Info("Overriding time scale...");
+                conLog.Info("Overriding day length...");
+                conLog.Info("Overriding night length...");
 
                 if (Convert.ToBoolean(Config.freezeTime))
                     conLog.Info("Time frozen.");
             }
             catch (Exception ex)
             {
-                conLog.Error("Something went wrong when overriding the enviroment! Skipping...");
+                conLog.Error("Something went wrong when overriding the enviroment! Skipping... Error: " + ex.ToString());
             }
         }
 
@@ -9168,7 +10226,7 @@ namespace RustEssentials.Util
                                         {
                                             // Return how long I have to wait
                                             double timeLeft = Math.Round((kv.Key.TimeLeft / 1000));
-                                            Broadcast.noticeTo(senderClient.netPlayer, "✯", "You must wait " + (timeLeft > 999999999 ? "forever" : timeLeft.ToString() + " seconds") + " seconds before using this.");
+                                            Broadcast.noticeTo(senderClient.netPlayer, "✯", "You must wait " + (timeLeft > 999999999 ? "forever" : timeLeft.ToString() + " seconds") + " before using this.");
                                         }
                                     }
                                 }
@@ -9267,7 +10325,7 @@ namespace RustEssentials.Util
                                         {
                                             // Return how long I have to wait
                                             double timeLeft = Math.Round((kv.Key.TimeLeft / 1000));
-                                            Broadcast.noticeTo(senderClient.netPlayer, "✯", "You must wait " + (timeLeft > 999999999 ? "forever" : timeLeft.ToString() + " seconds") + " seconds before using this.");
+                                            Broadcast.noticeTo(senderClient.netPlayer, "✯", "You must wait " + (timeLeft > 999999999 ? "forever" : timeLeft.ToString() + " seconds") + " before using this.");
                                         }
                                     }
                                 }
@@ -10208,46 +11266,54 @@ namespace RustEssentials.Util
 
         public static void giveawayItem(string itemName, int amount, int playerAmount)
         {
-            List<PlayerClient> winners = new List<PlayerClient>();
-            List<string> winnerNames = new List<string>();
-            List<PlayerClient> possibleWinners = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => !vanishedList.Contains(pc.userID.ToString()) && !lastWinners.Contains(pc.userID.ToString()) && pc.userName.Length > 0).ToList();
-            lastWinners.Clear();
-            string winnerList = "";
-            System.Random rnd = new System.Random();
-            playerAmount = Mathf.Clamp(playerAmount, 1, possibleWinners.Count);
-            for (int i = 0; i < playerAmount; i++)
+            try
             {
-                PlayerClient randomClient = possibleWinners[rnd.Next(0, possibleWinners.Count)];
-                winners.Add(randomClient);
-                winnerNames.Add(randomClient.userName);
-                lastWinners.Add(randomClient.userID.ToString());
+                List<PlayerClient> winners = new List<PlayerClient>();
+                List<string> winnerNames = new List<string>();
+                List<PlayerClient> possibleWinners = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => !vanishedList.Contains(pc.userID.ToString()) && !lastWinners.Contains(pc.userID.ToString()) && pc.userName.Length > 0).ToList();
+                lastWinners.Clear();
+                string winnerList = "";
+                System.Random rnd = new System.Random();
+                playerAmount = Mathf.Clamp(playerAmount, 1, possibleWinners.Count);
+                for (int i = 0; i < playerAmount; i++)
+                {
+                    PlayerClient randomClient = possibleWinners[rnd.Next(0, possibleWinners.Count)];
+                    winners.Add(randomClient);
+                    winnerNames.Add(randomClient.userName);
+                    lastWinners.Add(randomClient.userID.ToString());
+                    possibleWinners.Remove(randomClient);
+                }
+
+                if (winnerNames.Count == 2)
+                    winnerList = string.Join(" and ", winnerNames.ToArray());
+                else if (winnerNames.Count > 2)
+                {
+                    string lastName = winnerNames.Last();
+                    winnerNames.Remove(lastName);
+
+                    winnerList = string.Join(", ", winnerNames.ToArray());
+                    winnerList += ", and " + lastName;
+                }
+                else if (winnerNames.Count == 1)
+                    winnerList = winnerNames.First();
+
+                Broadcast.noticeAll("?", "Starting item giveaway! Who will win?...", 4);
+                Thread.Sleep(4500);
+                Broadcast.noticeAll("?", "3", 1);
+                Thread.Sleep(1500);
+                Broadcast.noticeAll("?", "2", 1);
+                Thread.Sleep(1500);
+                Broadcast.noticeAll("?", "1", 1);
+                Thread.Sleep(1500);
+                Broadcast.noticeAll("!", "Congratulations to " + winnerList + " on winning " + amount + " " + itemName + "!", 4);
+                foreach (PlayerClient targetClient in winners)
+                {
+                    addItem(targetClient, itemName, amount);
+                }
             }
-
-            if (winnerNames.Count == 2)
-                winnerList = string.Join(" and ", winnerNames.ToArray());
-            else if (winnerNames.Count > 2)
+            catch (Exception ex)
             {
-                string lastName = winnerNames.Last();
-                winnerNames.Remove(lastName);
-
-                winnerList = string.Join(", ", winnerNames.ToArray());
-                winnerList += ", and " + lastName;
-            }
-            else if (winnerNames.Count == 1)
-                winnerList = winnerNames.First();
-
-            Broadcast.noticeAll("?", "Starting item giveaway! Who will win?...", 4);
-            Thread.Sleep(4500);
-            Broadcast.noticeAll("?", "3", 1);
-            Thread.Sleep(1500);
-            Broadcast.noticeAll("?", "2", 1);
-            Thread.Sleep(1500);
-            Broadcast.noticeAll("?", "1", 1);
-            Thread.Sleep(1500);
-            Broadcast.noticeAll("!", "Congratulations to " + winnerList + " on winning " + amount + " " + itemName + "!", 4);
-            foreach (PlayerClient targetClient in winners)
-            {
-                addItem(targetClient, itemName, amount);
+                Vars.conLog.Error(ex.ToString());
             }
         }
 

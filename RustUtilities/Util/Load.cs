@@ -174,11 +174,16 @@ namespace RustEssentials.Util
                     Directory.CreateDirectory(Vars.tablesDir);
 
                 List<string> tables = Directory.GetFiles(Vars.tablesDir, "*.ini").ToList();
+                List<string> removeQueue = new List<string>();
                 foreach (string table in tables)
                 {
                     string tableName = Path.GetFileNameWithoutExtension(table);
                     if (!Vars.originalLootTables.ContainsKey(tableName))
-                        tables.Remove(table);
+                        removeQueue.Add(table);
+                }
+                foreach (string table in removeQueue)
+                {
+                    tables.Remove(table);
                 }
 
                 if (tables.Count < Vars.originalLootTables.Count)
@@ -236,6 +241,21 @@ namespace RustEssentials.Util
                             }
                         }
                     }
+                }
+
+                tables.Clear();
+                removeQueue.Clear();
+                tables = Directory.GetFiles(Vars.tablesDir, "*.ini").ToList();
+                removeQueue = new List<string>();
+                foreach (string table in tables)
+                {
+                    string tableName = Path.GetFileNameWithoutExtension(table);
+                    if (!Vars.originalLootTables.ContainsKey(tableName))
+                        removeQueue.Add(table);
+                }
+                foreach (string table in removeQueue)
+                {
+                    tables.Remove(table);
                 }
 
                 List<LootSpawnList.LootWeightedEntry> newLootPackages = new List<LootSpawnList.LootWeightedEntry>();
@@ -793,8 +813,9 @@ namespace RustEssentials.Util
                                 {
                                     if (line.Contains("."))
                                     {
-                                        currentWarp = line.Substring(1, line.IndexOf(".") - 1);
-                                        string prefix = line.Substring(line.IndexOf(".") + 1, line.Length - line.IndexOf(".") - 2);
+                                        string noBrackets = line.Substring(1, line.Length - 2);
+                                        currentWarp = line.Substring(1, line.LastIndexOf(".") - 1);
+                                        string prefix = noBrackets.Substring(noBrackets.LastIndexOf(".") + 1);
                                         string rank = "";
                                         foreach (KeyValuePair<string, string> kv in Vars.rankPrefixes)
                                         {
@@ -803,7 +824,7 @@ namespace RustEssentials.Util
                                                 rank = kv.Key;
                                             }
                                         }
-                                        if (Vars.rankPrefixes.Keys.Contains(rank))
+                                        if (Vars.rankPrefixes.ContainsKey(rank))
                                         {
                                             Vars.warpsForRanks[rank].Add(currentWarp.ToLower());
                                             Vars.warps.Add(currentWarp.ToLower(), new Vector3());
@@ -1227,7 +1248,7 @@ namespace RustEssentials.Util
                     }
                     try
                     {
-                        int number = Convert.ToInt16(Config.requestCooldown.Substring(0, Config.requestCooldown.Length - 1));
+                        int number = Convert.ToInt32(Config.requestCooldown.Substring(0, Config.requestCooldown.Length - 1));
                         int multiplier = 1000;
                         if (Config.requestCooldown.EndsWith("m"))
                             multiplier *= 60;
@@ -1269,22 +1290,22 @@ namespace RustEssentials.Util
                     {
                         Vars.conLog.Error("alliedFire could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
                     }
-                    try { Vars.neutralDamage = Convert.ToInt16(Config.neutralDamage); }
+                    try { Vars.neutralDamage = Convert.ToSingle(Config.neutralDamage); }
                     catch (Exception ex)
                     {
                         Vars.conLog.Error("neutralDamage could not be parsed as a number!");
                     }
-                    try { Vars.warDamage = Convert.ToInt16(Config.warDamage); }
+                    try { Vars.warDamage = Convert.ToSingle(Config.warDamage); }
                     catch (Exception ex)
                     {
                         Vars.conLog.Error("warDamage could not be parsed as a number!");
                     }
-                    try { Vars.warFriendlyDamage = Convert.ToInt16(Config.warFriendlyDamage); }
+                    try { Vars.warFriendlyDamage = Convert.ToSingle(Config.warFriendlyDamage); }
                     catch (Exception ex)
                     {
                         Vars.conLog.Error("warFriendlyDamage could not be parsed as a number!");
                     }
-                    try { Vars.warAllyDamage = Convert.ToInt16(Config.warAllyDamage); }
+                    try { Vars.warAllyDamage = Convert.ToSingle(Config.warAllyDamage); }
                     catch (Exception ex)
                     {
                         Vars.conLog.Error("warAllyDamage could not be parsed as a number!");
@@ -1336,8 +1357,8 @@ namespace RustEssentials.Util
                     {
                         if (line.Contains("="))
                         {
-                            string reason = line.Substring(line.IndexOf("#") + 1).Trim();
-                            line = line.Substring(0, line.IndexOf("#")).Trim();
+                            string reason = line.Substring(line.LastIndexOf("#") + 1).Trim();
+                            line = line.Substring(0, line.LastIndexOf("#")).Trim();
                             string playerName = line.Split('=')[0];
                             string playerUID = line.Split('=')[1];
                             if (!previousBans.ContainsKey(playerUID))

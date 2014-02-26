@@ -12,7 +12,6 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Reflection;
 using Facepunch;
-using LeatherLoader;
 using UnityEngine;
 using uLink;
 using Rust;
@@ -26,35 +25,36 @@ using System.Collections.Specialized;
 
 namespace RustEssentials
 {
-    [Bootstrap]
     public class RustEssentialsBootstrap : Facepunch.MonoBehaviour
     {
         public static Util.Load _load = new Util.Load();
+
+        public static void LoadEssentials()
+        {
+            Vars.conLog.Info("Loading RustEssentials...");
+            try
+            {
+                new GameObject(typeof(RustEssentialsBootstrap).FullName).AddComponent(typeof(RustEssentialsBootstrap));
+                Vars.conLog.Info("RustEssentials loaded! Processing...");
+            }
+            catch (Exception ex)
+            {
+                Vars.conLog.Error("RustEssentials could not be loaded! Error: ");
+                Vars.conLog.Error(ex.ToString());
+            }
+        }
 
         public void Awake()
         {
             DontDestroyOnLoad(this.gameObject);
         }
 
-        private string setLeatherModsDir;
-
-        public void ReceiveLeatherConfiguration(LeatherConfig config)
-        {
-            setLeatherModsDir = config.ConfigDirectoryPath;
-        }
-
         public void Start()
         {
-            if (!Directory.Exists(setLeatherModsDir))
-            {
-                Directory.CreateDirectory(setLeatherModsDir);
-            }
-
             createFiles();
 
             Bundling.OnceLoaded += new Bundling.OnLoadedEventHandler(AssetsReady);
             
-
             Rust.Steam.Server.SetModded();
         }
 
@@ -72,10 +72,10 @@ namespace RustEssentials
             Vars.conLog.deleteLogs();
             Vars.conLog.deleteChatLogs();
             _load.loadRanks();
+            _load.loadCommands();
             _load.loadBans();
             _load.loadPrefixes();
             Whitelist.Start();
-            _load.loadCommands();
             _load.loadKits();
             _load.loadMOTD();
             _load.loadWarps();
@@ -89,6 +89,7 @@ namespace RustEssentials
             Vars.readZoneData();
             Vars.readRequestData();
             Vars.readRequestAllData();
+            Vars.readAlliesData();
             Vars.loopKitSaving();
             Vars.zoneTimer();
             Vars.loopRequestSaving();

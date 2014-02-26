@@ -20,44 +20,59 @@ namespace RustEssentials.Util
 {
     public class Time
     {
-        public static double timeScale = 0.01D;
-
         public static void freezeTime(bool b)
         {
             Vars.timeFrozen = b;
-            if (b && EnvironmentControlCenter.timeScale > 0)
-                timeScale = EnvironmentControlCenter.timeScale;
-            EnvironmentControlCenter.ServerSetTiming(getTime(), (b ? 0D : timeScale));
+            if (b && getDayLength() < 999999999f && getNightLength() < 999999999f)
+            {
+                setDayLength(999999999f);
+                setNightLength(999999999f);
+            }
+            if (!b && getDayLength() >= 999999999f && getNightLength() >= 999999999f)
+            {
+                setDayLength(45f);
+                setNightLength(15f);
+            }
         }
 
-        public static double getScale()
+        public static float getNightLength()
         {
-            return EnvironmentControlCenter.timeScale;
+            return env.nightlength;
         }
 
-        public static void setScale(double d)
+        public static float getDayLength()
         {
-            EnvironmentControlCenter.ServerSetTiming(getTime(), d);
+            return env.daylength; 
+        }
+
+        public static void setNightLength(float f)
+        {
+            env.nightlength = f;
+        }
+
+        public static void setDayLength(float f)
+        {
+            env.daylength = f;
         }
 
         public static double getTime()
         {
-            return EnvironmentControlCenter.time;
+            return EnvironmentControlCenter.Singleton.GetTime();
         }
 
-        public static void setTime(double d)
+        public static void setTime(float d)
         {
-            EnvironmentControlCenter.ServerSetTiming(d, EnvironmentControlCenter.timeScale);
+            EnvironmentControlCenter.Singleton.SetTime(d);
         }
 
         public static void setDay()
         {
-            EnvironmentControlCenter.ServerSetTiming(12D, EnvironmentControlCenter.timeScale);
+            EnvironmentControlCenter.Singleton.SetTime(12F);
         }
 
         public static void setNight()
         {
-            EnvironmentControlCenter.ServerSetTiming(2D, EnvironmentControlCenter.timeScale);
+            EnvironmentControlCenter.Singleton.SetTime(2F);
         }
     }
 }

@@ -29,6 +29,11 @@ namespace RustEssentials.Util
         public static void broadcastCustom(string name, string message)
         {
             ConsoleNetworker.Broadcast("chat.add \"" + name + "\" \"" + Vars.replaceQuotes(message) + "\"");
+
+            //foreach (PlayerClient pc in Vars.AllPlayerClients)
+            //{
+            //    ConsoleNetworker.SendClientCommand(pc.netPlayer, "chat.add \"" + name + "\" \"" + Vars.replaceQuotes(message) + "\"");
+            //}
         }
 
         public static void broadcastTo(uLink.NetworkPlayer player, string message, bool b)
@@ -47,24 +52,41 @@ namespace RustEssentials.Util
         public static void broadcastJoinLeave(string message)
         {
             ConsoleNetworker.Broadcast("chat.add \"" + Vars.botName + "\" \"" + Vars.replaceQuotes(message) + "\"");
+
+            //foreach (PlayerClient pc in Vars.AllPlayerClients)
+            //{
+            //    ConsoleNetworker.SendClientCommand(pc.netPlayer, "chat.add \"" + Vars.botName + "\" \"" + Vars.replaceQuotes(message) + "\"");
+            //}
         }
 
         public static void broadcastAll(string message)
         {
             Vars.conLog.Chat("<BROADCAST ALL> " + Vars.botName + ": " + message);
             ConsoleNetworker.Broadcast("chat.add \"" + Vars.botName + "\" \"" + Vars.replaceQuotes(message) + "\"");
+
+            //foreach (PlayerClient pc in Vars.AllPlayerClients)
+            //{
+            //    ConsoleNetworker.SendClientCommand(pc.netPlayer, "chat.add \"" + Vars.botName + "\" \"" + Vars.replaceQuotes(message) + "\"");
+            //}
         }
 
-        public static void noticeTo(uLink.NetworkPlayer sender, string icon, string message, int duration = 2)
+        public static void noticeTo(uLink.NetworkPlayer sender, string icon, string message, int duration = 2, bool log = false)
         {
-            Vars.conLog.Chat("<NOTICE> " + Vars.botName + ": " + message);
+            if (log)
+                Vars.conLog.Chat("<NOTICE> " + Vars.botName + ": " + message);
             ConsoleNetworker.SendClientCommand(sender, "notice.popup " + duration + " \"" + icon + "\" \"" + Vars.replaceQuotes(message) + "\"");
         }
 
-        public static void noticeAll(string icon, string message, int duration = 2)
+        public static void noticeAll(string icon, string message, int duration = 2, bool log = false)
         {
-            Vars.conLog.Chat("<NOTICE ALL> " + Vars.botName + ": " + message);
+            if (log)
+                Vars.conLog.Chat("<NOTICE ALL> " + Vars.botName + ": " + message);
             ConsoleNetworker.Broadcast("notice.popup " + duration + " \"" + icon + "\" \"" + Vars.replaceQuotes(message) + "\"");
+
+            //foreach (PlayerClient pc in Vars.AllPlayerClients)
+            //{
+            //    ConsoleNetworker.SendClientCommand(pc.netPlayer, "notice.popup " + duration + " \"" + icon + "\" \"" + Vars.replaceQuotes(message) + "\"");
+            //}
         }
 
         public static void sideNoticeTo(uLink.NetworkPlayer player, string message)
@@ -75,6 +97,11 @@ namespace RustEssentials.Util
         public static void sideNoticeAll(string icon, string message)
         {
             ConsoleNetworker.Broadcast("notice.inventory \"" + Vars.replaceQuotes(message) + "\"");
+
+            //foreach (PlayerClient pc in Vars.AllPlayerClients)
+            //{
+            //    ConsoleNetworker.SendClientCommand(pc.netPlayer, "notice.inventory \"" + Vars.replaceQuotes(message) + "\"");
+            //}
         }
 
         public static void reply(PlayerClient senderClient, string[] args)

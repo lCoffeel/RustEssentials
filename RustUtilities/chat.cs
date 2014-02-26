@@ -19,7 +19,7 @@ public class chat : ConsoleSystem
     [ConsoleSystem.Admin]
     public static bool enabled = true;
     [ConsoleSystem.Admin]
-    public static bool serverlog;
+    public static bool serverlog = true;
 
     static chat()
     {
@@ -36,11 +36,16 @@ public class chat : ConsoleSystem
         string UID = arg.argUser.user.Userid.ToString();
         string message = arg.GetString(0, "text");
 
+
         if (playerName != null && message.Length > 0)
         {
             if (message.StartsWith("/"))
             {
                 Vars.conLog.Chat("<CMD> " + playerName + ": " + message);
+                if (serverlog)
+                {
+                    Debug.Log("[CHAT] <CMD> " + playerName + ": " + message);
+                }
                 //Thread t = new Thread(() => Commands.CMD(arg));
                 //t.Start();
                 Commands.CMD(arg);
@@ -51,17 +56,20 @@ public class chat : ConsoleSystem
                 message = message.Replace("\"", "\\\"").Replace("[PM]", "").Replace("[PM to]", "").Replace("[PM from]", "").Replace("[PM From]", "").Replace("[PM To]", "").Replace("[F]", "");
                 if (Vars.censorship)
                 {
-                    List<string> splitMessage = new List<string>(message.Replace(".", "").Replace("!", "").Replace(",", "").Replace("?", "").Replace(";", "").Split(' '));
+                    List<string> splitMessage = new List<string>(message.Split(' '));
                     foreach (string s in splitMessage)
                     {
-                        if (Vars.illegalWords.Contains(s.ToLower()))
+                        if (Vars.illegalWords.Contains(s.ToLower().Replace(".", "").Replace("!", "").Replace(",", "").Replace("?", "").Replace(";", "")))
                         {
+                            string curseWord = Array.Find(Vars.illegalWords.ToArray(), (string str) => str.Equals(s.ToLower().Replace(".", "").Replace("!", "").Replace(",", "").Replace("?", "").Replace(";", "")));
                             string asterisks = "";
-                            for (int i = 0; i < s.Length; i++)
+                            for (int i = 0; i < s.Replace(".", "").Replace("!", "").Replace(",", "").Replace("?", "").Replace(";", "").Length; i++)
                             {
                                 asterisks += "*";
                             }
-                            splitMessage[splitMessage.IndexOf(s)] = asterisks;
+                            string theRest = s.Replace(curseWord, "");
+                            string fullString = (s.StartsWith(theRest) ? theRest + asterisks : asterisks + theRest);
+                            splitMessage[splitMessage.IndexOf(s)] = fullString;
                         }
                     }
                     message = string.Join(" ", splitMessage.ToArray());
@@ -87,6 +95,11 @@ public class chat : ConsoleSystem
                         Thread t = new Thread(() => Vars.sendToSurrounding(arg.argUser.playerClient, message));
                         t.Start();
                         Vars.conLog.Chat("<D> " + playerName + ": " + message);
+                        if (serverlog)
+                        {
+                            Debug.Log("[CHAT] <D> " + playerName + ": " + message);
+                        }
+                        return;
                     }
                     else
                     {
@@ -98,9 +111,14 @@ public class chat : ConsoleSystem
                             Broadcast.broadcastTo(arg.argUser.networkPlayer, "Direct chat has been disabled! You are now talking in global chat.");
                             ConsoleNetworker.Broadcast("chat.add \"" + (Vars.removeTag ? "" : "<G> ") + playerName + "\" \"" + message + "\"");
                             Vars.conLog.Chat("<G> " + playerName + ": " + message);
+                            if (serverlog)
+                            {
+                                Debug.Log("[CHAT] <G> " + playerName + ": " + message);
+                            }
                             if (Vars.historyGlobal.Count > 50)
                                 Vars.historyGlobal.RemoveAt(0);
                             Vars.historyGlobal.Add("* " + (Vars.removeTag ? "" : "<G> ") + playerName + "$:|:$" + message);
+                            return;
                         }
                         else
                         {
@@ -111,6 +129,7 @@ public class chat : ConsoleSystem
                             }
                             else
                                 Broadcast.broadcastTo(arg.argUser.networkPlayer, "You have been muted on global chat.");
+                            return;
                         }
                     }
                 }
@@ -122,10 +141,15 @@ public class chat : ConsoleSystem
                         {
                             ConsoleNetworker.Broadcast("chat.add \"" + (Vars.removeTag ? "" : "<G> ") + playerName + "\" \"" + message + "\"");
                             Vars.conLog.Chat("<G> " + playerName + ": " + message);
+                            if (serverlog)
+                            {
+                                Debug.Log("[CHAT] <G> " + playerName + ": " + message);
+                            }
                             if (Vars.historyGlobal.Count > 50)
                                 Vars.historyGlobal.RemoveAt(0);
                             Vars.historyGlobal.Add("* " + (Vars.removeTag ? "" : "<G> ") + playerName + "$:|:$" + message);
-                        }
+                            return;
+                        }   
                         else
                         {
                             if (Vars.muteTimes.ContainsKey(UID))
@@ -135,6 +159,7 @@ public class chat : ConsoleSystem
                             }
                             else
                                 Broadcast.broadcastTo(arg.argUser.networkPlayer, "You have been muted on global chat.");
+                            return;
                         }
                     }
                     else
@@ -148,6 +173,11 @@ public class chat : ConsoleSystem
                         Thread t = new Thread(() => Vars.sendToSurrounding(arg.argUser.playerClient, message));
                         t.Start();
                         Vars.conLog.Chat("<D> " + playerName + ": " + message);
+                        if (serverlog)
+                        {
+                            Debug.Log("[CHAT] <D> " + playerName + ": " + message);
+                        }
+                        return;
                     }
                 }
                 if (Vars.inFaction.Contains(UID))
@@ -158,12 +188,17 @@ public class chat : ConsoleSystem
                     {
                         Vars.sendToFaction(arg.argUser.playerClient, message);
                         Vars.conLog.Chat("<F [" + possibleFactions[0].Key + "]> " + playerName + ": " + message);
+                        if (serverlog)
+                        {
+                            Debug.Log("[CHAT] <F [" + possibleFactions[0].Key + "]> " + playerName + ": " + message);
+                        }
                         if (Vars.historyFaction.Count > 50)
                             Vars.historyFaction.RemoveAt(0);
                         if (!Vars.historyFaction.Contains(possibleFactions[0].Key))
                             Vars.historyFaction.Add(possibleFactions[0].Key, new List<string>() { { "* <F> " + playerName + "$:|:$" + message } });
                         else
                             ((List<string>)Vars.historyFaction[possibleFactions[0].Key]).Add("* <F> " + playerName + "$:|:$" + message);
+                        return;
                     }
                     else
                     {
@@ -179,6 +214,10 @@ public class chat : ConsoleSystem
                         {
                             ConsoleNetworker.Broadcast("chat.add \"" + (Vars.removeTag ? "" : "<G> ") + playerName + "\" \"" + message + "\"");
                             Vars.conLog.Chat("<G> " + playerName + ": " + message);
+                            if (serverlog)
+                            {
+                                Debug.Log("[CHAT] <G> " + playerName + ": " + message);
+                            }
                             if (Vars.historyGlobal.Count > 50)
                                 Vars.historyGlobal.RemoveAt(0);
                             Vars.historyGlobal.Add("* " + (Vars.removeTag ? "" : "<G> ") + playerName + "$:|:$" + message);
@@ -193,6 +232,7 @@ public class chat : ConsoleSystem
                             else
                                 Broadcast.broadcastTo(arg.argUser.networkPlayer, "You have been muted on global chat.");
                         }
+                        return;
                     }
                 }
             }

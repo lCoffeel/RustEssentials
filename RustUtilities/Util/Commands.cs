@@ -49,8 +49,11 @@ namespace RustEssentials.Util
                 case "/reload":
                     Vars.reloadFileServer(commandArgs);
                     break;
-                case "/timescale":
-                    Vars.setScaleServer(commandArgs);
+                case "/daylength":
+                    Vars.setDayLengthServer(commandArgs);
+                    break;
+                case "/nightlength":
+                    Vars.setNightLengthServer(commandArgs);
                     break;
                 case "/time":
                     Vars.setTimeServer(commandArgs);
@@ -82,18 +85,21 @@ namespace RustEssentials.Util
             {
                 if (Vars.enabledCommands[Vars.findRank(playerClient.userID.ToString())].Contains(command) || (playerChar.netUser.CanAdmin() && commandArgs[0] == "/reload"))
                 {
-                    if (message.StartsWith("/whitelist check"))
+                    if (Vars.enabledCommands[Vars.findRank(playerClient.userID.ToString())].Contains("/whitelist check") && message.StartsWith("/whitelist check"))
                         Vars.whitelistCheck(playerClient);
-                    else if (message.StartsWith("/f safezone"))
+                    else if (Vars.enabledCommands[Vars.findRank(playerClient.userID.ToString())].Contains("/f safezone") && message.StartsWith("/f safezone"))
                         Vars.manageZones(playerClient, commandArgs, true);
-                    else if (message.StartsWith("/f warzone"))
+                    else if (Vars.enabledCommands[Vars.findRank(playerClient.userID.ToString())].Contains("/f warzone") && message.StartsWith("/f warzone"))
                         Vars.manageZones(playerClient, commandArgs, false);
-                    else if (message.StartsWith("/f build"))
+                    else if (Vars.enabledCommands[Vars.findRank(playerClient.userID.ToString())].Contains("/f build") && message.StartsWith("/f build"))
                         Vars.handleFactions(playerClient, commandArgs);
                     else
                     {
                         switch (command)
                         {
+                            case "/client":
+                                Vars.grabClient(playerClient, commandArgs);
+                                break;
                             case "/clearinv":
                                 Vars.clearPlayer(playerClient, commandArgs);
                                 break;
@@ -111,7 +117,10 @@ namespace RustEssentials.Util
                                 break;
                             case "/owner":
                                 Vars.showOwner(playerClient, commandArgs);
-                                break; 
+                                break;
+                            case "/removeall":
+                                Vars.removerAllTool(playerClient, commandArgs);
+                                break;
                             case "/remove":
                                 Vars.removerTool(playerClient, commandArgs);
                                 break;
@@ -211,8 +220,11 @@ namespace RustEssentials.Util
                             case "/kicke":
                                 Vars.kickPlayer(playerClient, commandArgs, true);
                                 break;
-                            case "/timescale":
-                                Vars.setScale(playerClient, commandArgs);
+                            case "/daylength":
+                                Vars.setDayLength(playerClient, commandArgs);
+                                break;
+                            case "/nightlength":
+                                Vars.setNightLength(playerClient, commandArgs);
                                 break;
                             case "/time":
                                 Vars.setTime(playerClient, commandArgs);
