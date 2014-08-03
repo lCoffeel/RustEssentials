@@ -293,6 +293,7 @@ namespace RustEssentials.Util
                         {
                             DateTime dt = DateTime.Now;
                             string dateStamp = dt.ToString("MM/dd HH:mm:ss");
+                            sw.WriteLine(dateStamp + "  " + "[ERROR] " + s);
                         }
                     }
                     break;
@@ -352,7 +353,7 @@ namespace RustEssentials.Util
                     }
                     break;
                 case "sleeper":
-                    if (File.Exists(Vars.currentStorageLog))
+                    if (File.Exists(Vars.currentSleeperDeathsLog))
                     {
                         using (StreamWriter sw = new StreamWriter(Vars.currentSleeperDeathsLog, true))
                         {

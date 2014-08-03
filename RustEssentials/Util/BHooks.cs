@@ -3306,10 +3306,7 @@ namespace RustEssentials.Util
                         t.IsBackground = true;
                         t.Start();
                     }
-                    else if (!Vars.destroyerList.Contains(playerClient.userID.ToString())
-                            && !Vars.destroyerAllList.Contains(playerClient.userID.ToString())
-                            && !Vars.removerList.Contains(playerClient.userID.ToString())
-                            && !Vars.ownershipList.Contains(playerClient.userID.ToString()))
+                    else
                     {
                         rep.ActionStream(1, uLink.RPCMode.AllExceptOwner, stream);
                         if (obj2 != null)
@@ -3535,10 +3532,7 @@ namespace RustEssentials.Util
                         t.IsBackground = true;
                         t.Start();
                     }
-                    else if (!Vars.destroyerList.Contains(playerClient.userID.ToString())
-                            && !Vars.destroyerAllList.Contains(playerClient.userID.ToString())
-                            && !Vars.removerList.Contains(playerClient.userID.ToString())
-                            && !Vars.ownershipList.Contains(playerClient.userID.ToString()))
+                    else
                     {
                         found.itemRepresentation.ActionStream(1, uLink.RPCMode.AllExceptOwner, stream);
                         float bulletRange = SDB.GetBulletRange(rep);

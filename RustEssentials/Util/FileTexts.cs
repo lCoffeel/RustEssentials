@@ -1140,8 +1140,8 @@ namespace RustEssentials.Util
             sb.AppendLine("/fps (Amplifies your FPS by altering your graphic settings)");
             sb.AppendLine("/freeze *player name* (Freezes the specified player in their current possion. Note: They will have god mode and cannot hurt others once frozen)");
             sb.AppendLine("/frozen (Displays the names of all frozen players)");
-            sb.AppendLine("/ghost {off} (Turns you into a ghost. Moving only affects your camera view - not your body)");
-            sb.AppendLine("/ghost {on} (Turns you back into a human and teleports you back to your body)");
+            sb.AppendLine("/ghost {off} (Turns you back into a human and teleports you back to your body)");
+            sb.AppendLine("/ghost {on} (Turns you into a ghost. Moving only affects your camera view - not your body)");
             sb.AppendLine("/give <player name> <item name> (Gives the item to that player)");
             sb.AppendLine("/give <player name> <item name> [amount] (Gives the amount of the item to that player)");
             sb.AppendLine("/give <player name> [item id] (Gives 1 of the item with the corresponding id to that player)");
