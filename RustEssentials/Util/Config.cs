@@ -71,6 +71,7 @@ namespace RustEssentials.Util
         private static Match MatchBotName;
         private static Match MatchDefaultColor;
         private static Match MatchServerIP;
+        private static Match MatchVersionOnJoin;
         private static Match MatchJoinMessage;
         private static Match MatchEnableJoin;
         private static Match MatchLeaveMessage;
@@ -156,10 +157,7 @@ namespace RustEssentials.Util
         // Remover
         private static Match MatchEnableRemover;
         private static Match MatchReturnItems;
-        private static Match MatchOnlyOnIndesctructibles;
-        private static Match MatchRemoverOnCeiling;
-        private static Match MatchRemoverOnPillar;
-        private static Match MatchRemoverOnFoundation;
+        private static Match MatchRemoverAttackDelay;
         private static Match MatchDisregardCeilingWeight;
         private static Match MatchDisregardPillarWeight;
         private static Match MatchDisregardFoundationWeight;
@@ -196,11 +194,20 @@ namespace RustEssentials.Util
         private static Match MatchMoveBackSpeed;
         private static Match MatchMoveBackJump;
         private static Match MatchLowerViolationInterval;
+        private static Match MatchSendAHToConsole;
+        private static Match MatchBedAndBagDistance;
+        private static Match MatchGatewayDistance;
         // Resources
         private static Match MatchRockMultiplier;
         private static Match MatchSHatchetMultiplier;
         private static Match MatchHatchetMultiplier;
         private static Match MatchPickAxeMultiplier;
+        private static Match MatchOverrideWoodResources;
+        private static Match MatchOverrideOreResources;
+        private static Match MatchOverrideAIResources;
+        private static Match MatchMultiplyMaxWood;
+        private static Match MatchMultiplyMaxOre;
+        private static Match MatchMultiplyMaxAIResources;
         // Shopify
         private static Match MatchEnableShopify;
         private static Match MatchShopifyAPIKey;
@@ -297,6 +304,7 @@ namespace RustEssentials.Util
         public static string botName;
         public static string defaultColor;
         public static string serverIP;
+        public static string versionOnJoin;
         public static string joinMessage;
         public static string enableJoin;
         public static string leaveMessage;
@@ -382,10 +390,7 @@ namespace RustEssentials.Util
         // Remover
         public static string enableRemover;
         public static string returnItems;
-        public static string onlyOnIndesctructibles;
-        public static string removerOnCeiling;
-        public static string removerOnPillar;
-        public static string removerOnFoundation;
+        public static string removerAttackDelay;
         public static string disregardCeilingWeight;
         public static string disregardPillarWeight;
         public static string disregardFoundationWeight;
@@ -422,11 +427,20 @@ namespace RustEssentials.Util
         public static string moveBackSpeed;
         public static string moveBackJump;
         public static string lowerViolationInterval;
+        public static string sendAHToConsole;
+        public static string bedAndBagDistance;
+        public static string gatewayDistance;
         // Resources
         public static string rockMultiplier;
         public static string sHatchetMultiplier;
         public static string hatchetMultiplier;
         public static string pickaxeMultiplier;
+        public static string overrideWoodResources;
+        public static string overrideOreResources;
+        public static string overrideAIResources;
+        public static string multiplyMaxWood;
+        public static string multiplyMaxOre;
+        public static string multiplyMaxAIResources;
         // Shopify
         public static string enableShopify;
         public static string shopifyAPIKey;
@@ -587,6 +601,8 @@ namespace RustEssentials.Util
                 MatchDefaultColor = Regex.Match(configInput, @"defaultColor=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing serverIP";
                 MatchServerIP = Regex.Match(configInput, @"serverIP=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing versionOnJoin";
+                MatchVersionOnJoin = Regex.Match(configInput, @"versionOnJoin=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing joinMessage";
                 MatchJoinMessage = Regex.Match(configInput, @"joinMessage=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing enableJoin";
@@ -734,14 +750,8 @@ namespace RustEssentials.Util
                 MatchEnableRemover = Regex.Match(configInput, @"enableRemover=\w+", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing returnItems";
                 MatchReturnItems = Regex.Match(configInput, @"returnItems=\w+", RegexOptions.IgnoreCase);
-                currentItem = "Grabbing onlyOnIndesctructibles";
-                MatchOnlyOnIndesctructibles = Regex.Match(configInput, @"onlyOnIndesctructibles=[^\n]*", RegexOptions.IgnoreCase);
-                currentItem = "Grabbing removerOnCeiling";
-                MatchRemoverOnCeiling = Regex.Match(configInput, @"removerOnCeiling=\w+", RegexOptions.IgnoreCase);
-                currentItem = "Grabbing removerOnPillar";
-                MatchRemoverOnPillar = Regex.Match(configInput, @"removerOnPillar=\w+", RegexOptions.IgnoreCase);
-                currentItem = "Grabbing removerOnFoundation";
-                MatchRemoverOnFoundation = Regex.Match(configInput, @"removerOnFoundation=\w+", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing removerAttackDelay";
+                MatchRemoverAttackDelay = Regex.Match(configInput, @"removerAttackDelay=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing disregardCeilingWeight";
                 MatchDisregardCeilingWeight = Regex.Match(configInput, @"disregardCeilingWeight=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing disregardPillarWeight";
@@ -802,6 +812,12 @@ namespace RustEssentials.Util
                 MatchMoveBackJump = Regex.Match(configInput, @"moveBackJump=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing lowerViolationInterval";
                 MatchLowerViolationInterval = Regex.Match(configInput, @"lowerViolationInterval=\w+", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing sendAHToConsole";
+                MatchSendAHToConsole = Regex.Match(configInput, @"sendAHToConsole=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing bedAndBagDistance";
+                MatchBedAndBagDistance = Regex.Match(configInput, @"bedAndBagDistance=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing gatewayDistance";
+                MatchGatewayDistance = Regex.Match(configInput, @"gatewayDistance=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing rockMultiplier";
                 MatchRockMultiplier = Regex.Match(configInput, @"rockMultiplier=\w+", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing sHatchetMultiplier";
@@ -810,6 +826,18 @@ namespace RustEssentials.Util
                 MatchHatchetMultiplier = Regex.Match(configInput, @"hatchetMultiplier=\w+", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing pickaxeMultiplier";
                 MatchPickAxeMultiplier = Regex.Match(configInput, @"pickaxeMultiplier=\w+", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing overrideWoodResources";
+                MatchOverrideWoodResources = Regex.Match(configInput, @"overrideWoodResources=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing overrideOreResources";
+                MatchOverrideOreResources = Regex.Match(configInput, @"overrideOreResources=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing overrideAIResources";
+                MatchOverrideAIResources = Regex.Match(configInput, @"overrideAIResources=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing multiplyMaxWood";
+                MatchMultiplyMaxWood = Regex.Match(configInput, @"multiplyMaxWood=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing multiplyMaxOre";
+                MatchMultiplyMaxOre = Regex.Match(configInput, @"multiplyMaxOre=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing multiplyMaxAIResources";
+                MatchMultiplyMaxAIResources = Regex.Match(configInput, @"multiplyMaxAIResources=[^\n]*", RegexOptions.IgnoreCase);
                 //currentItem = "Grabbing enableShopify";
                 //MatchEnableShopify = Regex.Match(configInput, @"enableShopify=\w+", RegexOptions.IgnoreCase);
                 //currentItem = "Grabbing shopifyAPIKey";
@@ -980,6 +1008,8 @@ namespace RustEssentials.Util
                 defaultColor = MatchDefaultColor.ToString().Split('=')[1].Replace("\r", "");
                 currentItem = "Setting serverIP";
                 serverIP = MatchServerIP.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting versionOnJoin";
+                versionOnJoin = MatchVersionOnJoin.ToString().Split('=')[1].Replace("\r", "");
                 currentItem = "Setting joinMessage";
                 joinMessage = MatchJoinMessage.ToString().Split('=')[1].Replace("\r", "");
                 currentItem = "Setting enableJoin";
@@ -1127,14 +1157,8 @@ namespace RustEssentials.Util
                 enableRemover = MatchEnableRemover.ToString().Split('=')[1];
                 currentItem = "Setting returnItems";
                 returnItems = MatchReturnItems.ToString().Split('=')[1];
-                currentItem = "Setting onlyOnIndesctructibles";
-                onlyOnIndesctructibles = MatchOnlyOnIndesctructibles.ToString().Split('=')[1].Replace("\r", "");
-                currentItem = "Setting removerOnCeiling";
-                removerOnCeiling = MatchRemoverOnCeiling.ToString().Split('=')[1];
-                currentItem = "Setting removerOnPillar";
-                removerOnPillar = MatchRemoverOnPillar.ToString().Split('=')[1];
-                currentItem = "Setting removerOnFoundation";
-                removerOnFoundation = MatchRemoverOnFoundation.ToString().Split('=')[1];
+                currentItem = "Setting removerAttackDelay";
+                removerAttackDelay = MatchRemoverAttackDelay.ToString().Split('=')[1];
                 currentItem = "Setting disregardCeilingWeight";
                 disregardCeilingWeight = MatchDisregardCeilingWeight.ToString().Split('=')[1].Replace("\r", "");
                 currentItem = "Setting disregardPillarWeight";
@@ -1221,6 +1245,12 @@ namespace RustEssentials.Util
                 moveBackJump = MatchMoveBackJump.ToString().Split('=')[1].Replace("\r", "");
                 currentItem = "Setting lowerViolationInterval";
                 lowerViolationInterval = MatchLowerViolationInterval.ToString().Split('=')[1];
+                currentItem = "Setting sendAHToConsole";
+                sendAHToConsole = MatchSendAHToConsole.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting bedAndBagDistance";
+                bedAndBagDistance = MatchBedAndBagDistance.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting gatewayDistance";
+                gatewayDistance = MatchGatewayDistance.ToString().Split('=')[1].Replace("\r", "");
                 currentItem = "Setting rockMultiplier";
                 rockMultiplier = MatchRockMultiplier.ToString().Split('=')[1];
                 currentItem = "Setting sHatchetMultiplier";
@@ -1229,6 +1259,18 @@ namespace RustEssentials.Util
                 hatchetMultiplier = MatchHatchetMultiplier.ToString().Split('=')[1];
                 currentItem = "Setting pickaxeMultiplier";
                 pickaxeMultiplier = MatchPickAxeMultiplier.ToString().Split('=')[1];
+                currentItem = "Setting overrideWoodResources";
+                overrideWoodResources = MatchOverrideWoodResources.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting overrideOreResources";
+                overrideOreResources = MatchOverrideOreResources.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting overrideAIResources";
+                overrideAIResources = MatchOverrideAIResources.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting multiplyMaxWood";
+                multiplyMaxWood = MatchMultiplyMaxWood.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting multiplyMaxOre";
+                multiplyMaxOre = MatchMultiplyMaxOre.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting multiplyMaxAIResources";
+                multiplyMaxAIResources = MatchMultiplyMaxAIResources.ToString().Split('=')[1].Replace("\r", "");
                 //currentItem = "Setting enableShopify";
                 //enableShopify = MatchEnableShopify.ToString().Split('=')[1];
                 //currentItem = "Setting shopifyAPIKey";

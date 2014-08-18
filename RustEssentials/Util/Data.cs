@@ -979,7 +979,8 @@ namespace RustEssentials.Util
                             {
                                 string name = s.Substring(1, s.LastIndexOf(')') - 1);
                                 string UID = s.Substring(s.LastIndexOf(')') + 1, 17);
-                                currentMembers.Add(name, UID);
+                                if (!currentMembers.ContainsKey(name))
+                                    currentMembers.Add(name, UID);
                             }
                             string fullString = factionName + "=" + currentMembersString;
 
@@ -1351,6 +1352,126 @@ namespace RustEssentials.Util
             catch (Exception ex)
             {
                 Vars.conLog.Error("RRD #2: " + ex.ToString());
+            }
+        }
+        #endregion
+
+        #endregion
+
+        #region Build Sharing
+
+        #region Read Build Sharing
+        public static void readBuildData()
+        {
+            try
+            {
+                List<string> buildLines = File.ReadAllLines(Vars.buildDataFile).ToList();
+                foreach (string s in buildLines)
+                {
+                    string owner = s.Split('=')[0];
+                    string partnerString = s.Split('=')[1];
+                    Vars.removerSharingData.Add(owner, partnerString);
+                }
+            }
+            catch (Exception ex)
+            {
+                Vars.conLog.Error("RBD #1: " + ex.ToString());
+            }
+        }
+        #endregion
+
+        #region Add Build Sharing
+        public static void addBuildData(string ownerID, string partnerID)
+        {
+            try
+            {
+                List<string> buildLines = File.ReadAllLines(Vars.buildDataFile).ToList();
+                List<string> owners = new List<string>();
+                foreach (string str in buildLines)
+                {
+                    owners.Add(str.Split('=')[0]);
+                }
+
+                if (owners.Contains(ownerID))
+                {
+                    string previousPartners = Array.Find(buildLines.ToArray(), (string s) => s.StartsWith(ownerID)).Split('=')[1];
+                    string fullString = ownerID + "=" + previousPartners;
+
+                    fullString += ":" + partnerID;
+
+                    int index = Array.FindIndex(buildLines.ToArray(), (string s) => s.StartsWith(ownerID));
+                    buildLines[index] = fullString;
+                }
+                else
+                {
+                    buildLines.Add(ownerID + "=" + partnerID);
+                }
+
+                using (StreamWriter sw = new StreamWriter(Vars.buildDataFile, false))
+                {
+                    foreach (string s in buildLines)
+                    {
+                        sw.WriteLine(s);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Vars.conLog.Error("ASD: " + ex.ToString());
+            }
+        }
+        #endregion
+
+        #region Remove Build Sharing
+        public static void remBuildData(string ownerID, string partnerID)
+        {
+            try
+            {
+                List<string> buildLines = File.ReadAllLines(Vars.buildDataFile).ToList();
+                if (partnerID == "all")
+                {
+                    string fullLine = Array.Find(buildLines.ToArray(), (string s) => s.StartsWith(ownerID));
+                    buildLines.Remove(fullLine);
+                }
+                else
+                {
+                    foreach (string line in buildLines)
+                    {
+                        if (line.StartsWith(ownerID))
+                        {
+                            string previousPartners = Array.Find(buildLines.ToArray(), (string s) => s.StartsWith(ownerID)).Split('=')[1];
+                            string fullString = ownerID + "=" + previousPartners;
+
+                            if (previousPartners.StartsWith(partnerID))
+                            {
+                                if (previousPartners.Contains(":"))
+                                {
+                                    fullString = fullString.Replace(partnerID + ":", "");
+                                    buildLines[buildLines.IndexOf(line)] = fullString;
+                                }
+                                else
+                                    buildLines.Remove(fullString);
+                            }
+                            else
+                            {
+                                fullString = fullString.Replace(":" + partnerID, "");
+                                buildLines[buildLines.IndexOf(line)] = fullString;
+                            }
+                            break;
+                        }
+                    }
+                }
+                using (StreamWriter sw = new StreamWriter(Vars.buildDataFile, false))
+                {
+                    foreach (string s in buildLines)
+                    {
+                        sw.WriteLine(s);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Vars.conLog.Error("RSD #2: " + ex.ToString());
             }
         }
         #endregion

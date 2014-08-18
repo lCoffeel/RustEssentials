@@ -65,6 +65,8 @@ namespace RustEssentials.Util
                                                 }
 
                                                 Broadcast.broadcastTo(Vars.notifyList.Values.ToList(), "Player " + pc.userName + " traveled at a speed of " + speed + " m/ms (" + Math.Round(distance, 2) + "m) in " + time + " ms.");
+                                                if (Vars.sendAHToConsole)
+                                                    Vars.conLog.Info("Player " + pc.userName + " traveled at a speed of " + speed + " m/ms (" + Math.Round(distance, 2) + "m) in " + time + " ms.");
                                                 Vars.lastPositions[playerChar] = playerChar.eyesOrigin;
                                                 // Add notifications/alerts here
                                                 if (!Vars.violationCount.ContainsKey(pc))
@@ -103,6 +105,8 @@ namespace RustEssentials.Util
                                                     }
 
                                                     Broadcast.broadcastTo(Vars.notifyList.Values.ToList(), "Player " + pc.userName + " traveled at a jumpspeed of " + jumpspeed + " m/ms (" + Math.Round(yDifference, 2) + "m) in " + time + " ms.");
+                                                    if (Vars.sendAHToConsole)
+                                                        Vars.conLog.Info("Player " + pc.userName + " traveled at a jumpspeed of " + jumpspeed + " m/ms (" + Math.Round(yDifference, 2) + "m) in " + time + " ms.");
                                                     Vars.lastPositions[playerChar] = playerChar.eyesOrigin;
                                                     // Add notifications/alerts here
                                                     if (!Vars.violationCount.ContainsKey(pc))
@@ -210,6 +214,8 @@ namespace RustEssentials.Util
                                                 }
 
                                                 Broadcast.broadcastTo(Vars.notifyList.Values.ToList(), "Player " + playerClient.userName + " traveled at a speed of " + speed + " m/ms (" + Math.Round(distance, 2) + "m) in " + time + " ms.");
+                                                if (Vars.sendAHToConsole)
+                                                    Vars.conLog.Info("Player " + playerClient.userName + " traveled at a speed of " + speed + " m/ms (" + Math.Round(distance, 2) + "m) in " + time + " ms.");
                                                 Vars.lastPositions[playerChar] = playerChar.eyesOrigin;
                                                 // Add notifications/alerts here
                                                 if (!Vars.violationCount.ContainsKey(playerClient))
@@ -248,6 +254,8 @@ namespace RustEssentials.Util
                                                     }
 
                                                     Broadcast.broadcastTo(Vars.notifyList.Values.ToList(), "Player " + playerClient.userName + " traveled at a jumpspeed of " + jumpspeed + " m/ms (" + Math.Round(yDifference, 2) + "m) in " + time + " ms.");
+                                                    if (Vars.sendAHToConsole)
+                                                        Vars.conLog.Info("Player " + playerClient.userName + " traveled at a jumpspeed of " + jumpspeed + " m/ms (" + Math.Round(yDifference, 2) + "m) in " + time + " ms.");
                                                     Vars.lastPositions[playerChar] = playerChar.eyesOrigin;
                                                     // Add notifications/alerts here
                                                     if (!Vars.violationCount.ContainsKey(playerClient))

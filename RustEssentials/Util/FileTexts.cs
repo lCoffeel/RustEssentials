@@ -122,10 +122,12 @@ namespace RustEssentials.Util
             sb.AppendLine("[Messages]");
             sb.AppendLine("# Name that the plugin bot will use to PM and chat with (Default RustEssentials).");
             sb.AppendLine("botName=RustEssentials");
-            sb.AppendLine("# Sets the color for the mod's messages when broadcasted in chat (Default #66CCFF) - uses HTML.");
+            sb.AppendLine("# Sets the color for the mod's messages when broadcast in chat (Default #66CCFF) - uses HTML.");
             sb.AppendLine("defaultColor=#66CCFF");
             sb.AppendLine("# Sets the server IP for /info. If this is left blank, it will grab the IP online (which may find an incorrect IP).");
             sb.AppendLine("serverIP=");
+            sb.AppendLine("# If true, the server will send the current RustEssential's version to players when they connect.");
+            sb.AppendLine("versionOnJoin=true");
             sb.AppendLine("# Join message that is displayed to all when a user joins (Default \"Player $USER$ has joined.\").");
             sb.AppendLine("joinMessage=Player $USER$ has joined.");
             sb.AppendLine("# Enables or disables the display of join messages.");
@@ -192,9 +194,9 @@ namespace RustEssentials.Util
             sb.AppendLine("logCap=15");
             sb.AppendLine("# When the mod says something in chat, be it PM or broadcast to all, it will show in the logs.");
             sb.AppendLine("logModMessages=true");
-            sb.AppendLine("# If an error occurs when something is broadcasted and catchBroadcastErrors is true, log the error.");
+            sb.AppendLine("# If an error occurs when something is broadcast and catchBroadcastErrors is true, log the error.");
             sb.AppendLine("logBroadcastErrors=true");
-            sb.AppendLine("# If an error occurs when something is broadcasted, handle the error.");
+            sb.AppendLine("# If an error occurs when something is broadcast, handle the error.");
             sb.AppendLine("catchBroadcastErrors=true");
             sb.AppendLine("# If true, disconnection will continue even if the player's NetworkPlayer and NetUser are null.");
             sb.AppendLine("disconnectEvenIfNull=false");
@@ -276,16 +278,12 @@ namespace RustEssentials.Util
             sb.AppendLine("warAllyDamage=0.70");
             sb.AppendLine("");
             sb.AppendLine("[Item Controller]");
-            //sb.AppendLine("# If false, researching with research kits will not require a workbench");
-            //sb.AppendLine("researchAtBench=true");
             sb.AppendLine("# If a user shoots with infinite ammo on, their loaded ammo amount will change to this number. If -1, the ammo will change to the max amount for the current gun.");
             sb.AppendLine("infAmmoClipSize=-1");
             sb.AppendLine("# If true, research kits will not disappear upon last use.");
             sb.AppendLine("infiniteResearch=false");
             sb.AppendLine("# If true, researching will require paper.");
             sb.AppendLine("researchPaper=false");
-            //sb.AppendLine("# If false, items that usually require a nearby workbench to craft will no longer need one");
-            //sb.AppendLine("craftAtBench=true");
             sb.AppendLine("# If true, barricades owned by a player will disappear after they die.");
             sb.AppendLine("removeOnDeath=false");
             sb.AppendLine("# If true, barricades owned by a player will disappear after they disconnect.");
@@ -298,14 +296,8 @@ namespace RustEssentials.Util
             sb.AppendLine("enableRemover=false");
             sb.AppendLine("# If true, a player with /remover on will receive the item of the object they destroy.");
             sb.AppendLine("returnItems=true");
-            sb.AppendLine("# If true, a player with /remover on can only destroy objects that are indestructible.");
-            sb.AppendLine("onlyOnIndesctructibles=false");
-            sb.AppendLine("# If true, /remover will work on ceilings (only if onlyOnIndestructibles is true).");
-            sb.AppendLine("removerOnCeiling=false");
-            sb.AppendLine("# If true, /remover will work on pillars (only if onlyOnIndestructibles is true).");
-            sb.AppendLine("removerOnPillar=true");
-            sb.AppendLine("# If true, /remover will work on foundations (only if onlyOnIndestructibles is true).");
-            sb.AppendLine("removerOnFoundation=false");
+            sb.AppendLine("# If above 0, objects that take explosive damage cannot be /remover'd within removerAttackDelay of being hurt.");
+            sb.AppendLine("removerAttackDelay=10");
             sb.AppendLine("# If true, ceilings can be removed even if objects are on top of them (only if onlyOnIndestructibles is true).");
             sb.AppendLine("disregardCeilingWeight=true");
             sb.AppendLine("# If true, pillars can be removed even if objects are on top of them (only if onlyOnIndestructibles is true).");
@@ -380,16 +372,34 @@ namespace RustEssentials.Util
             sb.AppendLine("moveBackJump=false");
             sb.AppendLine("# Sets how many calculateIntervals need to pass in order for violation counts to decrease. Example: when calculateInterval elapses 5 times, violation count will decrease on everyone (Default 13).");
             sb.AppendLine("lowerViolationInterval=13");
+            sb.AppendLine("# If true, anti-speed and anti-jump notifications will be displayed in the console as well as to users who have /notify on.");
+            sb.AppendLine("sendAHToConsole=true");
+            sb.AppendLine("# If above 0, players cannot place beds or sleeping bags within bedAndBagDistance meters of another player's house. This is to prevent sleeping bag glitching. Players can whitelist other players using /build.");
+            sb.AppendLine("bedAndBagDistance=0");
+            sb.AppendLine("# If above 0, players cannot place gateways within gatewayDistance meters of another player's house. This is to prevent players from blocking the doors of other players. Players can whitelist other players using /build.");
+            sb.AppendLine("gatewayDistance=4.5");
             sb.AppendLine("");
             sb.AppendLine("[Resources]");
-            sb.AppendLine("# Sets the multiplier for resource gathering when using a Rock.");
+            sb.AppendLine("# Sets the multiplier for every player's resource gather rate when using a Rock.");
             sb.AppendLine("rockMultiplier=1");
-            sb.AppendLine("# Sets the multiplier for resource gathering when using a Stone Hatchet.");
+            sb.AppendLine("# Sets the multiplier for every player's resource gather rate when using a Stone Hatchet.");
             sb.AppendLine("sHatchetMultiplier=1");
-            sb.AppendLine("# Sets the multiplier for resource gathering when using a Hatchet.");
+            sb.AppendLine("# Sets the multiplier for every player's resource gather rate when using a Hatchet.");
             sb.AppendLine("hatchetMultiplier=1");
-            sb.AppendLine("# Sets the multiplier for resource gathering when using a Pick Axe.");
+            sb.AppendLine("# Sets the multiplier for every player's resource gather rate when using a Pick Axe.");
             sb.AppendLine("pickaxeMultiplier=1");
+            sb.AppendLine("# If true, the multipliers (seen above) will not only multiply gather rate but will also give you the resources even if the resource node doesn't have the given amount of resources (only for trees & wood piles).");
+            sb.AppendLine("overrideWoodResources=false");
+            sb.AppendLine("# If true, the multipliers (seen above) will not only multiply gather rate but will also give you the resources even if the resource node doesn't have the given amount of resources (only for ore nodes).");
+            sb.AppendLine("overrideOreResources=false");
+            sb.AppendLine("# If true, the multipliers (seen above) will not only multiply gather rate but will also give you the resources even if the dead AI's body doesn't have the given amount of resources (only for dead AI bodies).");
+            sb.AppendLine("overrideAIResources=false");
+            sb.AppendLine("# If true, the multipliers (seen above) will not only multiply gather rate but will also multiply the maximum amount of resources that a resource node has (only for trees & wood piles).");
+            sb.AppendLine("multiplyMaxWood=false");
+            sb.AppendLine("# If true, the multipliers (seen above) will not only multiply gather rate but will also multiply the maximum amount of resources that a resource node has (only for ore nodes).");
+            sb.AppendLine("multiplyMaxOre=false");
+            sb.AppendLine("# If true, the multipliers (seen above) will not only multiply gather rate but will also multiply the maximum amount of resources that a dead AI's body has (only for dead AI bodies).");
+            sb.AppendLine("multiplyMaxAIResources=false");
             //sb.AppendLine("");
             //sb.AppendLine("# Shopify implementation is not complete, do not bother using this until then");
             //sb.AppendLine("[Shopify]");
@@ -475,6 +485,20 @@ namespace RustEssentials.Util
             sb.AppendLine("maxLightsPerHouse=30");
             sb.AppendLine("# Maximum amount of lights owned by a single person that can be lit at once.");
             sb.AppendLine("maxLightsPerPerson=20");
+
+            return sb;
+        }
+
+        public static StringBuilder removerBlacklistText()
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.AppendLine("# This is the /remover blacklist file. If you want to blacklist some objects from /remover, do so here.");
+            sb.AppendLine("# Simply list each object name on a new line.");
+            sb.AppendLine("# Example:");
+            sb.AppendLine("#   Wood Wall");
+            sb.AppendLine("#   Metal Foundation");
+            sb.AppendLine("[Remover Blacklist]");
 
             return sb;
         }
@@ -836,17 +860,17 @@ namespace RustEssentials.Util
             sb.AppendLine("# This is the MOTD file. Messages displayed upon join or cycle should go here.");
             sb.AppendLine("# Please note that the # symbol resembles a comment and should not be used when configuring.");
             sb.AppendLine("# ");
-            sb.AppendLine("# [Join] is the MOTD that is broadcasted directly to the user that joins upon connecting.");
-            sb.AppendLine("# [Cycle.#(s/m/h)] is the MOTD that is broadcasted to all users every time the # elapses.");
-            sb.AppendLine("# [Once.#(s/m/h)] is the MOTD that is broadcasted to all users once after the # elapses.");
-            sb.AppendLine("# [List.#(s/m/h)] is the MOTD that is broadcasted to all users one line at a time ever time the # elapses.");
-            sb.AppendLine("# [Rules] is the MOTD that is broadcasted directly to the user that types /rules");
+            sb.AppendLine("# [Join] is the MOTD that is broadcast directly to the user that joins upon connecting.");
+            sb.AppendLine("# [Cycle.#(s/m/h)] is the MOTD that is broadcast to all users every time the # elapses.");
+            sb.AppendLine("# [Once.#(s/m/h)] is the MOTD that is broadcast to all users once after the # elapses.");
+            sb.AppendLine("# [List.#(s/m/h)] is the MOTD that is broadcast to all users one line at a time ever time the # elapses.");
+            sb.AppendLine("# [Rules] is the MOTD that is broadcast directly to the user that types /rules");
             sb.AppendLine("#");
             sb.AppendLine("# The #(s/m/h) in [Cycle.#(s/m/h)] resembles the interval in (s)econds, (m)inutes, or (h)ours.");
             sb.AppendLine("# Example:");
             sb.AppendLine("#   [Cycle.2h]");
             sb.AppendLine("#   This is the MOTD.");
-            sb.AppendLine("# This MOTD will be broadcasted every 2 hours to all users.");
+            sb.AppendLine("# This MOTD will be broadcast every 2 hours to all users.");
             sb.AppendLine("#");
             sb.AppendLine("# Remember that you can add and remove as many lines as you want for the two MOTDs.");
             sb.AppendLine("# All MOTD's can run commands with {/command name}.");
@@ -932,6 +956,7 @@ namespace RustEssentials.Util
             sb.AppendLine("/random");
             sb.AppendLine("/ban");
             sb.AppendLine("/bane");
+            sb.AppendLine("/banip");
             sb.AppendLine("/unban");
             sb.AppendLine("/kickall");
             sb.AppendLine("/pos");
@@ -963,9 +988,11 @@ namespace RustEssentials.Util
             sb.AppendLine("/unfreezeall");
             sb.AppendLine("/opos");
             sb.AppendLine("/ghost");
+            sb.AppendLine("/followghost");
             sb.AppendLine("");
             sb.AppendLine("[Moderator]");
             sb.AppendLine("/kick");
+            sb.AppendLine("/kickip");
             sb.AppendLine("/kicke");
             sb.AppendLine("/join");
             sb.AppendLine("/leave");
@@ -1017,9 +1044,7 @@ namespace RustEssentials.Util
             sb.AppendLine("/remover");
             sb.AppendLine("/clock");
             sb.AppendLine("/compass");
-            sb.AppendLine("/sharerem");
-            sb.AppendLine("/unsharerem");
-            sb.AppendLine("/unshareremall");
+            sb.AppendLine("/build");
             sb.AppendLine("/lights");
             sb.AppendLine("/betty");
 
@@ -1068,6 +1093,8 @@ namespace RustEssentials.Util
             sb.AppendLine("/ban [player UID] *reason* (Bans player by UID with the specified reason)");
             sb.AppendLine("/bane \"player name\" (Bans player by their exact name with reason: \"Banned by a(n) <Your Rank>\")");
             sb.AppendLine("/bane \"player name\" *reason* (Bans player by their exact name with the specified reason)");
+            sb.AppendLine("/banip [player ip] (Bans an IP with reason: \"Banned by a(n) <Your Rank>\")");
+            sb.AppendLine("/banip [player ip] *reason* (Bans an IP with the specified reason)");
             sb.AppendLine("/betty (Places a bouncing betty at your feet if you have the right materials - configurable in config)");
             sb.AppendLine("/bypass {off} (Re-enables the anti-speedhack and anti-jumphack for the sender)");
             sb.AppendLine("/bypass {on} (Bypasses the anti-speedhack and anti-jumphack for the sender)");
@@ -1176,9 +1203,11 @@ namespace RustEssentials.Util
             sb.AppendLine("/join <player name> (Send a fake join message of a player name)");
             sb.AppendLine("/kick <player name> (Kick player with reason: \"Kicked by a(n) <Your Rank>\")");
             sb.AppendLine("/kick <player name> *reason* (Kick player with the specified reason)");
+            sb.AppendLine("/kickall (Kicks all users, except for the command executor, out of the server)");
             sb.AppendLine("/kicke \"player name\" (Kick player by their exact name with reason: \"Kicked by a(n) <Your Rank>\")");
             sb.AppendLine("/kicke \"player name\" *reason* (Kick player by their exact name with the specified reason)");
-            sb.AppendLine("/kickall (Kicks all users, except for the command executor, out of the server)");
+            sb.AppendLine("/kickip [player ip] (Kick all players with the specified ip with the reason: \"Kicked by a(n) <Your Rank>\")");
+            sb.AppendLine("/kickip [player ip] *reason* (Kick all players with the specified ip with the specified reason)");
             sb.AppendLine("/kill *player name* (Kills the specified player)");
             sb.AppendLine("/kill \"player name\" (Kills the specified player with that exact name)");
             sb.AppendLine("/kit [kit name] (Gives the user the specified kit if the user has the correct authority level)");
@@ -1219,11 +1248,14 @@ namespace RustEssentials.Util
             sb.AppendLine("/random [item id] (Gives 1 of the specified item to 1 random player)");
             sb.AppendLine("/random [item id] [amount] (Gives an amount of the specified item to 1 random player)");
             sb.AppendLine("/random [item id] [amount] [amount of winners] (Gives an amount of the specified item to random players)");
-            sb.AppendLine("/reload {config/whitelist/ranks/commands/kits/motd/bans/prefix/warps/controller/tables/loadout/all} (Reloads the specified file)");
+            sb.AppendLine("/reload {config/whitelist/ranks/commands/kits/motd/bans/prefix/warps/controller/tables/decay/remover/loadout/all} (Reloads the specified file)");
             sb.AppendLine("/remove {off} (Revokes access to delete entities (structures and AI entities) upon hit)");
             sb.AppendLine("/remove {on} (Gives access to delete entities (structures and AI entities) upon hit)");
             sb.AppendLine("/remover {off} (Revokes the ability to damage and destroy structures)");
             sb.AppendLine("/remover {on} (Gives users the ability to damage and eventually destroy their own indestructible structures like foundations, ceilings, and pillars)");
+            sb.AppendLine("/remover {share} *player name* (Shares your /remover with the designated user, allowing them to use /remover on your objects)");
+            sb.AppendLine("/remover {unshare} *player name* (Revokes your /remover from the designated user, disallowing them from using /remover on your objects)");
+            sb.AppendLine("/remover {unshareall} (Revokes your /remover from everyone, disallowing anyone but you from using /remover on your objects)");
             sb.AppendLine("/removeall {off} (Revokes access to delete entities (structures and AI entities) upon hit. If the entity is a structure, it will destroy all conntected structures too)");
             sb.AppendLine("/removeall {on} (Gives access to delete entities (structures and AI entities) upon hit. If the entity is a structure, it will destroy all conntected structures too)");
             sb.AppendLine("/rfreeze [radius] (Freezes all players within the specified radius)");
@@ -1234,7 +1266,9 @@ namespace RustEssentials.Util
             sb.AppendLine("/saypop [icon] *message* (Says a dropdown message to all clients with designated icon)");
             sb.AppendLine("/saypop [icon] *message* [#s] (Says a dropdown message to all clients with designated icon with a duration of # seconds (1-7 range))");
             sb.AppendLine("/share *player name* (Shares ownership of your doors with the designated user)");
-            sb.AppendLine("/sharerem *player name* (Shares your /remover with the designated user, allowing them to use /remover on your objects)");
+            sb.AppendLine("/build {share} *player name* (Allows the designated user to place beds, sleeping bags, and gateways near your houses)");
+            sb.AppendLine("/build {unshare} *player name* (Revokes access for the designated user to place beds, sleeping bags, and gateways near your houses)");
+            sb.AppendLine("/build {unshareall} (Revokes everyone's access to place beds, sleeping bags, and gateways near your houses)");
             sb.AppendLine("/spawn [entity name] (Spawns 1 of the specified entity)");
             sb.AppendLine("/spawn [entity name] [amount] (Spawns said number of instances of the specified entity)");
             sb.AppendLine("/spawnlist (Displays all spawnable entities for /spawn)");
@@ -1264,6 +1298,8 @@ namespace RustEssentials.Util
             sb.AppendLine("/uid *player name* (Returns that user's steam UID)");
             sb.AppendLine("/uid \"player name\" (Returns the steam UID of the user with that exact name)");
             sb.AppendLine("/unban *player name* (Unbans the specified player)");
+            sb.AppendLine("/unban [player uid] (Unbans the specified player uid)");
+            sb.AppendLine("/unban [player ip] (Unbans the specified ip)");
             sb.AppendLine("/unfreeze *player name* (Unfreezes the specified player)");
             sb.AppendLine("/unfreezeall (Unfreezes all frozen players)");
             sb.AppendLine("/ungod (Revokes god mode from the sender)");
@@ -1272,8 +1308,6 @@ namespace RustEssentials.Util
             sb.AppendLine("/unmute *player name* (Unmutes the player on global chat)");
             sb.AppendLine("/unshare *player name* (Revokes ownership of your doors from the designated user)");
             sb.AppendLine("/unshareall (Revokes ownership of your doors from everyone)");
-            sb.AppendLine("/unsharerem *player name* (Revokes your /remover from the designated user, disallowing them from using /remover on your objects)");
-            sb.AppendLine("/unshareremall (Revokes your /remover from everyone, disallowing anyone but you from using /remover on your objects)");
             sb.AppendLine("/vanish {off} (Makes the sender appear. If the sender reconnects, the name becomes visible)");
             sb.AppendLine("/vanish {on} (Makes the sender vanish. If the sender reconnects, the name becomes invisible)");
             sb.AppendLine("/version (Returns the current running version of Rust Essentials)");

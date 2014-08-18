@@ -117,7 +117,7 @@ namespace RustEssentials.Util
         public static void executeCMD(string playerName, string message, uLink.NetworkPlayer player, PlayerClient playerClient, Character playerChar)
         {
             string[] commandArgs = message.Split(' ');
-            string command = commandArgs[0];
+            string command = commandArgs[0].ToLower();
 
             if (Vars.totalCommands.Contains(command) || (playerChar.netUser != null && playerChar.netUser.CanAdmin() && commandArgs[0] == "/reload"))
             {
@@ -139,6 +139,9 @@ namespace RustEssentials.Util
                     {
                         switch (command)
                         {
+                            case "/build":
+                                Share.handleBuild(playerClient, commandArgs);
+                                break;
                             case "/tpg":
                                 Vars.teleportGhost(playerClient, commandArgs);
                                 break;
@@ -159,15 +162,6 @@ namespace RustEssentials.Util
                                 break;
                             case "/baccess":
                                 Tools.giveBettyAccess(playerClient, commandArgs);
-                                break;
-                            case "/sharerem":
-                                Share.shareRemoverWith(playerClient, commandArgs);
-                                break;
-                            case "/unsharerem":
-                                Share.unshareRemoverWith(playerClient, commandArgs);
-                                break;
-                            case "/unshareremall":
-                                Share.unshareRemoverWithAll(playerClient);
                                 break;
                             case "/opos":
                                 Tools.oposTool(playerClient, commandArgs);
@@ -335,7 +329,7 @@ namespace RustEssentials.Util
                                 Tools.giveAccess(playerClient, commandArgs);
                                 break;
                             case "/version":
-                                Broadcast.broadcastTo(player, "The server is running Rust Essentials v" + Vars.currentVersion + ".");
+                                Broadcast.broadcastTo(player, "The server is running RustEssentials v" + Vars.currentVersion + ".");
                                 break;
                             case "/save":
                                 Vars.save(playerClient);
@@ -394,11 +388,17 @@ namespace RustEssentials.Util
                             case "/ban":
                                 Vars.banPlayer(playerClient, commandArgs, false);
                                 break;
+                            case "/banip":
+                                Vars.banIP(playerClient, commandArgs);
+                                break;
                             case "/bane":
                                 Vars.banPlayer(playerClient, commandArgs, true);
                                 break;
                             case "/kick":
                                 Vars.kickPlayer(playerClient, commandArgs, false);
+                                break;
+                            case "/kickip":
+                                Vars.kickIP(playerClient, commandArgs);
                                 break;
                             case "/kicke":
                                 Vars.kickPlayer(playerClient, commandArgs, true);

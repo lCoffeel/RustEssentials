@@ -11,6 +11,40 @@ namespace RustEssentials.Util
 {
     public class Load
     {
+        public void loadRemoverBlacklist()
+        {
+            try
+            {
+                if (File.Exists(Vars.removerBlacklistFile))
+                {
+                    Vars.removerObjectBlacklist.Clear();
+                    using (StreamReader sr = new StreamReader(Vars.removerBlacklistFile))
+                    {
+                        string line;
+                        while ((line = sr.ReadLine()) != null)
+                        {
+                            if (!line.StartsWith("#"))
+                            {
+                                if (line.IndexOf("#") > -1)
+                                {
+                                    line = line.Substring(0, line.IndexOf("#"));
+                                }
+
+                                if (!line.Contains("[") && !line.Contains("]"))
+                                {
+                                    Vars.removerObjectBlacklist.Add(line);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Vars.conLog.Error("LRB: " + ex.ToString());
+            }
+        }
+
         public void loadPathConfig()
         {
             try
@@ -110,6 +144,7 @@ namespace RustEssentials.Util
                 Vars.conLog.Error("LPC: " + ex.ToString());
             }
         }
+
         private string currentRank = "";
         private string currentPrefix = "";
 
@@ -946,7 +981,6 @@ namespace RustEssentials.Util
 
         public void loadCommands()
         {
-            
             try
             {
                 if (File.Exists(Vars.commandsFile))
@@ -998,7 +1032,7 @@ namespace RustEssentials.Util
                     }
                 }
                 inheritCommands();
-                Vars.callAPI("RustEssentials.Commands", "Reload", false);
+                Vars.callAPI("RustEssentialsAPI.Commands", "Reload", false);
             }
             catch (Exception ex) { Vars.conLog.Error("LOADC: " + ex.ToString()); }
         }
@@ -1892,6 +1926,12 @@ namespace RustEssentials.Util
 
                     Vars.botName = Vars.replaceQuotes(Config.botName);
                     Vars.defaultColor = Vars.replaceQuotes(Config.defaultColor);
+                    Vars.serverIP = Config.serverIP.Replace("\n", "");
+                    try { Vars.versionOnJoin = Convert.ToBoolean(Config.versionOnJoin); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("versionOnJoin could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
                     Vars.joinMessage = Vars.replaceQuotes(Config.joinMessage).Replace("\n", "");
                     try { Vars.enableJoin = Convert.ToBoolean(Config.enableJoin); }
                     catch (Exception ex)
@@ -2132,7 +2172,6 @@ namespace RustEssentials.Util
                     if (item != null || Config.wandTool.ToLower() == "any")
                     {
                         Vars.wandName = Config.wandTool;
-                        Vars.conLog.Info("Wand tool set to \"" + Vars.wandName + "\"!");
                     }
                     else
                         Vars.conLog.Error("wandTool cannot be set to \"" + Config.wandTool + "\" because it is not a known item!");
@@ -2140,7 +2179,6 @@ namespace RustEssentials.Util
                     if (item != null || Config.portalTool.ToLower() == "any")
                     {
                         Vars.portalName = Config.portalTool;
-                        Vars.conLog.Info("Portal tool set to \"" + Vars.portalName + "\"!");
                     }
                     else
                         Vars.conLog.Error("portalTool cannot be set to \"" + Config.wandTool + "\" because it is not a known item!");
@@ -2248,25 +2286,10 @@ namespace RustEssentials.Util
                     {
                         Vars.conLog.Error("returnItems could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
                     }
-                    try { Vars.onlyOnIndesctructibles = Convert.ToBoolean(Config.onlyOnIndesctructibles); }
+                    try { Vars.removerAttackDelay = Convert.ToSingle(Config.removerAttackDelay); }
                     catch (Exception ex)
                     {
-                        Vars.conLog.Error("onlyOnIndesctructibles could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                    }
-                    try { Vars.removerOnCeiling = Convert.ToBoolean(Config.removerOnCeiling); }
-                    catch (Exception ex)
-                    {
-                        Vars.conLog.Error("removerOnCeiling could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                    }
-                    try { Vars.removerOnPillar = Convert.ToBoolean(Config.removerOnPillar); }
-                    catch (Exception ex)
-                    {
-                        Vars.conLog.Error("removerOnPillar could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
-                    }
-                    try { Vars.removerOnFoundation = Convert.ToBoolean(Config.removerOnFoundation); }
-                    catch (Exception ex)
-                    {
-                        Vars.conLog.Error("removerOnFoundation could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                        Vars.conLog.Error("removerAttackDelay could not be parsed as a number!");
                     }
                     try { Vars.disregardCeilingWeight = Convert.ToBoolean(Config.disregardCeilingWeight); }
                     catch (Exception ex)
@@ -2398,10 +2421,25 @@ namespace RustEssentials.Util
                     {
                         Vars.conLog.Error("lowerViolationInterval could not be parsed as a number!");
                     }
+                    try { Vars.sendAHToConsole = Convert.ToBoolean(Config.sendAHToConsole); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("sendAHToConsole could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
                     try { Vars.calculateInterval = Convert.ToSingle(Config.calculateInterval) / 1000; }
                     catch (Exception ex)
                     {
                         Vars.conLog.Error("calculateInterval could not be parsed as a number!");
+                    }
+                    try { Vars.bedAndBagDistance = Convert.ToSingle(Config.bedAndBagDistance); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("bedAndBagDistance could not be parsed as a number!");
+                    }
+                    try { Vars.gatewayDistance = Convert.ToSingle(Config.gatewayDistance); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("gatewayDistance could not be parsed as a number!");
                     }
 
                     try { Vars.rockMultiplier = Convert.ToSingle(Config.rockMultiplier); }
@@ -2423,6 +2461,36 @@ namespace RustEssentials.Util
                     catch (Exception ex)
                     {
                         Vars.conLog.Error("pickaxeMultiplier could not be parsed as a number!");
+                    }
+                    try { Vars.overrideWoodResources = Convert.ToBoolean(Config.overrideWoodResources); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("overrideWoodResources could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.overrideOreResources = Convert.ToBoolean(Config.overrideOreResources); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("overrideOreResources could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.overrideAIResources = Convert.ToBoolean(Config.overrideAIResources); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("overrideAIResources could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.multiplyMaxWood = Convert.ToBoolean(Config.multiplyMaxWood); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("multiplyMaxWood could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.multiplyMaxOre = Convert.ToBoolean(Config.multiplyMaxOre); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("multiplyMaxOre could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.multiplyMaxAIResources = Convert.ToBoolean(Config.multiplyMaxAIResources); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("multiplyMaxAIResources could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
                     }
 
                     //try { Vars.enableShopify = Convert.ToBoolean(Config.enableShopify); }
@@ -2677,7 +2745,7 @@ namespace RustEssentials.Util
         {
             if (File.Exists(Vars.bansFile))
             {
-
+                List<string> previousIPBans = new List<string>();
                 Dictionary<string, string> previousBans = new Dictionary<string, string>();
                 Dictionary<string, string> previousBanReasons = new Dictionary<string, string>();
                 using (StreamReader sr = new StreamReader(Vars.bansFile))
@@ -2685,10 +2753,15 @@ namespace RustEssentials.Util
                     string line;
                     while ((line = sr.ReadLine()) != null)
                     {
+                        string reason = "Unknown reason.";
+                        if (line.Contains("#"))
+                        {
+                            reason = line.Substring(line.LastIndexOf("#") + 1).Trim();
+                            line = line.Substring(0, line.LastIndexOf("#")).Trim();
+                        }
+
                         if (line.Contains("="))
                         {
-                            string reason = line.Substring(line.LastIndexOf("#") + 1).Trim();
-                            line = line.Substring(0, line.LastIndexOf("#")).Trim();
                             string playerName = line.Split('=')[0];
                             string playerUID = line.Split('=')[1];
                             if (!previousBans.ContainsKey(playerUID))
@@ -2696,9 +2769,17 @@ namespace RustEssentials.Util
                             if (!previousBanReasons.ContainsKey(playerUID))
                                 previousBanReasons.Add(playerUID, reason);
                         }
+                        else if (line.Contains("."))
+                        {
+                            if (!previousIPBans.Contains(line))
+                                previousIPBans.Add(line);
+                            if (!previousBanReasons.ContainsKey(line))
+                                previousBanReasons.Add(line, reason);
+                        }
                     }
                 }
 
+                Vars.currentIPBans = previousIPBans;
                 Vars.currentBans = previousBans;
                 Vars.currentBanReasons = previousBanReasons;
                 Vars.saveBans();

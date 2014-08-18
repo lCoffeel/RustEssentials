@@ -14,23 +14,56 @@ namespace RustEssentials.Util
 {
     public class Logging
     {
-        public void Info(string s)
+        public void Info(string s, bool isThreaded = false)
         {
-            ConsoleSystem.Log("[RustEssentials] " + s);
+            if (isThreaded)
+            {
+                var mydelegate = new Action<string>(delegate(string str)
+                {
+                    Debug.Log("[RustEssentials] " + str);
+                });
+                mydelegate.Invoke(s);
+            }
+            else
+            {
+                Debug.Log("[RustEssentials] " + s);
+            }
             if (Vars.enableConsoleLogging)
                 logToFile(s, "info");
         }
 
-        public void Error(string s)
+        public void Error(string s, bool isThreaded = false)
         {
-            ConsoleSystem.LogError("[RustEssentials] " + s);
+            if (isThreaded)
+            {
+                var mydelegate = new Action<string>(delegate(string str)
+                {
+                    Debug.LogError("[RustEssentials] " + str);
+                });
+                mydelegate.Invoke(s);
+            }
+            else
+            {
+                Debug.LogError("[RustEssentials] " + s);
+            }
             if (Vars.enableConsoleLogging)
                 logToFile(s, "error");
         }
 
-        public void Warning(string s)
+        public void Warning(string s, bool isThreaded = false)
         {
-            ConsoleSystem.LogWarning("[RustEssentials] " + s);
+            if (isThreaded)
+            {
+                var mydelegate = new Action<string>(delegate(string str)
+                {
+                    Debug.LogWarning("[RustEssentials] " + str);
+                });
+                mydelegate.Invoke(s);
+            }
+            else
+            {
+                Debug.LogWarning("[RustEssentials] " + s);
+            }
             if (Vars.enableConsoleLogging)
                 logToFile(s, "warning");
         }

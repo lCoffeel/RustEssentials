@@ -975,6 +975,9 @@ namespace RustEssentials.Util
 
                 switch (command)
                 {
+                    case "build":
+                        broadcastTo(sender, "/build: Allows another player to place beds, sleeping bags, and gateways near your houses. Syntax: /build {share/unshare} *player name* or /build {unshareall}");
+                        break;
                     case "tpg":
                         broadcastTo(sender, "/tpg: Teleports to another user's ghost (or body if they are not ghosting). Syntax: /tpg [name] or /tpg [name1] [name2]");
                         break;
@@ -995,15 +998,6 @@ namespace RustEssentials.Util
                         break;
                     case "baccess":
                         broadcastTo(sender, "/baccess: Gives access to pick up any bouncing betty. Syntax: /baccess {on/off}");
-                        break;
-                    case "sharerem":
-                        broadcastTo(sender, "/sharerem: Shares your /remover with another player (CASE SENSITIVE). Syntax: /sharerem *player name*");
-                        break;
-                    case "unsharerem":
-                        broadcastTo(sender, "/unsharerem: Unshares your /remover with another player (CASE SENSITIVE). Syntax: /unsharerem *player name*");
-                        break;
-                    case "unshareremall":
-                        broadcastTo(sender, "/unshareremall: Unshares your /remover (CASE SENSITIVE). Syntax: /unshareremall");
                         break;
                     case "opos":
                         broadcastTo(sender, "/opos: Displays the position of any object you hit. Syntax: /opos {on/off}");
@@ -1120,7 +1114,7 @@ namespace RustEssentials.Util
                         broadcastTo(sender, "/owner: Hitting structures will display the owner of them. Syntax: /owner {on/off}");
                         break;
                     case "remover":
-                        broadcastTo(sender, "/remover: Toggles the minor remover tool. Turn on for more details. Syntax: /remover {on/off}");
+                        broadcastTo(sender, "/remover: Toggles the minor remover tool. Turn on for more details. Syntax: /remover {on/off/share/unshare/unshareall}");
                         break;
                     case "removeall":
                         broadcastTo(sender, "/removeall: Toggles the advanced remover tool. Turn on for more details. Syntax: /removeall {on/off}");
@@ -1207,19 +1201,25 @@ namespace RustEssentials.Util
                         broadcastTo(sender, "/whitelist: Manages the whitelist. UID only for add/rem. Syntax: /whitelist {add/rem/on/off/kick/check} [UID]");
                         break;
                     case "reload":
-                        broadcastTo(sender, "/reload: Reloads the specified config file. Syntax: /reload {config/whitelist/ranks/commands/kits/motd/bans/all}");
+                        broadcastTo(sender, "/reload: Reloads the specified config file. Syntax: /reload {config/whitelist/ranks/commands/kits/motd/prefixes/warps/controller /tables/loadout/decay/remover/bans/all}");
                         break;
                     case "unban":
-                        broadcastTo(sender, "/unban: Unbans the specified player. Syntax: /unban \"full name or UID\"");
+                        broadcastTo(sender, "/unban: Unbans the specified player. Syntax: /unban \"full name, UID, or IP\"");
                         break;
                     case "ban":
-                        broadcastTo(sender, "/ban: Bans the specified player. Syntax: /ban \"player or UID\" [reason]");
+                        broadcastTo(sender, "/ban: Bans the specified player. Syntax: /ban [player or UID] *reason*");
+                        break;
+                    case "banip":
+                        broadcastTo(sender, "/banip: Bans the specified IP. Syntax: /banip [player ip] *reason*");
                         break;
                     case "bane":
-                        broadcastTo(sender, "/bane: Bans the specified player by the exact name. Syntax: /bane \"player\" [reason]");
+                        broadcastTo(sender, "/bane: Bans the specified player by the exact name. Syntax: /bane <player> *reason*");
                         break;
                     case "kick":
                         broadcastTo(sender, "/kick: Kicks the specified player. Syntax: /kick \"player\" [reason]");
+                        break;
+                    case "kickip":
+                        broadcastTo(sender, "/kickip: Kicks all players with the specified ip. Syntax: /kickip [ip] [reason]");
                         break;
                     case "kicke":
                         broadcastTo(sender, "/kicke: Kicks the specified player by the exact name. Syntax: /kicke \"player\" [reason]");

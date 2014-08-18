@@ -1360,8 +1360,12 @@ namespace RustEssentials.Util
 
             List<IInventoryItem> items = new List<IInventoryItem>();
             grabItem(playerClient, itemDB.name, out items);
-            items = Array.FindAll(items.ToArray(), (IInventoryItem item) => item.uses < ((InventoryItem)item).maxUses).ToList();
-            hasStackableSlot = items.Count > 0;
+            if (items != null)
+            {
+                items = Array.FindAll(items.ToArray(), (IInventoryItem item) => item.uses < ((InventoryItem)item).maxUses).ToList();
+                if (items != null)
+                    hasStackableSlot = items.Count > 0;
+            }
 
             return hasStackableSlot;
         }
@@ -2055,6 +2059,18 @@ namespace RustEssentials.Util
                                             {
                                                 Vars.conLog.Error("VOTED #14: " + ex.ToString());
                                             }
+                                            try
+                                            {
+                                                using (WebClient wc = new WebClient())
+                                                {
+                                                    wc.Proxy = null;
+                                                    wc.DownloadString("http://rust-servers.net/api/?action=post&object=votes&element=claim&key=" + Vars.RSAPIKey + "&steamid=" + senderClient.userID);
+                                                }
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                Vars.conLog.Error("VOTED #19: " + ex.ToString());
+                                            }
                                         }
                                     }
                                     catch (Exception ex)
@@ -2135,7 +2151,7 @@ namespace RustEssentials.Util
                                                 using (WebClient wc = new WebClient())
                                                 {
                                                     wc.Proxy = null;
-                                                    result = wc.DownloadString("http://api.toprustservers.com/api/put?plugin=voter&key=" + Vars.TRSAPIKey + "&uid=" + senderClient.userID);
+                                                    wc.DownloadString("http://api.toprustservers.com/api/put?plugin=voter&key=" + Vars.TRSAPIKey + "&uid=" + senderClient.userID);
                                                 }
                                             }
                                             catch (Exception ex)
@@ -2151,7 +2167,7 @@ namespace RustEssentials.Util
                                 }
                                 else if (TRSresult == "invalid_api")
                                 {
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "The voter TRSAPIKey is invalid! If you are not a server admin, let them know!");
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "The voter TRSAPIKey is invalid! If you are not a server admin, let one know!");
                                 }
 
                                 if (result == "1")
@@ -2173,6 +2189,18 @@ namespace RustEssentials.Util
                                             {
                                                 Vars.conLog.Error("VOTED #17: " + ex.ToString());
                                             }
+                                            try
+                                            {
+                                                using (WebClient wc = new WebClient())
+                                                {
+                                                    wc.Proxy = null;
+                                                    wc.DownloadString("http://rust-servers.net/api/?action=post&object=votes&element=claim&key=" + Vars.RSAPIKey + "&steamid=" + senderClient.userID);
+                                                }
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                Vars.conLog.Error("VOTED #18: " + ex.ToString());
+                                            }
                                         }
                                     }
                                     catch (Exception ex)
@@ -2182,7 +2210,7 @@ namespace RustEssentials.Util
                                 }
                                 else if (result == "Error: no server key" || result == "Error: incorrect server key")
                                 {
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "The voter RSAPIKey is invalid! If you are not a server admin, let them know!");
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "The voter RSAPIKey is invalid! If you are not a server admin, let one know!");
                                 }
                             });
                             t.IsBackground = true;

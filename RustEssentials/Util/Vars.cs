@@ -46,6 +46,8 @@ namespace RustEssentials.Util
         public static string warpsFile = Path.Combine(essentialsDir, "warps.ini");
         public static string doorsFile = Path.Combine(essentialsDir, "door_data.dat");
         public static string removerDataFile = Path.Combine(essentialsDir, "remover_data.dat");
+        public static string removerBlacklistFile = Path.Combine(essentialsDir, "remover_blacklist.ini");
+        public static string buildDataFile = Path.Combine(essentialsDir, "build_data.dat");
         public static string factionsFile = Path.Combine(essentialsDir, "factions.dat");
         public static string bettyFile = Path.Combine(essentialsDir, "bouncing_betties.dat");
         public static string alliesFile = Path.Combine(essentialsDir, "allies.dat");
@@ -88,7 +90,7 @@ namespace RustEssentials.Util
         public static bool autoRefresh = true;
         public static bool useAsMembers = false;
         public static bool announceDrops = true;
-        public static bool onFirstPlayer = true;
+        public static bool onFirstPlayer = false;
         public static bool directChat = false;
         public static bool globalChat = true;
         public static bool logPluginChat = true;
@@ -124,9 +126,6 @@ namespace RustEssentials.Util
         public static bool enableDurability = true;
         public static bool enableRemover = false;
         public static bool returnItems = true;
-        public static bool removerOnPillar = true;
-        public static bool removerOnCeiling = false;
-        public static bool removerOnFoundation = false;
         public static bool enableTRSVoting = false;
         public static bool enableRSVoting = false;
         public static bool noErrors = true;
@@ -140,7 +139,6 @@ namespace RustEssentials.Util
         public static bool disregardCeilingWeight = true;
         public static bool disregardPillarWeight = true;
         public static bool disregardFoundationWeight = true;
-        public static bool onlyOnIndesctructibles = false;
         public static bool hideKills = false;
         public static bool killsToConsole = false;
         public static bool enableDecay = true;
@@ -192,6 +190,14 @@ namespace RustEssentials.Util
         public static bool checkModeIsSet = false;
         public static bool moveBackSpeed = false;
         public static bool moveBackJump = false;
+        public static bool overrideWoodResources = false;
+        public static bool overrideOreResources = false;
+        public static bool overrideAIResources = false;
+        public static bool multiplyMaxWood = false;
+        public static bool multiplyMaxOre = false;
+        public static bool multiplyMaxAIResources = false;
+        public static bool sendAHToConsole = true;
+        public static bool versionOnJoin = true;
 
         public static string whitelistKickCMD = "Whitelist was enabled and you are not whitelisted.";
         public static string whitelistKickJoin = "You are not whitelisted!";
@@ -302,6 +308,9 @@ namespace RustEssentials.Util
         public static float distanceFromOtherHouses = 15f;
         public static float defaultLightsRange = 50f;
         public static float maxLightsRange = 50f;
+        public static float bedAndBagDistance = 0f;
+        public static float gatewayDistance = 4.5f;
+        public static float removerAttackDelay = 10f;
         // SAVED VARIABLES END
 
         //public static MySqlConnection mysqlConnection;
@@ -318,6 +327,7 @@ namespace RustEssentials.Util
             { defaultLoadoutFile },
             { motdFile },
             { doorsFile },
+            { removerBlacklistFile },
             { removerDataFile },
             { factionsFile },
             { bettyFile },
@@ -391,6 +401,7 @@ namespace RustEssentials.Util
         public static List<string> noninheritedWarps = new List<string>();
         public static List<string> excludeFromSleepers = new List<string>();
         public static List<string> excludeFromFamilyCheck = new List<string>();
+        public static List<string> removerObjectBlacklist = new List<string>();
         public static List<string> wasHit = new List<string>();
         public static BettyKillList<BouncingBettyKill> diedToBetty = new BettyKillList<BouncingBettyKill>();
         public static List<Items.Item> TRSItems = new List<Items.Item>();
@@ -428,6 +439,7 @@ namespace RustEssentials.Util
         public static List<PlayerClient> ghostTeleporting = new List<PlayerClient>();
         public static List<PlayerClient> antihackTeleport = new List<PlayerClient>();
         public static List<PlayerClient> isAccepting = new List<PlayerClient>();
+        public static List<string> currentIPBans = new List<string>();
         public static Dictionary<string, List<Items.Item>> defaultLoadout = new Dictionary<string, List<Items.Item>>()
         {
             {"Hotbar", new List<Items.Item>(){
@@ -437,8 +449,10 @@ namespace RustEssentials.Util
             }}
         };
 
+        public static Dictionary<GameObject, double> removerDelayedObjects = new Dictionary<GameObject, double>();
         public static Dictionary<string, string> sharingData = new Dictionary<string, string>();
         public static Dictionary<string, string> removerSharingData = new Dictionary<string, string>();
+        public static Dictionary<string, string> buildSharingData = new Dictionary<string, string>();
         public static Dictionary<string, string> playerPrefixes = new Dictionary<string, string>();
         public static Dictionary<string, string> rankPrefixes = new Dictionary<string, string>();
         public static Dictionary<string, string> currentBans = new Dictionary<string, string>();
@@ -501,7 +515,8 @@ namespace RustEssentials.Util
             { itemControllerFile, FileTexts.itemControllerText() },
             { decayFile, FileTexts.decayText() },
             //{ donorKitsFile, FileTexts.donorKitsText() },
-            { pathsFile, FileTexts.pathsText() }
+            { pathsFile, FileTexts.pathsText() },
+            { removerBlacklistFile, FileTexts.removerBlacklistText() }
         };
 
         public static void shuttingDown(string reason)
@@ -587,11 +602,19 @@ namespace RustEssentials.Util
                 REB.StartCoroutine(speedHackUpdate());
         }
 
+        public static IEnumerator delayRemover(GameObject GO)
+        {
+            yield return new WaitForSeconds(removerAttackDelay);
+
+            if (Vars.removerDelayedObjects.ContainsKey(GO))
+                Vars.removerDelayedObjects.Remove(GO);
+        }
+
         public static double currentTime
         {
             get
             {
-                return Math.Round((DateTime.Now - Process.GetCurrentProcess().StartTime).TotalMilliseconds);
+                return Math.Abs(Math.Round((DateTime.Now - Process.GetCurrentProcess().StartTime).TotalMilliseconds));
             }
         }
 
@@ -4696,6 +4719,10 @@ namespace RustEssentials.Util
                         try { RustEssentialsBootstrap._load.loadDecay(); }
                         catch (Exception ex) { Vars.conLog.Error("Error when loading decay: " + ex.ToString()); }
                         break;
+                    case "remover":
+                        try { RustEssentialsBootstrap._load.loadRemoverBlacklist(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading remover blacklist: " + ex.ToString()); }
+                        break;
                     case "all":
                         RustEssentialsBootstrap._load.loadConfig();
                         try { Whitelist.readWhitelist(); }
@@ -4722,6 +4749,8 @@ namespace RustEssentials.Util
                         catch (Exception ex) { Vars.conLog.Error("Error when loading default loadout: " + ex.ToString()); }
                         try { RustEssentialsBootstrap._load.loadDecay(); }
                         catch (Exception ex) { Vars.conLog.Error("Error when loading decay: " + ex.ToString()); }
+                        try { RustEssentialsBootstrap._load.loadRemoverBlacklist(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading remover blacklist: " + ex.ToString()); }
                         break;
                 }
             }
@@ -4800,6 +4829,11 @@ namespace RustEssentials.Util
                         catch (Exception ex) { Vars.conLog.Error("Error when loading decay: " + ex.ToString()); }
                         Broadcast.broadcastTo(sender, "Decay reloaded.");
                         break;
+                    case "remover":
+                        try { RustEssentialsBootstrap._load.loadRemoverBlacklist(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading remover blacklist: " + ex.ToString()); }
+                        Broadcast.broadcastTo(sender, "Remover blacklist reloaded.");
+                        break;
                     case "all":
                         RustEssentialsBootstrap._load.loadConfig();
                         try { Whitelist.readWhitelist(); }
@@ -4826,6 +4860,8 @@ namespace RustEssentials.Util
                         catch (Exception ex) { Vars.conLog.Error("Error when loading default loadout: " + ex.ToString()); }
                         try { RustEssentialsBootstrap._load.loadDecay(); }
                         catch (Exception ex) { Vars.conLog.Error("Error when loading decay: " + ex.ToString()); }
+                        try { RustEssentialsBootstrap._load.loadRemoverBlacklist(); }
+                        catch (Exception ex) { Vars.conLog.Error("Error when loading remover blacklist: " + ex.ToString()); }
                         Broadcast.broadcastTo(sender, "All files reloaded.");
                         break;
                     default:
@@ -5707,9 +5743,10 @@ namespace RustEssentials.Util
                             Character targetChar;
                             Character.FindByUser(targetClient.userID, out targetChar);
 
-                            if (Checks.ofLowerRank(targetClient.userID.ToString(), true, senderClient.userID.ToString(), true))
+                            if (Checks.ofLowerRank(targetClient.userID.ToString(), true, senderClient.userID.ToString(), true) || sender == targetClient.netPlayer)
                             {
                                 IDBase idBase = (IDBase)targetChar;
+                                Broadcast.noticeTo(senderClient.netPlayer, "№", targetClient.userName + " fell victim to /kill.");
                                 killList.Add(targetClient);
 
                                 TakeDamage component = targetClient.controllable.GetComponent<TakeDamage>();
@@ -5718,10 +5755,10 @@ namespace RustEssentials.Util
                                     godList.Remove(targetClient.userID.ToString());
                                 int result = (int)TakeDamage.Kill(idBase, idBase);
                             }
-                            else
+                            else if (sender != targetClient.netPlayer)
                             {
-                                Broadcast.noticeTo(sender, "№", "You are not allowed to /kill those of higher authority.");
-                                Broadcast.noticeTo(targetClient.netPlayer, "№", senderClient.userName + " tried to /kill you.");
+                                Broadcast.noticeTo(sender, "№", "You are not allowed to /kill those of higher authority.", 5);
+                                Broadcast.noticeTo(targetClient.netPlayer, "№", senderClient.userName + " tried to /kill you.", 5);
                             }
                         }
                         catch (Exception ex) { Vars.conLog.Error("KT #1: " + ex.ToString()); }
@@ -5743,10 +5780,9 @@ namespace RustEssentials.Util
                             Character targetChar;
                             Character.FindByUser(targetClient.userID, out targetChar);
 
-                            if (Checks.ofLowerRank(targetClient.userID.ToString(), true, senderClient.userID.ToString(), true))
+                            if (Checks.ofLowerRank(targetClient.userID.ToString(), true, senderClient.userID.ToString(), true) || sender == targetClient.netPlayer)
                             {
                                 IDBase idBase = (IDBase)targetChar;
-                                Broadcast.noticeTo(targetClient.netPlayer, "№", "You fell victim to /kill.");
                                 Broadcast.noticeTo(senderClient.netPlayer, "№", targetClient.userName + " fell victim to /kill.");
                                 killList.Add(targetClient);
 
@@ -5756,10 +5792,10 @@ namespace RustEssentials.Util
                                     godList.Remove(targetClient.userID.ToString());
                                 int result = (int)TakeDamage.Kill(idBase, idBase);
                             }
-                            else
+                            else if (sender != targetClient.netPlayer)
                             {
-                                Broadcast.noticeTo(sender, "№", "You are not allowed to /kill those of higher authority.");
-                                Broadcast.noticeTo(targetClient.netPlayer, "№", senderClient.userName + " tried to /kill you.");
+                                Broadcast.noticeTo(sender, "№", "You are not allowed to /kill those of higher authority.", 5);
+                                Broadcast.noticeTo(targetClient.netPlayer, "№", senderClient.userName + " tried to /kill you.", 5);
                             }
                         }
                         catch (Exception ex) { Vars.conLog.Error("KT #2: " + ex.ToString()); }
@@ -5778,6 +5814,11 @@ namespace RustEssentials.Util
                     {
                         string reason = currentBanReasons[kv.Key];
                         sw.WriteLine(kv.Value + "=" + kv.Key + " # " + reason);
+                    }
+                    foreach (string ip in currentIPBans)
+                    {
+                        string reason = currentBanReasons[ip];
+                        sw.WriteLine(ip + " # " + reason);
                     }
                 }
             }
@@ -5875,7 +5916,7 @@ namespace RustEssentials.Util
                     currentBanReasons.Remove(UID);
                     saveBans();
 
-                    Broadcast.noticeTo(playerClient.netPlayer, "☻", "Player " + targetName + " (" + UID + ") has been unbanned.", 2, true);
+                    Broadcast.noticeTo(playerClient.netPlayer, "☻", "Player " + targetName + " (" + UID + ") has been unbanned.", 5, true);
                 }
                 else if (currentBans.ContainsKey(targetName)) // If the unban is by UID
                 {
@@ -5894,21 +5935,196 @@ namespace RustEssentials.Util
                             currentBanReasons.Remove(UID);
                             saveBans();
 
-                            Broadcast.noticeTo(playerClient.netPlayer, "☻", "Player " + playerName + " (" + UID + ") has been unbanned.", 2, true);
+                            Broadcast.noticeTo(playerClient.netPlayer, "☻", "Player " + playerName + " (" + UID + ") has been unbanned.", 5, true);
                         }
                         else
                         {
-                            Broadcast.noticeTo(playerClient.netPlayer, "№", "Player/UID " + targetName + " is not banned!");
+                            Broadcast.noticeTo(playerClient.netPlayer, "№", "UID " + targetName + " is not banned!", 5, true);
                         }
                     }
                     catch (Exception ex)
                     {
-                        Broadcast.noticeTo(playerClient.netPlayer, "№", "Player/UID " + targetName + " is not banned!");
+                        Broadcast.noticeTo(playerClient.netPlayer, "№", "UID " + targetName + " is not banned!", 5, true);
                     }
+                }
+                else if (currentIPBans.Contains(targetName))
+                {
+                    currentIPBans.Remove(targetName);
+                    currentBanReasons.Remove(targetName);
+                    saveBans();
+
+                    Broadcast.noticeTo(playerClient.netPlayer, "☻", "IP " + targetName + " has been unbanned.", 5, true);
                 }
                 else
                 {
-                    Broadcast.noticeTo(playerClient.netPlayer, "№", "Player/UID " + targetName + " is not banned!");
+                    Broadcast.noticeTo(playerClient.netPlayer, "№", "Player/UID/IP " + targetName + " is not banned!", 5, true);
+                }
+            }
+        }
+
+        public static void kickIP(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                string targetIP = args[1];
+
+                try
+                {
+                    KeyValuePair<PlayerClient, string>[] possibleTargets = Array.FindAll(playerIPs.ToArray(), (KeyValuePair<PlayerClient, string> kv) => kv.Value == targetIP);
+                    string reason = "";
+                    List<string> reasonList = new List<string>();
+                    if (args.Count() > 2)
+                    {
+                        int curIndex = 0;
+                        foreach (string s in args)
+                        {
+                            if (curIndex > 1)
+                            {
+                                reasonList.Add(s);
+                            }
+                            curIndex++;
+                        }
+
+                        reason = string.Join(" ", reasonList.ToArray());
+                    }
+                    else
+                    {
+                        reason = "Kicked by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                    }
+
+                    if (possibleTargets.Count() > 0)
+                    {
+                        Broadcast.broadcastAll("IP " + targetIP + " was kicked.");
+                        Vars.conLog.Error("IP " + targetIP + " was kicked.");
+
+                        try
+                        {
+                            foreach (var kv in possibleTargets)
+                            {
+                                NetUser target = kv.Key.netUser;
+                                if (target != null)
+                                {
+                                    if (Checks.ofLowerRank(target.userID.ToString(), true, senderClient.userID.ToString(), true))
+                                    {
+                                        kickPlayer(target, reason, false);
+                                    }
+                                    else if (senderClient.netPlayer == target.networkPlayer)
+                                        Broadcast.noticeTo(senderClient.netPlayer, "№", "You can't kick yourself.", 5);
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Vars.conLog.Error("KICKIP #1: " + ex.ToString());
+                        }
+                    }
+                    else
+                    {
+                        Broadcast.broadcastTo(senderClient.netPlayer, "There are no players connected under the IP " + targetIP + ".");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("KICKIP #2: " + ex.ToString());
+                }
+            }
+        }
+
+        public static void banIP(PlayerClient senderClient, string[] args)
+        {
+            if (args.Count() > 1)
+            {
+                string targetIP = args[1];
+
+                try
+                {
+                    KeyValuePair<PlayerClient, string>[] possibleTargets = Array.FindAll(playerIPs.ToArray(), (KeyValuePair<PlayerClient, string> kv) => kv.Value == targetIP);
+                    string reason = "";
+                    List<string> reasonList = new List<string>();
+                    if (args.Count() > 2)
+                    {
+                        int curIndex = 0;
+                        foreach (string s in args)
+                        {
+                            if (curIndex > 1)
+                            {
+                                reasonList.Add(s);
+                            }
+                            curIndex++;
+                        }
+
+                        reason = string.Join(" ", reasonList.ToArray());
+                    }
+                    else
+                    {
+                        reason = "Banned by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                    }
+
+                    Broadcast.broadcastAll("IP " + targetIP + " was banned.");
+                    Vars.conLog.Error("IP " + targetIP + " was banned.");
+
+                    if (possibleTargets.Count() > 0)
+                    {
+                        try
+                        {
+                            RustEssentialsBootstrap._load.loadBans();
+                            if (!currentBans.ContainsKey(targetIP))
+                            {
+                                foreach (var kv in possibleTargets)
+                                {
+                                    NetUser target = kv.Key.netUser;
+                                    if (target != null)
+                                    {
+                                        if (Checks.ofLowerRank(target.userID.ToString(), true, senderClient.userID.ToString(), true))
+                                        {
+                                            Broadcast.broadcastTo(target.networkPlayer, "You were banned! Reason:");
+                                            Broadcast.broadcastTo(target.networkPlayer, reason);
+                                            Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]banned[color white]! Reason:");
+                                            Broadcast.broadcastToConsole(target.networkPlayer, "[color white]" + reason);
+                                            if (!kickQueue.Contains(target.userID.ToString()))
+                                                kickQueue.Add(target.userID.ToString());
+                                            target.Kick(NetError.NoError, false);
+                                            Broadcast.broadcastAll("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
+                                            Broadcast.broadcastAll(reason);
+                                            Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
+                                            Vars.conLog.Error(reason);
+                                        }
+                                        else if (senderClient.netPlayer == target.networkPlayer)
+                                            Broadcast.noticeTo(senderClient.netPlayer, "№", "You can't ban yourself.", 5);
+                                    }
+                                }
+                                currentIPBans.Add(targetIP);
+                                currentBanReasons.Add(targetIP, reason);
+                                saveBans();
+                            }
+                            else
+                            {
+                                Broadcast.broadcastTo(senderClient.netPlayer, "IP " + targetIP + " is already banned!");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Vars.conLog.Error("BANIP #1: " + ex.ToString());
+                        }
+                    }
+                    else
+                    {
+                        RustEssentialsBootstrap._load.loadBans();
+                        if (!currentBans.ContainsKey(targetIP))
+                        {
+                            currentIPBans.Add(targetIP);
+                            currentBanReasons.Add(targetIP, reason);
+                            saveBans();
+                        }
+                        else
+                        {
+                            Broadcast.noticeTo(senderClient.netPlayer, "!", "IP " + targetIP + " is already banned!");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("BANIP #2: " + ex.ToString());
                 }
             }
         }
@@ -6005,24 +6221,28 @@ namespace RustEssentials.Util
                                         Broadcast.broadcastTo(target.networkPlayer, "You were banned! Reason:");
                                         Broadcast.broadcastTo(target.networkPlayer, reason);
                                         Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]banned[color white]! Reason:");
-                                        Broadcast.broadcastToConsole(target.networkPlayer, "[color white]" + reason);   
+                                        Broadcast.broadcastToConsole(target.networkPlayer, "[color white]" + reason);
                                         target.Kick(NetError.NoError, false);
                                         Broadcast.broadcastAll("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
                                         Broadcast.broadcastAll(reason);
+                                        Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
+                                        Vars.conLog.Error(reason);
                                         currentBans.Add(target.userID.ToString(), target.displayName);
                                         currentBanReasons.Add(target.userID.ToString(), reason);
                                         saveBans();
                                     }
                                     else
                                     {
-                                        Broadcast.noticeTo(senderClient.netPlayer, "!", "Player " + target.displayName + " (" + target.userID + ") is already banned!");
+                                        Broadcast.noticeTo(senderClient.netPlayer, "!", "Player " + target.displayName + " (" + target.userID + ") is already banned!", 5);
                                     }
                                 }
-                                else
+                                else if (senderClient.netPlayer != target.networkPlayer)
                                 {
-                                    Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to /ban those of higher authority.");
-                                    Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to /ban you.");
+                                    Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to ban those of higher authority.", 5);
+                                    Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to ban you.", 5);
                                 }
+                                else if (senderClient.netPlayer == target.networkPlayer)
+                                    Broadcast.noticeTo(senderClient.netPlayer, "№", "You can't ban yourself.", 5);
                             }
                         }
                         catch (Exception ex)
@@ -6146,20 +6366,24 @@ namespace RustEssentials.Util
                                             target.Kick(NetError.NoError, false);
                                             Broadcast.broadcastAll("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
                                             Broadcast.broadcastAll(reason);
+                                            Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
+                                            Vars.conLog.Error(reason);
                                             currentBans.Add(target.userID.ToString(), target.displayName);
                                             currentBanReasons.Add(target.userID.ToString(), reason);
                                             saveBans();
                                         }
                                         else
                                         {
-                                            Broadcast.noticeTo(senderClient.netPlayer, "!", "Player " + target.displayName + " (" + target.userID + ") is already banned!");
+                                            Broadcast.noticeTo(senderClient.netPlayer, "!", "Player " + target.displayName + " (" + target.userID + ") is already banned!", 5);
                                         }
                                     }
-                                    else
+                                    else if (senderClient.netPlayer != target.networkPlayer)
                                     {
-                                        Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to /ban those of higher authority.");
-                                        Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to /ban you.");
+                                        Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to ban those of higher authority.", 5);
+                                        Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to ban you.", 5);
                                     }
+                                    else if (senderClient.netPlayer == target.networkPlayer)
+                                        Broadcast.noticeTo(senderClient.netPlayer, "№", "You can't ban yourself.", 5);
                                 }
                             }
                             catch (Exception ex2)
@@ -6215,20 +6439,24 @@ namespace RustEssentials.Util
                                             target.Kick(NetError.NoError, false);
                                             Broadcast.broadcastAll("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
                                             Broadcast.broadcastAll(reason);
+                                            Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
+                                            Vars.conLog.Error(reason);
                                             currentBans.Add(target.userID.ToString(), target.displayName);
                                             currentBanReasons.Add(target.userID.ToString(), reason);
                                             saveBans();
                                         }
                                         else
                                         {
-                                            Broadcast.noticeTo(senderClient.netPlayer, "!", "Player " + target.displayName + " (" + target.userID + ") is already banned!");
+                                            Broadcast.noticeTo(senderClient.netPlayer, "!", "Player " + target.displayName + " (" + target.userID + ") is already banned!", 5);
                                         }
                                     }
-                                    else
+                                    else if (senderClient.netPlayer != target.networkPlayer)
                                     {
-                                        Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to /ban those of higher authority.");
-                                        Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to /ban you.");
+                                        Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to ban those of higher authority.", 5);
+                                        Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to ban you.", 5);
                                     }
+                                    else if (senderClient.netPlayer == target.networkPlayer)
+                                        Broadcast.noticeTo(senderClient.netPlayer, "№", "You can't ban yourself.", 5);
                                 }
                             }
                             catch (Exception ex2)
@@ -6330,20 +6558,15 @@ namespace RustEssentials.Util
 
                                 if (Checks.ofLowerRank(target.userID.ToString(), true, senderClient.userID.ToString(), true))
                                 {
-                                    kickQueue.Add(target.displayName);
-                                    Broadcast.broadcastTo(target.networkPlayer, "You were kicked! Reason:");
-                                    Broadcast.broadcastTo(target.networkPlayer, reason);
-                                    Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]kicked[color white]! Reason:");
-                                    Broadcast.broadcastToConsole(target.networkPlayer, "[color white]" + reason);
-                                    target.Kick(NetError.NoError, false);
-                                    Broadcast.broadcastAll("Player " + target.displayName + " was kicked. Reason:");
-                                    Broadcast.broadcastAll(reason);
+                                    kickPlayer(target, reason, false);
                                 }
-                                else
+                                else if (senderClient.netPlayer != target.networkPlayer)
                                 {
-                                    Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to /kick those of higher authority.");
-                                    Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to /kick you.");
+                                    Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to kick those of higher authority.", 5);
+                                    Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to kick you.", 5);
                                 }
+                                else if (senderClient.netPlayer == target.networkPlayer)
+                                    Broadcast.noticeTo(senderClient.netPlayer, "№", "You can't kick yourself.", 5);
                             }
                         }
                         catch (Exception ex)
@@ -6391,20 +6614,15 @@ namespace RustEssentials.Util
 
                                         if (Checks.ofLowerRank(target.userID.ToString(), true, senderClient.userID.ToString(), true))
                                         {
-                                            kickQueue.Add(target.displayName);
-                                            Broadcast.broadcastTo(target.networkPlayer, "You were kicked! Reason:");
-                                            Broadcast.broadcastTo(target.networkPlayer, reason);
-                                            Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]kicked[color white]! Reason:");
-                                            Broadcast.broadcastToConsole(target.networkPlayer, "[color white]" + reason);
-                                            target.Kick(NetError.NoError, false);
-                                            Broadcast.broadcastAll("Player " + target.displayName + " was kicked. Reason:");
-                                            Broadcast.broadcastAll(reason);
+                                            kickPlayer(target, reason, false);
                                         }
-                                        else
+                                        else if (senderClient.netPlayer != target.networkPlayer)
                                         {
-                                            Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to /kick those of higher authority.");
-                                            Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to /kick you.");
+                                            Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to kick those of higher authority.", 5);
+                                            Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to kick you.", 5);
                                         }
+                                        else if (senderClient.netPlayer == target.networkPlayer)
+                                            Broadcast.noticeTo(senderClient.netPlayer, "№", "You can't kick yourself.", 5);
                                     }
                                 }
                                 catch (Exception ex)
@@ -6452,20 +6670,15 @@ namespace RustEssentials.Util
 
                                 if (Checks.ofLowerRank(target.userID.ToString(), true, senderClient.userID.ToString(), true))
                                 {
-                                    kickQueue.Add(target.displayName);
-                                    Broadcast.broadcastTo(target.networkPlayer, "You were kicked! Reason:");
-                                    Broadcast.broadcastTo(target.networkPlayer, reason);
-                                    Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]kicked[color white]! Reason:");
-                                    Broadcast.broadcastToConsole(target.networkPlayer, "[color white]" + reason);
-                                    target.Kick(NetError.NoError, false);
-                                    Broadcast.broadcastAll("Player " + target.displayName + " was kicked. Reason:");
-                                    Broadcast.broadcastAll(reason);
+                                    kickPlayer(target, reason, false);
                                 }
-                                else
+                                else if (senderClient.netPlayer != target.networkPlayer)
                                 {
-                                    Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to /kick those of higher authority.");
-                                    Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to /kick you.");
+                                    Broadcast.noticeTo(senderClient.netPlayer, "№", "You are not allowed to kick those of higher authority.", 5);
+                                    Broadcast.noticeTo(target.networkPlayer, "№", senderClient.userName + " tried to kick you.", 5);
                                 }
+                                else if (senderClient.netPlayer == target.networkPlayer)
+                                    Broadcast.noticeTo(senderClient.netPlayer, "№", "You can't kick yourself.", 5);
                             }
                         }
                         catch (Exception ex)
@@ -6477,17 +6690,18 @@ namespace RustEssentials.Util
             }
         }
 
-        public static void otherKick(NetUser target, string reason)
+        public static void otherKick(NetUser target, string reason, bool isThreaded = false)
         {
             if (target != null)
             {
-                kickQueue.Add(target.userID.ToString());
+                Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was kicked for:", isThreaded);
+                Vars.conLog.Error(reason, isThreaded);
+                if (!kickQueue.Contains(target.userID.ToString()))
+                    kickQueue.Add(target.userID.ToString());
                 Broadcast.broadcastTo(target.networkPlayer, "You were kicked! Reason:");
                 Broadcast.broadcastTo(target.networkPlayer, reason);
                 Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]kicked[color white]! Reason:");
                 Broadcast.broadcastToConsole(target.networkPlayer, "[color white]" + reason);
-                Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was kicked for:");
-                Vars.conLog.Error(reason);
                 target.Kick(NetError.NoError, false);
             }
         }
@@ -6496,12 +6710,13 @@ namespace RustEssentials.Util
         {
             if (target != null)
             {
-                kickQueue.Add(target.userID.ToString());
+                Vars.conLog.Error("Nonwhitelisted player " + target.displayName + " (" + target.userID + ") attempted to join.");
+                if (!kickQueue.Contains(target.userID.ToString()))
+                    kickQueue.Add(target.userID.ToString());
                 Broadcast.broadcastTo(target.networkPlayer, "You were kicked! Reason:");
                 Broadcast.broadcastTo(target.networkPlayer, reason);
                 Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]kicked[color white]! Reason:");
                 Broadcast.broadcastToConsole(target.networkPlayer, "[color white]" + reason);
-                Vars.conLog.Error("Nonwhitelisted player " + target.displayName + " (" + target.userID + ") attempted to join.");
                 target.Kick(NetError.NoError, false);
             }
         }
@@ -6510,7 +6725,13 @@ namespace RustEssentials.Util
         {
             if (target != null)
             {
-                kickQueue.Add(target.userID.ToString());
+                if (!isBan)
+                {
+                    Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was kicked. Reason:");
+                    Vars.conLog.Error(reason);
+                }
+                if (!kickQueue.Contains(target.userID.ToString()))
+                    kickQueue.Add(target.userID.ToString());
                 Broadcast.broadcastTo(target.networkPlayer, (isBan ? "You were banned! Reason:" : "You were kicked! Reason:"));
                 Broadcast.broadcastTo(target.networkPlayer, reason);
                 Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]" + (isBan ? "banned" : "kicked") + "[color white]! Reason:");
@@ -6522,8 +6743,6 @@ namespace RustEssentials.Util
                 {
                     Broadcast.broadcastAll("Player " + target.displayName + " was kicked. Reason:");
                     Broadcast.broadcastAll(reason);
-                    Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was kicked. Reason:");
-                    Vars.conLog.Error(reason);
                 }
             }
         }
@@ -6734,7 +6953,7 @@ namespace RustEssentials.Util
                     return "F1 Grenade";
 
                 default:
-                    return "null";
+                    return null;
             }
         }
 
@@ -6807,7 +7026,7 @@ namespace RustEssentials.Util
                     return "Wood Shelter";
 
                 default:
-                    return "null";
+                    return null;
             }
         }
 
@@ -6865,7 +7084,7 @@ namespace RustEssentials.Util
                     return "Metal Wall";
 
                 default:
-                    return "null";
+                    return null;
             }
         }
 
@@ -6879,32 +7098,35 @@ namespace RustEssentials.Util
 
             StructureMaster master;
             bool teleportTwice = false;
-            Character playerChar = Vars.AllCharacters[playerClient];
-            if (playerChar != null && Vector3.Distance(playerChar.eyesOrigin, destination) > 375 && Checks.onStructure(destination, out master) && allowDoubleTP)
+            if (Vars.AllCharacters.ContainsKey(playerClient))
             {
-                teleportTwice = true;
-            }
-
-            Hook hook = callHook("RustEssentialsAPI.Hooks", "OnEssentialsTeleport", false, playerClient.userID, destination);
-
-            if (Checks.ContinueHook(hook))
-            {
-                if (playerChar != null && lastPositions.ContainsKey(playerChar))
-                    lastPositions[playerChar] = destination;
-
-                RustServerManagement RSM = RustServerManagement.Get();
-                if (playerClient.netUser != null)
+                Character playerChar = Vars.AllCharacters[playerClient];
+                if (playerChar != null && Vector3.Distance(playerChar.eyesOrigin, destination) > 375 && Checks.onStructure(destination, out master) && allowDoubleTP)
                 {
-                    playerClient.netUser.truthDetector.NoteTeleported(destination, 2.0);
+                    teleportTwice = true;
                 }
-                if (playerClient.controllable != null)
+
+                Hook hook = callHook("RustEssentialsAPI.Hooks", "OnEssentialsTeleport", false, playerClient.userID, destination);
+
+                if (Checks.ContinueHook(hook))
                 {
-                    RSM.networkView.RPC<Vector3>("UnstickMove", playerClient.netPlayer, destination);
-                    if (!teleportTwice)
-                        currentlyTeleporting.Remove(playerClient);
-                    else
-                        Vars.REB.StartCoroutine(continueTeleport(playerChar, destination));
-                    return true;
+                    if (playerChar != null && lastPositions.ContainsKey(playerChar))
+                        lastPositions[playerChar] = destination;
+
+                    RustServerManagement RSM = RustServerManagement.Get();
+                    if (playerClient.netUser != null)
+                    {
+                        playerClient.netUser.truthDetector.NoteTeleported(destination, 2.0);
+                    }
+                    if (playerClient.controllable != null)
+                    {
+                        RSM.networkView.RPC<Vector3>("UnstickMove", playerClient.netPlayer, destination);
+                        if (!teleportTwice)
+                            currentlyTeleporting.Remove(playerClient);
+                        else if (playerChar != null)
+                            Vars.REB.StartCoroutine(continueTeleport(playerChar, destination));
+                        return true;
+                    }
                 }
             }
             currentlyTeleporting.Remove(playerClient);

@@ -706,6 +706,44 @@ namespace RustEssentials.Util
             return (lowerRankLevel == higherRankLevel);
         }
 
+        public static bool nearHouse(Vector3 sourcePos, float radius, ulong userID = 0, bool excludeOwner = true)
+        {
+            RaycastHit[] hits = Physics.SphereCastAll(new Ray(sourcePos + new Vector3(0, 5, 0), Vector3.down), radius, 15f, -472317957);
+            foreach (var hit in hits)
+            {
+                IDMain main = IDBase.GetMain(hit.collider);
+
+                if ((hit.collider.gameObject.layer == 10 && hit.collider.gameObject.name.Contains("Shelter")) || (main != null))
+                {
+                    string extra = "";
+                    if (main != null)
+                    {
+                        extra = " : " + main.name;
+                        if (main is StructureMaster)
+                        {
+                            StructureMaster master = main as StructureMaster;
+                            bool isShared = Vars.buildSharingData.ContainsKey(master.ownerID.ToString()) && Vars.buildSharingData[master.ownerID.ToString()].Contains(userID.ToString());
+                            if (excludeOwner && (master.ownerID == userID || isShared))
+                                return false;
+                            else
+                                return true;
+                        }
+                    }
+                    else if (hit.collider.gameObject.GetComponent<DeployableObject>() != null)
+                    {
+                        DeployableObject deployable = hit.collider.gameObject.GetComponent<DeployableObject>();
+                        bool isShared = Vars.buildSharingData.ContainsKey(deployable.ownerID.ToString()) && Vars.buildSharingData[deployable.ownerID.ToString()].Contains(userID.ToString());
+                        if (excludeOwner && (deployable.ownerID == userID || isShared))
+                            return false;
+                        else
+                            return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public static bool ofLowerRank(string lowerRank, bool lowerIsUID, string higherRank, bool higherIsUID)
         {
             int lowerRankLevel;

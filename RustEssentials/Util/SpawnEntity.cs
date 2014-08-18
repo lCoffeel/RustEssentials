@@ -48,7 +48,27 @@ namespace RustEssentials.Util
                                 position.x += randX;
                                 position.z += randZ;
                             }
-                            var obj = NetCull.InstantiateStatic(entityName, position, rotation);
+                            var gameObject = NetCull.InstantiateStatic(entityName, position, rotation);
+
+                            if (isAnimal(entityName))
+                            {
+                                object[] param = new object[] { entityName, position, rotation, gameObject };
+                                Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnSpawnAI", false, param);
+                                if (!Checks.ContinueHook(hook))
+                                {
+                                    Vars.beingDestroyed.Add(gameObject);
+                                    TakeDamage.HurtSelf(gameObject.GetComponent<IDMain>(), 1000f);
+                                }
+                            }
+                            if (isResource(entityName))
+                            {
+                                object[] param = new object[] { entityName, position, rotation, gameObject };
+                                Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnSpawnResource", false, param);
+                                if (!Checks.ContinueHook(hook))
+                                {
+                                    NetCull.Destroy(gameObject);
+                                }
+                            }
                         }
                     }
                     else

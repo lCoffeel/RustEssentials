@@ -89,10 +89,12 @@ namespace RustEssentials.Util
                             Broadcast.broadcastTo(senderClient.netPlayer, "You do not have the ownership tool activated.");
                         break;
                     default:
-                        Broadcast.broadcastTo(senderClient.netPlayer, "Unknown argument \"" + mode + "\".");
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
                         break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
         public static void craftTool(PlayerClient senderClient, string[] args)
         {
@@ -122,8 +124,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You are already in normal craft mode.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
 
         public static void wandTool(PlayerClient senderClient, string[] args)
@@ -172,6 +179,8 @@ namespace RustEssentials.Util
                         break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on, off, or a number.");
         }
 
         public static void explosiveBulletTool(PlayerClient senderClient, string[] args)
@@ -203,8 +212,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You have not loaded explosive bullets yet.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
 
         public static void followGhostTool(PlayerClient senderClient, string[] args)
@@ -234,8 +248,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "Your body is not currently following your ghost.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
 
         public static void ghostTool(PlayerClient senderClient, Character senderChar, string[] args)
@@ -269,8 +288,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You are not already a ghost...");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
 
         public static IEnumerator ghostPositionUpdate(PlayerClient senderClient, Character senderChar)
@@ -311,8 +335,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You are not receiving messages from the antihack.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
 
         public static void bypassTool(PlayerClient senderClient, string[] args)
@@ -342,8 +371,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You are not currently bypassing the antihack.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
 
         public static void infAmmoTool(PlayerClient senderClient, string[] args)
@@ -373,8 +407,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You have do not have infinite ammo.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
 
         public static void unlAmmoTool(PlayerClient senderClient, string[] args)
@@ -404,8 +443,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You have do not have unlimited ammo.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
 
         public static void portalTool(PlayerClient senderClient, string[] args)
@@ -437,8 +481,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You have not enabled the portal tool yet.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
 
         public static void vanishTool(PlayerClient senderClient, string[] args)
@@ -488,8 +537,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You have not vanished.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
 
         public static void hideTool(PlayerClient senderClient, string[] args)
@@ -518,6 +572,9 @@ namespace RustEssentials.Util
                         }
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You are not currently hidden from AI.");
+                        break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
                         break;
                 }
             }
@@ -549,6 +606,9 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You do not currently have access to pick up any bouncing betty.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
         }
@@ -579,8 +639,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You do not currently have access to all doors.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
 
         public static void minorRemoverTool(PlayerClient senderClient, string[] args)
@@ -617,8 +682,22 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You do not have the minor remover tool activated.");
                         break;
+                    case "share":
+                        Share.shareRemoverWith(senderClient, args);
+                        break;
+                    case "unshare":
+                        Share.unshareRemoverWith(senderClient, args);
+                        break;
+                    case "unshareall":
+                        Share.unshareRemoverWithAll(senderClient);
+                        break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on, off, share, unshare, or unshareall.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on, off, share, unshare, or unshareall.");
         }
 
         public static void elevatorTool(PlayerClient senderClient, string[] args)
@@ -650,8 +729,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You do not have the elevator tool activated.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
 
         public static void removerAllTool(PlayerClient senderClient, string[] args)
@@ -683,8 +767,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You do not have the advanced remover tool activated.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
 
         public static void oposTool(PlayerClient senderClient, string[] args)
@@ -716,8 +805,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You do not have the object position tool activated.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
 
         public static void removerTool(PlayerClient senderClient, string[] args)
@@ -749,8 +843,13 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You do not have the remover tool activated.");
                         break;
+                    default:
+                        Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
+                        break;
                 }
             }
+            else
+                Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on or off.");
         }
     }
 }

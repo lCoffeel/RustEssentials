@@ -670,6 +670,25 @@ namespace RustEssentials.Util
                             damage.status = LifeStatus.IsAlive;
                         }
 
+                        if (damage.victim.idMain is StructureComponent)
+                        {
+                            object[] args = new object[] { damage.victim.idMain, damage };
+                            Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnStructureHurt", false, args);
+                            if (hook == Hook.Success && args[1] != null && args[1] is DamageEvent)
+                                damage = (DamageEvent)args[1];
+                            else if (hook == Hook.Failure)
+                                damage.amount = 0;
+                        }
+                        if (damage.victim.idMain is DeployableObject)
+                        {
+                            object[] args = new object[] { damage.victim.idMain, damage };
+                            Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnDeployableHurt", false, args);
+                            if (hook == Hook.Success && args[1] != null && args[1] is DamageEvent)
+                                damage = (DamageEvent)args[1];
+                            else if (hook == Hook.Failure)
+                                damage.amount = 0;
+                        }
+
                         if (Vars.destroyerList.Contains(damage.attacker.userID.ToString()))
                         {
                             Vars.beingDestroyed.Add(damage.victim.idMain.gameObject);
@@ -742,7 +761,7 @@ namespace RustEssentials.Util
                             {
                                 DeployableObject comp = (DeployableObject)damage.victim.idMain;
 
-                                if (!Vars.onlyOnIndesctructibles)
+                                if (!Vars.removerObjectBlacklist.Contains(Vars.getFullObjectName(comp.gameObject.name)))
                                 {
                                     if (damage.extraData != null)
                                     {
@@ -760,16 +779,19 @@ namespace RustEssentials.Util
                                                 float currentHealth = comp.GetComponent<TakeDamage>().health;
                                                 float maxHealth = comp.GetComponent<TakeDamage>().maxHealth;
                                                 string weaponName = extraData.dataBlock.name;
-                                                if (Items.allMelees.Contains(weaponName))
+                                                if (!Vars.removerDelayedObjects.ContainsKey(comp.gameObject))
                                                 {
-                                                    damage.amount = maxHealth;
-                                                    if (Vars.returnItems)
+                                                    if (Items.allMelees.Contains(weaponName))
                                                     {
+                                                        damage.amount = maxHealth;
                                                         if (damage.attacker.client != null)
                                                         {
                                                             if (comp.name == "WoodBox(Clone)" || comp.name == "WoodBoxLarge(Clone)" || comp.name == "SmallStash(Clone)" || comp.name == "Campfire(Clone)" || comp.name == "Furnace(Clone)")
                                                                 Vars.conLog.Storage(playerClient.userName + " (" + playerClient.userID + ") /remover'd a " + Vars.getFullObjectName(comp.gameObject.name) + " at " + comp.transform.position + ".");
-                                                            Items.addItem(damage.attacker.client, Vars.getFullObjectName(comp.name), 1);
+                                                            if (Vars.returnItems)
+                                                            {
+                                                                Items.addItem(damage.attacker.client, Vars.getFullObjectName(comp.name), 1);
+                                                            }
                                                             if (comp.name.Contains("MetalBarsWindow"))
                                                             {
                                                                 Vars.beingDestroyed.Add(damage.victim.idMain.gameObject);
@@ -784,36 +806,25 @@ namespace RustEssentials.Util
                                                         }
                                                     }
                                                 }
+                                                else
+                                                    Broadcast.noticeTo(damage.attacker.client.netPlayer, "✚", "You must wait " + Math.Round((Vars.removerDelayedObjects[comp.gameObject] - Vars.currentTime) / 1000) + " second(s)!", 3);
                                             }
                                             else
                                                 Broadcast.noticeTo(damage.attacker.networkView.owner, "✚", "You do not own this!");
                                         }
                                     }
                                 }
+                                else
+                                    Broadcast.noticeTo(damage.attacker.networkView.owner, "✚", "You cannot remove this!");
                             }
                             if (damage.victim.idMain is StructureComponent)
                             {
                                 StructureComponent structure = (StructureComponent)damage.victim.idMain;
-                                bool canRemove = false;
                                 bool isCeiling = structure.type == StructureComponent.StructureComponentType.Ceiling;
                                 bool isPillar = structure.type == StructureComponent.StructureComponentType.Pillar;
                                 bool isFoundation = structure.type == StructureComponent.StructureComponentType.Foundation;
 
-                                if (Vars.onlyOnIndesctructibles)
-                                {
-                                    if (isCeiling && Vars.removerOnCeiling)
-                                        canRemove = true;
-
-                                    if (isPillar && Vars.removerOnPillar)
-                                        canRemove = true;
-
-                                    if (isFoundation && Vars.removerOnFoundation)
-                                        canRemove = true;
-                                }
-                                else
-                                    canRemove = true;
-
-                                if (canRemove)
+                                if (!Vars.removerObjectBlacklist.Contains(Vars.getFullStructureName(structure.gameObject.name)))
                                 {
                                     if (damage.extraData != null)
                                     {
@@ -839,45 +850,52 @@ namespace RustEssentials.Util
                                                 float currentHealth = structure.GetComponent<TakeDamage>().health;
                                                 float maxHealth = structure.GetComponent<TakeDamage>().maxHealth;
                                                 string weaponName = extraData.dataBlock.name;
-                                                if (Items.allMelees.Contains(weaponName))
+                                                if (!Vars.removerDelayedObjects.ContainsKey(structure._master.gameObject))
                                                 {
-                                                    switch (weaponName)
+                                                    if (Items.allMelees.Contains(weaponName))
                                                     {
-                                                        case "Hatchet":
-                                                            damage.amount = UnityEngine.Random.Range(maxHealth * .15f, maxHealth * .3f);
-                                                            break;
-                                                        case "Pick Axe":
-                                                            damage.amount = UnityEngine.Random.Range(maxHealth * .25f, maxHealth * .45f);
-                                                            break;
-                                                        case "Stone Hatchet":
-                                                            damage.amount = UnityEngine.Random.Range(maxHealth * 0.05f, maxHealth * 0.15f);
-                                                            break;
-                                                        case "Rock":
-                                                            damage.amount = UnityEngine.Random.Range(maxHealth * 0.02f, maxHealth * 0.1f);
-                                                            break;
-                                                    }
-                                                    damage.amount = Mathf.Round(damage.amount);
-                                                    float newHealth = (currentHealth - damage.amount);
-
-                                                    if (currentHealth - damage.amount > 0)
-                                                        Broadcast.sideNoticeTo(damage.attacker.networkView.owner, "[✚] -" + damage.amount + " (" + newHealth + "/" + structure.GetComponent<TakeDamage>().maxHealth + ")");
-                                                    else
-                                                    {
-                                                        if (Vars.returnItems)
+                                                        switch (weaponName)
                                                         {
-                                                            if (damage.attacker.client != null)
+                                                            case "Hatchet":
+                                                                damage.amount = UnityEngine.Random.Range(maxHealth * .15f, maxHealth * .3f);
+                                                                break;
+                                                            case "Pick Axe":
+                                                                damage.amount = UnityEngine.Random.Range(maxHealth * .25f, maxHealth * .45f);
+                                                                break;
+                                                            case "Stone Hatchet":
+                                                                damage.amount = UnityEngine.Random.Range(maxHealth * 0.05f, maxHealth * 0.15f);
+                                                                break;
+                                                            case "Rock":
+                                                                damage.amount = UnityEngine.Random.Range(maxHealth * 0.02f, maxHealth * 0.1f);
+                                                                break;
+                                                        }
+                                                        damage.amount = Mathf.Round(damage.amount);
+                                                        float newHealth = (currentHealth - damage.amount);
+
+                                                        if (currentHealth - damage.amount > 0)
+                                                            Broadcast.sideNoticeTo(damage.attacker.networkView.owner, "[✚] -" + damage.amount + " (" + newHealth + "/" + structure.GetComponent<TakeDamage>().maxHealth + ")");
+                                                        else
+                                                        {
+                                                            if (Vars.returnItems)
                                                             {
-                                                                Items.addItem(damage.attacker.client, Vars.getFullStructureName(structure.name), 1);
+                                                                if (damage.attacker.client != null)
+                                                                {
+                                                                    Items.addItem(damage.attacker.client, Vars.getFullStructureName(structure.name), 1);
+                                                                }
                                                             }
                                                         }
                                                     }
                                                 }
+                                                else
+                                                    Broadcast.noticeTo(damage.attacker.client.netPlayer, "✚", "You must wait " + Math.Round((Vars.removerDelayedObjects[structure._master.gameObject] - Vars.currentTime) / 1000) + " second(s)!", 3);
                                             }
                                             else
                                                 Broadcast.noticeTo(damage.attacker.networkView.owner, "✚", "You do not own this!");
                                         }
                                     }
                                 }
+                                else
+                                    Broadcast.noticeTo(damage.attacker.networkView.owner, "✚", "You cannot remove this!");
                             }
                         }
                         else
@@ -921,12 +939,17 @@ namespace RustEssentials.Util
                             {
                                 DeployableObject comp = (DeployableObject)damage.victim.idMain;
                                 float health = comp.GetComponent<TakeDamage>().health;
+                                string fancyName = Vars.getFullObjectName(comp.name);
+                                if (Vars.removerAttackDelay > 0 && health - damage.amount > 0 && (fancyName == "Wooden Door" || fancyName == "Metal Door"))
+                                {
+                                    if (!Vars.removerDelayedObjects.ContainsKey(comp.gameObject))
+                                        Vars.removerDelayedObjects.Add(comp.gameObject, Vars.currentTime + (Vars.removerAttackDelay * 1000));
+                                    Vars.REB.StartCoroutine(Vars.delayRemover(comp.gameObject));
+                                }
                                 if (health - damage.amount <= 0)
                                 {
                                     if (comp.name == "WoodBox(Clone)" || comp.name == "WoodBoxLarge(Clone)" || comp.name == "SmallStash(Clone)" || comp.name == "Campfire(Clone)" || comp.name == "Furnace(Clone)")
                                         Vars.conLog.Storage(playerClient.userName + " (" + playerClient.userID + ") destroyed " + comp.ownerID + "'s " + Vars.getFullObjectName(comp.gameObject.name) + " at " + comp.transform.position + ".");
-
-                                    string fancyName = Vars.getFullObjectName(comp.name);
 
                                     if (fancyName == "Camp Fire" || fancyName == "Furnace")
                                     {
@@ -943,6 +966,7 @@ namespace RustEssentials.Util
                         if (damage.victim.idMain is StructureComponent)
                         {
                             component = (StructureComponent)damage.victim.idMain;
+                            float health = component.GetComponent<TakeDamage>().health;
 
                             Zone zone = null;
                             if (Vars.structuresInZones.Contains(component) || Checks.inZone(damage.victim.idMain.transform.position, out zone))
@@ -960,6 +984,21 @@ namespace RustEssentials.Util
                                 damage.amount = 0f;
                                 damage.status = LifeStatus.IsAlive;
                             }
+                            else
+                            {
+                                object[] args = new object[] { damage.victim.idMain, damage };
+                                Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnStructureHurt", false, args);
+                                if (hook == Hook.Success && args[1] != null && args[1] is DamageEvent)
+                                    damage = (DamageEvent)args[1];
+                                else if (hook == Hook.Failure)
+                                    damage.amount = 0;
+                                if (Vars.removerAttackDelay > 0 && health - damage.amount > 0)
+                                {
+                                    if (!Vars.removerDelayedObjects.ContainsKey(component._master.gameObject))
+                                        Vars.removerDelayedObjects.Add(component._master.gameObject, Vars.currentTime);
+                                    Vars.REB.StartCoroutine(Vars.delayRemover(component._master.gameObject));
+                                }
+                            }
                         }
 
                         if (damage.victim.idMain is DeployableObject)
@@ -968,15 +1007,7 @@ namespace RustEssentials.Util
                             EnvDecay ED = obj.GetComponent<EnvDecay>();
 
                             float health = obj.GetComponent<TakeDamage>().health;
-                            if (health - damage.amount <= 0 && (obj.name == "WoodBox(Clone)" || obj.name == "WoodBoxLarge(Clone)" || obj.name == "SmallStash(Clone)" || obj.name == "Campfire(Clone)" || obj.name == "Furnace(Clone)"))
-                                Vars.conLog.Storage(obj.ownerID + "'s " + Vars.getFullObjectName(obj.gameObject.name) + " at " + obj.transform.position + " was destroyed by [a(n)] " + (damage.attacker.idMain.gameObject.name == obj.gameObject.name ? "decay" : Vars.getFullExplosiveName(damage.attacker.idMain.gameObject.name)) + ".");
-
                             string fancyName = Vars.getFullObjectName(obj.name);
-
-                            if (fancyName == "Camp Fire" || fancyName == "Furnace")
-                            {
-                                Lights.remove(obj);
-                            }
 
                             bool hasED = false;
                             if (ED != null)
@@ -1000,59 +1031,29 @@ namespace RustEssentials.Util
                                 damage.amount = 0f;
                                 damage.status = LifeStatus.IsAlive;
                             }
-                        }
-                    }
-                }
-            }
-        }
-
-        public static void onAIHurt(ref DamageEvent damage)
-        {
-            if (damage.attacker.idMain != null)
-            {
-                if (Checks.isPlayer(damage.attacker.idMain))
-                {
-                    PlayerClient attackerClient = damage.attacker.client;
-
-                    bool hasWand = false;
-                    bool hasPortal = false;
-                    if (attackerClient != null)
-                    {
-                        if (attackerClient.controllable.GetComponent<Inventory>() != null)
-                        {
-                            if (attackerClient.controllable.GetComponent<Inventory>().activeItem != null)
+                            else
                             {
-                                if (attackerClient.controllable.GetComponent<Inventory>().activeItem.datablock != null)
-                                {
-                                    string heldItem = attackerClient.controllable.GetComponent<Inventory>().activeItem.datablock.name;
+                                object[] args = new object[] { damage.victim.idMain, damage };
+                                Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnDeployableHurt", false, args);
+                                if (hook == Hook.Success && args[1] != null && args[1] is DamageEvent)
+                                    damage = (DamageEvent)args[1];
+                                else if (hook == Hook.Failure)
+                                    damage.amount = 0;
 
-                                    if (Vars.wandList.ContainsKey(attackerClient.userID.ToString()))
-                                    {
-                                        hasWand = true;
-                                        if (heldItem != Vars.wandName && Vars.wandName != "any")
-                                            hasWand = false;
-                                    }
-                                    if (Vars.portalList.Contains(attackerClient.userID.ToString()))
-                                    {
-                                        hasPortal = true;
-                                        if (heldItem != Vars.portalName && Vars.portalName != "any")
-                                            hasPortal = false;
-                                    }
+                                if (health - damage.amount <= 0 && (obj.name == "WoodBox(Clone)" || obj.name == "WoodBoxLarge(Clone)" || obj.name == "SmallStash(Clone)" || obj.name == "Campfire(Clone)" || obj.name == "Furnace(Clone)"))
+                                    Vars.conLog.Storage(obj.ownerID + "'s " + Vars.getFullObjectName(obj.gameObject.name) + " at " + obj.transform.position + " was destroyed by [a(n)] " + (damage.attacker.idMain.gameObject.name == obj.gameObject.name ? "decay cycle" : Vars.getFullExplosiveName(damage.attacker.idMain.gameObject.name)) + ".");
+                                if (health - damage.amount <= 0 && (fancyName == "Camp Fire" || fancyName == "Furnace"))
+                                {
+                                    Lights.remove(obj);
+                                }
+                                if (Vars.removerAttackDelay > 0 && health - damage.amount > 0 && (fancyName == "Wooden Door" || fancyName == "Metal Door"))
+                                {
+                                    if (!Vars.removerDelayedObjects.ContainsKey(obj.gameObject))
+                                        Vars.removerDelayedObjects.Add(obj.gameObject, Vars.currentTime);
+                                    Vars.REB.StartCoroutine(Vars.delayRemover(obj.gameObject));
                                 }
                             }
                         }
-                    }
-                    if (hasWand || hasPortal)
-                    {
-                        damage.amount = 0f;
-                        damage.status = LifeStatus.IsAlive;
-                    }
-
-                    if (Vars.destroyerList.Contains(attackerClient.userID.ToString()))
-                    {
-                        Vars.beingDestroyed.Add(damage.victim.idMain.gameObject);
-                        damage.amount = 1000f;
-                        damage.status = LifeStatus.WasKilled;
                     }
                 }
             }
@@ -1177,6 +1178,84 @@ namespace RustEssentials.Util
             else
                 BWAI.Invoke("DelayedDestroy", 90f);
             WildlifeManager.RemoveWildlifeInstance(BWAI);
+        }
+
+        public static void onAIHurt(ref DamageEvent damage)
+        {
+            if (Vars.beingDestroyed.Contains(damage.victim.idMain.gameObject))
+            {
+                if (damage.victim.idMain.GetComponent<HostileWildlifeAI>() != null)
+                {
+                    HostileWildlifeAI hostile = damage.victim.idMain.GetComponent<HostileWildlifeAI>();
+                    hostile.dropOnDeathString = null;
+                }
+                damage.amount = 1000f;
+                damage.status = LifeStatus.WasKilled;
+
+                return;
+            }
+
+            if (damage.attacker.idMain != null)
+            {
+                if (Checks.isPlayer(damage.attacker.idMain))
+                {
+                    PlayerClient attackerClient = damage.attacker.client;
+
+                    bool hasWand = false;
+                    bool hasPortal = false;
+                    if (attackerClient != null)
+                    {
+                        if (attackerClient.controllable.GetComponent<Inventory>() != null)
+                        {
+                            if (attackerClient.controllable.GetComponent<Inventory>().activeItem != null)
+                            {
+                                if (attackerClient.controllable.GetComponent<Inventory>().activeItem.datablock != null)
+                                {
+                                    string heldItem = attackerClient.controllable.GetComponent<Inventory>().activeItem.datablock.name;
+
+                                    if (Vars.wandList.ContainsKey(attackerClient.userID.ToString()))
+                                    {
+                                        hasWand = true;
+                                        if (heldItem != Vars.wandName && Vars.wandName != "any")
+                                            hasWand = false;
+                                    }
+                                    if (Vars.portalList.Contains(attackerClient.userID.ToString()))
+                                    {
+                                        hasPortal = true;
+                                        if (heldItem != Vars.portalName && Vars.portalName != "any")
+                                            hasPortal = false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    object[] args = new object[] { attackerClient.userID.ToString(), damage };
+                    Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnAIHurt", false, args);
+                    if (hook == Hook.Success && args[1] != null && args[1] is DamageEvent)
+                        damage = (DamageEvent)args[1];
+                    else if (hook == Hook.Failure)
+                        damage.amount = 0;
+
+                    if (hasWand || hasPortal)
+                    {
+                        damage.amount = 0f;
+                        damage.status = LifeStatus.IsAlive;
+                    }
+
+                    if (Vars.destroyerList.Contains(attackerClient.userID.ToString()))
+                    {
+                        if (damage.victim.idMain.GetComponent<HostileWildlifeAI>() != null)
+                        {
+                            HostileWildlifeAI hostile = damage.victim.idMain.GetComponent<HostileWildlifeAI>();
+                            hostile.dropOnDeathString = null;
+                        }
+                        Vars.beingDestroyed.Add(damage.victim.idMain.gameObject);
+                        damage.amount = 1000f;
+                        damage.status = LifeStatus.WasKilled;
+                    }
+                }
+            }
         }
 
         public static void onHumanHurt(ref DamageEvent damage)
@@ -1518,17 +1597,20 @@ namespace RustEssentials.Util
             if (status == 200)
             {
                 NetUser user = (NetUser)args[0];
-                if (result.Contains("unauthorized"))
+                if (!string.IsNullOrEmpty(result))
                 {
-                    Vars.conLog.Error("OUI: Unable to connect to the Steam Web API for " + user.playerClient.userName + " (" + user.userID + "). Error:");
-                    Vars.conLog.Error("Invalid steamAPIKey.");
-                }
-                else
-                {
-                    SteamAPIFamilyShare jsonArray = JsonConvert.DeserializeObject<SteamAPIFamilyShare>(result);
-                    if (jsonArray.response.lender_steamid != "0")
+                    if (result.Contains("unauthorized"))
                     {
-                        Vars.otherKick(user, "Family Shared accounts are not allowed on this server.");
+                        Vars.conLog.Error("OUI: Unable to connect to the Steam Web API for " + user.playerClient.userName + " (" + user.userID + "). Error:", true);
+                        Vars.conLog.Error("Invalid steamAPIKey.", true);
+                    }
+                    else
+                    {
+                        SteamAPIFamilyShare jsonArray = JsonConvert.DeserializeObject<SteamAPIFamilyShare>(result);
+                        if (jsonArray != null && jsonArray.response.lender_steamid != "0")
+                        {
+                            Vars.otherKick(user, "Family Shared accounts are not allowed on this server.", true);
+                        }
                     }
                 }
             }
@@ -1540,7 +1622,7 @@ namespace RustEssentials.Util
             Callback callback = (Callback)info[0];
             HttpWebRequest request = (HttpWebRequest)info[1];
             NetUser user = (NetUser)info[2];
-            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            HttpWebResponse response = (HttpWebResponse)request.EndGetResponse(result);
             HttpStatusCode code = (HttpStatusCode)response.StatusCode;
             Stream stream = response.GetResponseStream();
             StreamReader reader = new StreamReader(stream);
@@ -1559,28 +1641,6 @@ namespace RustEssentials.Util
                 if (user != null)
                 {
                     string userName = user.displayName;
-
-                    if (Vars.enableAntiFamilyShare && !Vars.excludeFromFamilyCheck.Contains(Vars.findRank(user.userID.ToString())))
-                    {
-                        try
-                        {
-                            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://api.steampowered.com/IPlayerService/IsPlayingSharedGame/v0001/?key=" + Vars.steamAPIKey + "&steamid=" + user.userID + "&appid_playing=252490");
-                            request.UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36";
-                            request.Credentials = CredentialCache.DefaultCredentials;
-                            request.Proxy = null;
-                            request.Timeout = 60000;
-                            Callback callback = steamAPICallback;
-                            object[] info = new object[] { callback, request, user };
-
-                            request.BeginGetResponse(ReponseCallback, info);
-                        }
-                        catch (Exception ex)
-                        {
-                            Vars.conLog.Error("OUI: Unable to connect to the Steam Web API. Error:");
-                            Vars.conLog.Error(ex.Message);
-                        }
-                    }
-
                     RustProto.Avatar objB = user.LoadAvatar();
                     if (objB != null)
                     {
@@ -1608,7 +1668,7 @@ namespace RustEssentials.Util
                                         Items.addArmor(user.playerClient, "Invisible Boots", 1, true);
                                     }
 
-                                    if (Vars.onFirstPlayer && Vars.dropMode == 1)
+                                    if (Vars.onFirstPlayer)
                                     {
                                         Vars.conLog.Info("Spawning first airdrop(s)...");
                                         for (int i = 0; i < Vars.planeCount; i++)
@@ -1630,6 +1690,27 @@ namespace RustEssentials.Util
                                     }
 
                                     Vars.callHook("RustEssentialsAPI.Hooks", "OnUserInit", false, user.userID.ToString());
+
+                                    if (Vars.enableAntiFamilyShare && !Vars.excludeFromFamilyCheck.Contains(Vars.findRank(user.userID.ToString())))
+                                    {
+                                        try
+                                        {
+                                            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://api.steampowered.com/IPlayerService/IsPlayingSharedGame/v0001/?key=" + Vars.steamAPIKey + "&steamid=" + user.userID + "&appid_playing=252490");
+                                            request.UserAgent = "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36";
+                                            request.Credentials = CredentialCache.DefaultCredentials;
+                                            request.Proxy = null;
+                                            request.Timeout = 60000;
+                                            Callback callback = steamAPICallback;
+                                            object[] info = new object[] { callback, request, user };
+
+                                            request.BeginGetResponse(ReponseCallback, info);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Vars.conLog.Error("OUI: Unable to connect to the Steam Web API. Error:");
+                                            Vars.conLog.Error(ex.Message);
+                                        }
+                                    }
                                 }
                             }
                             else
@@ -1824,6 +1905,18 @@ namespace RustEssentials.Util
                         Vars.notifyList.Remove(user.userID.ToString());
 
                     PlayerClient playerClient = user.playerClient;
+
+                    if (playerClient != null)
+                    {
+                        string uid = playerClient.userID.ToString();
+                        if (Vars.ghostList.ContainsKey(uid))
+                        {
+                            Vars.simulateTeleport(playerClient, Vars.ghostList[uid], true);
+                            Vars.ghostList.Remove(uid);
+                            Vars.ghostPositions.Remove(uid);
+                        }
+                    }
+
                     onUserEssentialsDisconnect(player, user, playerClient);
                     user.connection.netUser = null;
                     CA.m_Connections.Remove(user.connection);
@@ -1836,13 +1929,6 @@ namespace RustEssentials.Util
                             if (controllable != null)
                             {
                                 Character forCharacter = controllable.character;
-                                string uid = playerClient.userID.ToString();
-                                if (Vars.ghostList.ContainsKey(uid))
-                                {
-                                    Vars.simulateTeleport(playerClient, Vars.ghostList[uid], true);
-                                    Vars.ghostList.Remove(uid);
-                                    Vars.ghostPositions.Remove(uid);
-                                }
                                 try
                                 {
                                     SM.SaveAvatar(forCharacter);
@@ -2400,6 +2486,90 @@ namespace RustEssentials.Util
             }
         }
 
+        public static GameObject spawnGeneric(GenericSpawner spawner, GenericSpawnerSpawnList.GenericSpawnInstance inst)
+        {
+            Vector3 spawnPos;
+            Vector3 vector;
+            Vector3 newRegion;
+            GameObject gameObject;
+            bool running = false;
+            int num = 0;
+            while (!running && num < 15)
+            {
+                Vector3 spawnRegion = spawner.transform.position + (UnityEngine.Random.insideUnitSphere * spawner.radius);
+                spawnRegion.y = spawner.transform.position.y;
+                Quaternion quaternion = Quaternion.Euler(new Vector3(0f, UnityEngine.Random.Range(0f, 360f), 0f));
+                if (inst.useNavmeshSample && TransformHelpers.GetGroundInfoNavMesh(spawnRegion, out newRegion, 15f, -1))
+                {
+                    spawnRegion = newRegion;
+                }
+                if (TransformHelpers.GetGroundInfoTerrainOnly(spawnRegion, 300f, out spawnPos, out vector))
+                {
+                    running = true;
+                    spawnPos.y = spawnPos.y + 0.05f;
+                    quaternion = TransformHelpers.LookRotationForcedUp(quaternion * Vector3.forward, vector);
+                    gameObject = (inst.forceStaticInstantiate || inst.prefabName.StartsWith(";") ? NetCull.InstantiateStatic(inst.prefabName, spawnPos, quaternion) : NetCull.InstantiateDynamic(inst.prefabName, spawnPos, quaternion));
+                    if (gameObject)
+                    {
+                        if (SpawnEntity.isAnimal(inst.prefabName))
+                        {
+                            object[] args = new object[] { inst.prefabName, spawnPos, quaternion, gameObject };
+                            Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnSpawnAI", false, args);
+                            if (Checks.ContinueHook(hook))
+                            {
+                                inst.spawned.Add(gameObject);
+                                gameObject.SendMessage("SetSpawner", spawner.gameObject);
+                            }
+                            else
+                            {
+                                Vars.beingDestroyed.Add(gameObject);
+                                TakeDamage.HurtSelf(gameObject.GetComponent<IDMain>(), 1000f);
+                                return null;
+                            }
+                        }
+                        else if (SpawnEntity.isResource(inst.prefabName))
+                        {
+                            object[] param = new object[] { inst.prefabName, spawnPos, quaternion, gameObject };
+                            Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnSpawnResource", false, param);
+                            if (Checks.ContinueHook(hook))
+                            {
+                                inst.spawned.Add(gameObject);
+                                gameObject.SendMessage("SetSpawner", spawner.gameObject);
+                            }
+                            else
+                            {
+                                NetCull.Destroy(gameObject);
+                                return null;
+                            }
+                        }
+                        else
+                        {
+                            object[] args = new object[] { inst.prefabName, spawnPos, quaternion, gameObject };
+                            Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnSpawnAI", false, args);
+                            if (Checks.ContinueHook(hook))
+                            {
+                                inst.spawned.Add(gameObject);
+                                gameObject.SendMessage("SetSpawner", spawner.gameObject);
+                            }
+                            else
+                            {
+                                Vars.beingDestroyed.Add(gameObject);
+                                TakeDamage.HurtSelf(gameObject.GetComponent<IDMain>(), 1000f);
+                                return null;
+                            }
+                        }
+                    }
+                    return gameObject;
+                }
+            }
+
+            if (!running)
+                Debug.Log(string.Concat("ERROR! Giving up spawning of instance :", inst.prefabName));
+
+            return null;
+        }
+
+
         public static void onUserConnected(NetUser user)
         {
             try
@@ -2425,6 +2595,10 @@ namespace RustEssentials.Util
                 if (Vars.currentBans.ContainsKey(steamUID))
                 {
                     Vars.kickPlayer(user, Vars.currentBanReasons[steamUID], true);
+                }
+                else if (Vars.currentIPBans.Contains(user.networkPlayer.ipAddress))
+                {
+                    Vars.kickPlayer(user, Vars.currentBanReasons[user.networkPlayer.ipAddress], true);
                 }
                 else
                 {
@@ -2514,7 +2688,8 @@ namespace RustEssentials.Util
                         {
                             Vars.conLog.Info("Player " + user.displayName + " (" + steamUID + ") has connected through steam group \"" + Vars.steamGroup + "\".");
 
-                            Broadcast.broadcastTo(user.networkPlayer, "The server is running RustEssentials v" + Vars.currentVersion + ".");
+                            if (Vars.versionOnJoin)
+                                Broadcast.broadcastTo(user.networkPlayer, "The server is running RustEssentials v" + Vars.currentVersion + ".");
                             if (Vars.motdList.ContainsKey("Join"))
                             {
                                 foreach (string s in Vars.motdList["Join"])
@@ -2556,7 +2731,8 @@ namespace RustEssentials.Util
                             }
                             else
                             {
-                                Broadcast.broadcastTo(user.networkPlayer, "The server is running RustEssentials v" + Vars.currentVersion + ".");
+                                if (Vars.versionOnJoin)
+                                    Broadcast.broadcastTo(user.networkPlayer, "The server is running RustEssentials v" + Vars.currentVersion + ".");
                                 if (Vars.motdList.Keys.Contains("Join"))
                                 {
                                     foreach (string s in Vars.motdList["Join"])
@@ -2952,41 +3128,45 @@ namespace RustEssentials.Util
                 }
                 else
                 {
-                    if (viewID == uLink.NetworkViewID.unassigned)
+                    Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnPlaceStructure", false, playerClient.userID.ToString(), item, SCDB, position, rotation);
+                    if (Checks.ContinueHook(hook))
                     {
-                        if (SCDB.MasterFromRay(new Ray(origin, direction)))
+                        if (viewID == uLink.NetworkViewID.unassigned)
                         {
-                            return;
-                        }
-                        if (structureToPlacePrefab.type != StructureComponent.StructureComponentType.Foundation)
-                        {
-                            Debug.Log("ERROR, tried to place non foundation structure on terrain!");
+                            if (SCDB.MasterFromRay(new Ray(origin, direction)))
+                            {
+                                return;
+                            }
+                            if (structureToPlacePrefab.type != StructureComponent.StructureComponentType.Foundation)
+                            {
+                                Debug.Log("ERROR, tried to place non foundation structure on terrain!");
+                            }
+                            else
+                            {
+                                component = NetCull.InstantiateClassic<StructureMaster>(Bundling.Load<StructureMaster>("content/structures/StructureMasterPrefab"), position, rotation, 0);
+                                component.SetupCreator(item.controllable);
+                            }
                         }
                         else
                         {
-                            component = NetCull.InstantiateClassic<StructureMaster>(Bundling.Load<StructureMaster>("content/structures/StructureMasterPrefab"), position, rotation, 0);
-                            component.SetupCreator(item.controllable);
+                            component = uLink.NetworkView.Find(viewID).gameObject.GetComponent<StructureMaster>();
                         }
-                    }
-                    else
-                    {
-                        component = uLink.NetworkView.Find(viewID).gameObject.GetComponent<StructureMaster>();
-                    }
-                    if (component == null)
-                    {
-                        Debug.Log("NO master, something seriously wrong");
-                    }
-                    else if (SCDB._structureToPlace.CheckLocation(component, position, rotation) && SCDB.CheckBlockers(position))
-                    {
-                        //Vars.conLog.Info(SCDB.structureToPlaceName);
-                        StructureComponent comp = NetCull.InstantiateStatic(SCDB.structureToPlaceName, position, rotation).GetComponent<StructureComponent>();
-                        if (comp != null)
+                        if (component == null)
                         {
-                            component.AddStructureComponent(comp);
-                            int count = 1;
-                            if (item.Consume(ref count))
+                            Debug.Log("NO master, something seriously wrong");
+                        }
+                        else if (SCDB._structureToPlace.CheckLocation(component, position, rotation) && SCDB.CheckBlockers(position))
+                        {
+                            //Vars.conLog.Info(SCDB.structureToPlaceName);
+                            StructureComponent comp = NetCull.InstantiateStatic(SCDB.structureToPlaceName, position, rotation).GetComponent<StructureComponent>();
+                            if (comp != null)
                             {
-                                item.inventory.RemoveItem(item.slot);
+                                component.AddStructureComponent(comp);
+                                int count = 1;
+                                if (item.Consume(ref count))
+                                {
+                                    item.inventory.RemoveItem(item.slot);
+                                }
                             }
                         }
                     }
@@ -3023,39 +3203,57 @@ namespace RustEssentials.Util
                         }
                         else
                         {
-                            DeployableObject component = NetCull.InstantiateStatic(DIDB.DeployableObjectPrefabName, vector3, quaternion).GetComponent<DeployableObject>(); // Creates model in world space
-                            if (component != null)
+                            if (Vars.bedAndBagDistance > 0 && Checks.nearHouse(vector3, Vars.bedAndBagDistance, playerClient.userID, true) && (DIDB.name == "Sleeping Bag" || DIDB.name == "Bed"))
                             {
-                                if (Vars.logBedPlacements && (component.name == "SleepingBagA(Clone)" || component.name == "SingleBed(Clone)"))
-                                    Vars.conLog.Info(playerClient.userName + " (" + playerClient.userID + ") placed a " + (component.name.Contains("Sleeping") ? "Sleeping Bag" : "Bed") + " at " + vector3);
-
-                                if (component.name == "WoodBox(Clone)" || component.name == "WoodBoxLarge(Clone)" || component.name == "SmallStash(Clone)" || component.name == "Campfire(Clone)" || component.name == "Furnace(Clone)")
+                                Rust.Notice.Popup(info.sender, "", "You can't place that within " + Vars.bedAndBagDistance + "m of another player's house.", 4f);
+                            }
+                            else
+                            {
+                                if (Checks.nearHouse(vector3, Vars.gatewayDistance, playerClient.userID, true) && DIDB.name == "Wood Gateway")
                                 {
-                                    Vars.conLog.Storage(playerClient.userName + " (" + playerClient.userID + ") placed a " + DIDB.name + " at " + vector3 + ".");
+                                    Rust.Notice.Popup(info.sender, "", "You can't place that within " + Vars.gatewayDistance + "m of another player's house.", 4f);
                                 }
-
-                                string fancyName = Vars.getFullObjectName(component.name);
-
-                                if (fancyName == "Camp Fire" || fancyName == "Furnace")
+                                else
                                 {
-                                    StructureMaster master;
-                                    if (Checks.onStructure(component.transform.position, out master))
-                                        Lights.add(playerClient.userID, component, master);
-                                    else
-                                        Lights.add(playerClient.userID, component);
-                                }
-
-                                try
-                                {
-                                    component.SetupCreator(item.controllable); // Sets object variables such as ownerID
-                                    DIDB.SetupDeployableObject(stream, rep, ref info, component, carrier);
-                                }
-                                finally
-                                {
-                                    int count = 1;
-                                    if (item.Consume(ref count))
+                                    Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnPlaceDeployable", false, playerClient.userID.ToString(), item, DIDB, vector3, quaternion);
+                                    if (Checks.ContinueHook(hook))
                                     {
-                                        item.inventory.RemoveItem(item.slot);
+                                        DeployableObject component = NetCull.InstantiateStatic(DIDB.DeployableObjectPrefabName, vector3, quaternion).GetComponent<DeployableObject>(); // Creates model in world space
+                                        if (component != null)
+                                        {
+                                            if (Vars.logBedPlacements && (component.name == "SleepingBagA(Clone)" || component.name == "SingleBed(Clone)"))
+                                                Vars.conLog.Info(playerClient.userName + " (" + playerClient.userID + ") placed a " + (component.name.Contains("Sleeping") ? "Sleeping Bag" : "Bed") + " at " + vector3);
+
+                                            if (component.name == "WoodBox(Clone)" || component.name == "WoodBoxLarge(Clone)" || component.name == "SmallStash(Clone)" || component.name == "Campfire(Clone)" || component.name == "Furnace(Clone)")
+                                            {
+                                                Vars.conLog.Storage(playerClient.userName + " (" + playerClient.userID + ") placed a " + DIDB.name + " at " + vector3 + ".");
+                                            }
+
+                                            string fancyName = Vars.getFullObjectName(component.name);
+
+                                            if (fancyName == "Camp Fire" || fancyName == "Furnace")
+                                            {
+                                                StructureMaster master;
+                                                if (Checks.onStructure(component.transform.position, out master))
+                                                    Lights.add(playerClient.userID, component, master);
+                                                else
+                                                    Lights.add(playerClient.userID, component);
+                                            }
+
+                                            try
+                                            {
+                                                component.SetupCreator(item.controllable); // Sets object variables such as ownerID
+                                                DIDB.SetupDeployableObject(stream, rep, ref info, component, carrier);
+                                            }
+                                            finally
+                                            {
+                                                int count = 1;
+                                                if (item.Consume(ref count))
+                                                {
+                                                    item.inventory.RemoveItem(item.slot);
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -3067,6 +3265,190 @@ namespace RustEssentials.Util
             {
                 Vars.conLog.Error("DEP: " + ex.ToString());
             }
+        }
+
+        public static bool runCommand(ref ConsoleSystem.Arg arg, bool bWantReply = true)
+        {
+            if (Vars.runningAPI)
+            {
+                try
+                {
+                    Type Command = Vars.API.GetType("RustEssentialsAPI.RCONCommand");
+                    MethodInfo Exists = Command.GetMethod("Exists");
+                    MethodInfo Execute = Command.GetMethod("Execute", BindingFlags.NonPublic | BindingFlags.Static);
+                    string commandLine = arg.GetString(0, "global.null");
+                    string[] commandArgs = commandLine.Split(' ');
+                    string command = commandArgs[0];
+                    Hook hook = Hook.Continue;
+                    bool containsCMD = (bool)Exists.Invoke(null, new object[] { command });
+
+                    if (containsCMD)
+                    {
+                        hook = (Hook)Execute.Invoke(null, new object[] { new object[] { command, commandLine, arg.argUser.playerClient } });
+                    }
+
+                    if (hook == Hook.Success)
+                    {
+                        if (bWantReply)
+                            arg.ReplyWith(string.Concat(new string[] { "Command ", arg.Class, ".", arg.Function, " was successfully executed." }));
+                        return true;
+                    }
+
+                    if (hook == Hook.Failure)
+                        return false;
+                }
+                catch (Exception ex)
+                {
+                    Vars.conLog.Error("RUNCMD: " + ex.ToString());
+                }
+            }
+
+            Type[] classes = ConsoleSystem.FindTypes(arg.Class);
+            if (classes.Count() == 0)
+            {
+                if (bWantReply)
+                    arg.ReplyWith(string.Concat("Console class could not be found: ", arg.Class));
+
+                return false;
+            }
+
+            if (bWantReply)
+                arg.ReplyWith(string.Concat(new string[] { "Command ", arg.Class, ".", arg.Function, " was successfully executed." }));
+
+            Type[] classesCopy = classes;
+            for (int i = 0; i < classesCopy.Count(); i++)
+            {
+                Type type = classesCopy[i];
+                MethodInfo method = type.GetMethod(arg.Function);
+                try
+                {
+                    if (method.IsStatic) // Is our command linked to a method?
+                    {
+                        if (!arg.CheckPermissions(method.GetCustomAttributes(true)))
+                        {
+                            if (bWantReply)
+                                arg.ReplyWith(string.Concat("No permission: ", arg.Class, ".", arg.Function));
+
+                            return false;
+                        }
+
+                        object[] objArray = new ConsoleSystem.Arg[] { arg };
+                        try
+                        {
+                            method.Invoke(null, objArray);
+                            arg = objArray[0] as ConsoleSystem.Arg;
+                            return true;
+                        }
+                        catch (Exception ex)
+                        {
+                            arg.ReplyWith(string.Concat(new string[] { "Something went wrong when calling the method: ", arg.Class, ".", arg.Function, " - ", ex.Message }));
+                            return false;
+                        }
+                    }
+                }
+                catch { }
+
+                FieldInfo field = type.GetField(arg.Function);
+                try
+                {
+                    if (field.IsStatic) // Is our command linked to a field?
+                    {
+                        if (!arg.CheckPermissions(field.GetCustomAttributes(true)))
+                        {
+                            if (bWantReply)
+                                arg.ReplyWith(string.Concat("No permission: ", arg.Class, ".", arg.Function));
+
+                            return false;
+                        }
+
+                        Type fieldType = field.FieldType;
+                        if (arg.HasArgs(1))
+                        {
+                            try
+                            {
+                                string str = field.GetValue(null).ToString();
+                                if (object.Equals(fieldType, typeof(float)))
+                                    field.SetValue(null, float.Parse(arg.Args[0]));
+
+                                if (object.Equals(fieldType, typeof(int)))
+                                    field.SetValue(null, int.Parse(arg.Args[0]));
+
+                                if (object.Equals(fieldType, typeof(string)))
+                                    field.SetValue(null, arg.Args[0]);
+
+                                if (object.Equals(fieldType, typeof(bool)))
+                                    field.SetValue(null, bool.Parse(arg.Args[0]));
+
+                                if (bWantReply)
+                                    arg.ReplyWith(string.Concat(new string[] { arg.Class, ".", arg.Function, ": changed \"", str, "\" to \"", field.GetValue(null).ToString(), "\" (", fieldType.Name, ")" }));
+                            }
+                            catch (Exception ex)
+                            {
+                                if (bWantReply)
+                                    arg.ReplyWith(string.Concat("Something went wrong when setting the field: ", arg.Class, ".", arg.Function));
+                            }
+                        }
+                        else if (bWantReply)
+                            arg.ReplyWith(string.Concat(new string[] { arg.Class, ".", arg.Function, ": \"", field.GetValue(null).ToString(), "\" (", fieldType.Name, ")" }));
+
+                        return true;
+                    }
+                }
+                catch { }
+
+                PropertyInfo property = type.GetProperty(arg.Function);
+                try
+                {
+                    if (property.GetGetMethod().IsStatic && property.GetSetMethod().IsStatic) // Is our command linked to a property?
+                    {
+                        if (!arg.CheckPermissions(property.GetCustomAttributes(true)))
+                        {
+                            if (bWantReply)
+                                arg.ReplyWith(string.Concat("No permission: ", arg.Class, ".", arg.Function));
+
+                            return false;
+                        }
+                        Type propertyType = property.PropertyType;
+                        if (arg.HasArgs(1))
+                        {
+                            try
+                            {
+                                string str1 = property.GetValue(null, null).ToString();
+                                if (object.Equals(propertyType, typeof(float)))
+                                    property.SetValue(null, float.Parse(arg.Args[0]), null);
+
+                                if (object.Equals(propertyType, typeof(int)))
+                                    property.SetValue(null, int.Parse(arg.Args[0]), null);
+
+                                if (object.Equals(propertyType, typeof(string)))
+                                    property.SetValue(null, arg.Args[0], null);
+
+                                if (object.Equals(propertyType, typeof(bool)))
+                                    property.SetValue(null, bool.Parse(arg.Args[0]), null);
+
+                                if (bWantReply)
+                                    arg.ReplyWith(string.Concat(new string[] { arg.Class, ".", arg.Function, ": changed \"", str1, "\" to \"", property.GetValue(null, null).ToString(), "\" (", propertyType.Name, ")" }));
+
+                            }
+                            catch (Exception ex)
+                            {
+                                if (bWantReply)
+                                    arg.ReplyWith(string.Concat("Something went wrong when setting the property: ", arg.Class, ".", arg.Function));
+                            }
+                        }
+                        else if (bWantReply)
+                            arg.ReplyWith(string.Concat(new string[] { arg.Class, ".", arg.Function, ": \"", property.GetValue(null, null).ToString(), "\" (", propertyType.Name, ")" }));
+
+                        return true;
+                    }
+                }
+                catch { }
+            }
+
+            if (bWantReply)
+                arg.ReplyWith(string.Concat("Command not found: ", arg.Class, ".", arg.Function));
+
+            return false;
         }
 
         public static void reloadWeapon(BulletWeaponItem<BulletWeaponDataBlock> BWI)
@@ -3840,7 +4222,25 @@ namespace RustEssentials.Util
                                     float efficiency = MWDB.efficiencies[(int)staticTree];
                                     if (flag2) // if a tree
                                     {
-                                        MWDB.resourceGatherLevel += efficiency;
+                                        string currentItem = item.datablock.name;
+                                        switch (currentItem)
+                                        {
+                                            case "Rock":
+                                                MWDB.resourceGatherLevel += efficiency * Vars.rockMultiplier;
+                                                break;
+                                            case "Stone Hatchet":
+                                                MWDB.resourceGatherLevel += efficiency * Vars.sHatchetMultiplier;
+                                                break;
+                                            case "Hatchet":
+                                                MWDB.resourceGatherLevel += efficiency * Vars.hatchetMultiplier;
+                                                break;
+                                            case "Pick Axe":
+                                                MWDB.resourceGatherLevel += efficiency * Vars.pickaxeMultiplier;
+                                                break;
+                                            default:
+                                                MWDB.resourceGatherLevel += efficiency;
+                                                break;
+                                        }
                                         if (MWDB.resourceGatherLevel >= 1f)
                                         {
                                             int num4;
@@ -3915,45 +4315,92 @@ namespace RustEssentials.Util
             {
                 return false;
             }
+            foreach (var v in RT.resourcesAvailable)
+            {
+                Vars.conLog.Info(v.AmountLeft() + " : " + v.ResourceItemName);
+            }
             ResourceGivePair item = RT.resourcesAvailable[UnityEngine.Random.Range(0, RT.resourcesAvailable.Count)];
-
-            switch (reciever.activeItem.datablock.name)
+            string currentItem = reciever.activeItem.datablock.name;
+            float factor = 1;
+            float amountAdded = 0;
+            switch (currentItem)
             {
                 case "Rock":
-                    RT.gatherProgress += efficiency * RT.gatherEfficiencyMultiplier * Vars.rockMultiplier;
+                    factor = Vars.rockMultiplier;
+                    amountAdded = efficiency * RT.gatherEfficiencyMultiplier * Vars.rockMultiplier;
+                    RT.gatherProgress += amountAdded;
                     break;
                 case "Stone Hatchet":
-                    RT.gatherProgress += efficiency * RT.gatherEfficiencyMultiplier * Vars.sHatchetMultiplier;
+                    factor = Vars.sHatchetMultiplier;
+                    amountAdded = efficiency * RT.gatherEfficiencyMultiplier * Vars.sHatchetMultiplier;
+                    RT.gatherProgress += amountAdded;
                     break;
                 case "Hatchet":
-                    RT.gatherProgress += efficiency * RT.gatherEfficiencyMultiplier * Vars.hatchetMultiplier;
+                    factor = Vars.hatchetMultiplier;
+                    amountAdded = efficiency * RT.gatherEfficiencyMultiplier * Vars.hatchetMultiplier;
+                    RT.gatherProgress += amountAdded;
                     break;
                 case "Pick Axe":
-                    RT.gatherProgress += efficiency * RT.gatherEfficiencyMultiplier * Vars.pickaxeMultiplier;
+                    factor = Vars.pickaxeMultiplier;
+                    amountAdded = efficiency * RT.gatherEfficiencyMultiplier * Vars.pickaxeMultiplier;
+                    RT.gatherProgress += amountAdded;
                     break;
                 default:
-                    RT.gatherProgress += efficiency * RT.gatherEfficiencyMultiplier;
+                    amountAdded = efficiency * RT.gatherEfficiencyMultiplier;
+                    RT.gatherProgress += amountAdded;
                     break;
             }
-            int a = Mathf.Abs((int)RT.gatherProgress);
+            int abs = Mathf.Abs((int)RT.gatherProgress);
 
-            RT.gatherProgress = Mathf.Clamp(RT.gatherProgress, 0f, a);
-            a = Mathf.Min(a, item.AmountLeft());
-            if (a > 0)
+            RT.gatherProgress = Mathf.Clamp(RT.gatherProgress, 0f, abs);
+            int toAdd = abs;
+            if (!((Vars.overrideWoodResources || Vars.multiplyMaxWood) && RT.type == ResourceTarget.ResourceTargetType.WoodPile) &&
+                !((Vars.overrideOreResources || Vars.multiplyMaxOre) && (RT.type == ResourceTarget.ResourceTargetType.Rock1 || RT.type == ResourceTarget.ResourceTargetType.Rock2 || RT.type == ResourceTarget.ResourceTargetType.Rock3)) &&
+                !((Vars.overrideAIResources || Vars.multiplyMaxAIResources) && RT.type == ResourceTarget.ResourceTargetType.Animal))
             {
-                int num2 = reciever.AddItemAmount(item.ResourceItemDataBlock, a);
-                if (num2 < a)
-                {
-                    int amount = a - num2;
+                toAdd = Mathf.Min(toAdd, item.AmountLeft());
+            }
 
-                    item.Subtract(amount);
-                    RT.gatherProgress -= amount;
-                    Rust.Notice.Inventory(reciever.networkView.owner, amount.ToString() + " x " + item.ResourceItemName);
+            if (toAdd > 0)
+            {
+                int amountLeft = item.AmountLeft();
+                int oldAmountLeft = amountLeft;
+                int oldToAdd = toAdd;
+                if ((Vars.multiplyMaxWood && RT.type == ResourceTarget.ResourceTargetType.WoodPile) ||
+                    (Vars.multiplyMaxOre && (RT.type == ResourceTarget.ResourceTargetType.Rock1 || RT.type == ResourceTarget.ResourceTargetType.Rock2 || RT.type == ResourceTarget.ResourceTargetType.Rock3)) ||
+                    (Vars.multiplyMaxAIResources && RT.type == ResourceTarget.ResourceTargetType.Animal))
+                {
+                    amountLeft = (int)Mathf.Round(amountLeft * factor);
+                }
+                if ((Vars.multiplyMaxWood && RT.type == ResourceTarget.ResourceTargetType.WoodPile) ||
+                    (Vars.multiplyMaxOre && (RT.type == ResourceTarget.ResourceTargetType.Rock1 || RT.type == ResourceTarget.ResourceTargetType.Rock2 || RT.type == ResourceTarget.ResourceTargetType.Rock3)) ||
+                    (Vars.multiplyMaxAIResources && RT.type == ResourceTarget.ResourceTargetType.Animal))
+                {
+                    toAdd = Mathf.Min(toAdd, amountLeft);
+                }
+                int num2 = reciever.AddItemAmount(item.ResourceItemDataBlock, toAdd);
+                if (num2 < toAdd)
+                {
+                    int amountGiven = toAdd - num2;
+                    item.Subtract((amountGiven > amountLeft ? oldAmountLeft : (int)Mathf.Round(amountGiven/factor)));
+                    Rust.Notice.Inventory(reciever.networkView.owner, amountGiven.ToString() + " x " + item.ResourceItemName);
+                    if (toAdd < oldToAdd)
+                        num2 += toAdd; 
+                    RT.gatherProgress -= (oldToAdd - num2);
                     RT.SendMessage("ResourcesGathered", SendMessageOptions.DontRequireReceiver);
                 }
                 else
                 {
                     Rust.Notice.Popup(reciever.networkView.owner, "", "Your inventory is full!", 3f);
+                    if ((Vars.overrideWoodResources && RT.type == ResourceTarget.ResourceTargetType.WoodPile) ||
+                        (Vars.overrideOreResources && (RT.type == ResourceTarget.ResourceTargetType.Rock1 || RT.type == ResourceTarget.ResourceTargetType.Rock2 || RT.type == ResourceTarget.ResourceTargetType.Rock3)) ||
+                        (Vars.overrideAIResources && RT.type == ResourceTarget.ResourceTargetType.Animal))
+                    {
+                        if (RT.gatherProgress > amountLeft)
+                        {
+                            RT.gatherProgress = amountLeft - amountAdded;
+                        }
+                    }
                 }
             }
             if (!item.AnyLeft())
@@ -4174,29 +4621,9 @@ namespace RustEssentials.Util
             PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == workbenchInv.networkView.owner);
             if (playerClient != null)
             {
-                if (workbenchInv.GetComponent<PlayerInventory>() != null)
-                {
-                    if (!workbenchInv.GetComponent<PlayerInventory>().KnowsBP(BDB) && Vars.enableAntiBP && !Vars.bypassList.Contains(playerClient.userID.ToString()))
-                    {
-                        //Broadcast.noticeTo(workbenchInv.networkView.owner, "♨", "You have not researched this item!", 4, true);
-                        RustEssentialsBootstrap._load.loadBans();
-                        if (!Vars.currentBans.ContainsKey(playerClient.userID.ToString()))
-                        {
-                            Broadcast.broadcastTo(playerClient.netPlayer, "You were banned! Reason:");
-                            Broadcast.broadcastTo(playerClient.netPlayer, "[AH] Crafted item without researching it.");
-                            playerClient.netUser.Kick(NetError.NoError, false);
-                            Broadcast.broadcastAll("Player " + playerClient.userName + " (" + playerClient.userID + ") was banned. Reason:");
-                            Broadcast.broadcastAll("[AH] Crafted item without researching it.");
-                            Vars.currentBans.Add(playerClient.userID.ToString(), playerClient.userName);
-                            Vars.currentBanReasons.Add(playerClient.userID.ToString(), "[AH] Crafted item without researching it.");
-                            Vars.saveBans();
-                        }
-                        return false;
-                    }
-                }
                 if (!Vars.craftList.Contains(playerClient.userID.ToString()))
                 {
-                    Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnCraftItem", false, playerClient.userID.ToString(), BDB.resultItem, BDB.numResultItem, amount);
+                    Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnCraftItem", false, playerClient.userID.ToString(), BDB, BDB.numResultItem, amount);
                     if (Checks.ContinueHook(hook))
                     {
                         for (int i = 0; i < BDB.ingredients.Length; i++)
@@ -4223,6 +4650,59 @@ namespace RustEssentials.Util
                     workbenchInv.AddItemAmount(BDB.resultItem, amount * BDB.numResultItem);
             }
             return true;
+        }
+
+        public static void startCrafting(CraftingInventory inv, BlueprintDataBlock BDB, int amount, ulong startTime)
+        {
+            bool flag = inv.crafting.inProgress;
+            PlayerClient playerClient;
+            bool found = Vars.getPlayerClient(inv.networkView.owner, out playerClient);
+            bool continueMethod = true;
+            if (inv.GetComponent<PlayerInventory>() != null)
+            {
+                if (!inv.GetComponent<PlayerInventory>().KnowsBP(BDB) && Vars.enableAntiBP && !Vars.bypassList.Contains(playerClient.userID.ToString()))
+                {
+                    //Broadcast.noticeTo(workbenchInv.networkView.owner, "♨", "You have not researched this item!", 4, true);
+                    RustEssentialsBootstrap._load.loadBans();
+                    if (!Vars.currentBans.ContainsKey(playerClient.userID.ToString()))
+                    {
+                        Broadcast.broadcastTo(playerClient.netPlayer, "You were banned! Reason:");
+                        Broadcast.broadcastTo(playerClient.netPlayer, "[AH] Crafted item without researching it.");
+                        Broadcast.broadcastToConsole(playerClient.netPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36] banned[color white]! Reason:");
+                        Broadcast.broadcastToConsole(playerClient.netPlayer, "[color white] [AH] Crafted item without researching it.");
+                        playerClient.netUser.Kick(NetError.NoError, false);
+                        Broadcast.broadcastAll("Player " + playerClient.userName + " (" + playerClient.userID + ") was banned. Reason:");
+                        Broadcast.broadcastAll("[AH] Crafted item without researching it.");
+                        Vars.currentBans.Add(playerClient.userID.ToString(), playerClient.userName);
+                        Vars.currentBanReasons.Add(playerClient.userID.ToString(), "[AH] Crafted item without researching it.");
+                        Vars.saveBans();
+                        continueMethod = false;
+                    }
+                }
+            }
+            if (continueMethod)
+            {
+                Hook hook = Hook.Continue;
+                if (found)
+                    hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnStartCrafting", false, playerClient.userID.ToString(), BDB, BDB.numResultItem, amount);
+                if (!found || Checks.ContinueHook(hook))
+                {
+                    if (inv.crafting.Restart(inv, amount, BDB, startTime))
+                    {
+                        inv._lastThinkTime = NetCull.time;
+                        if (crafting.timescale != 1f)
+                        {
+                            inv.crafting.duration = Math.Max(0.1f, inv.crafting.duration * crafting.timescale);
+                        }
+                        if (inv.IsInstant())
+                        {
+                            inv.crafting.duration = 0.1f;
+                        }
+                        inv.UpdateCraftingDataToOwner();
+                        inv.BeginCrafting();
+                    }
+                }
+            }
         }
 
         private static float lastDecayThink = 0;
@@ -4269,7 +4749,14 @@ namespace RustEssentials.Util
                                         {
                                             float damageQuantity = ((Mathf.Clamp(UnityEngine.Time.time - ED.lastDecayThink, 0f, Convert.ToSingle(interval)) / (Convert.ToSingle(interval) * 144f)) * ED._takeDamage.maxHealth) * ED.decayMultiplier;
 
-                                            if (TakeDamage.HurtSelf(ED, damageQuantity, null) == LifeStatus.WasKilled)
+                                            object[] args = new object[] { ED._deployable, damageQuantity };
+                                            Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnDeployableDecay", false, args);
+                                            if (hook == Hook.Success && args[1] != null && args[1] is float)
+                                                damageQuantity = (float)args[1];
+                                            else if (hook == Hook.Failure)
+                                                damageQuantity = 0;
+
+                                            if (damageQuantity > 0 && TakeDamage.HurtSelf(ED, damageQuantity, null) == LifeStatus.WasKilled)
                                             {
                                                 return EnvDecay.ThinkResult.Done;
                                             }
@@ -4302,7 +4789,15 @@ namespace RustEssentials.Util
                                     if (!Vars.checkIfInZone || (Vars.checkIfInZone && !Checks.inZone(position, out zone)))
                                     {
                                         float damageQuantity = ((Mathf.Clamp(UnityEngine.Time.time - ED.lastDecayThink, 0f, decay.decaytickrate) / decay.deploy_maxhealth_sec) * ED._takeDamage.maxHealth) * ED.decayMultiplier;
-                                        if (TakeDamage.HurtSelf(ED, damageQuantity, null) == LifeStatus.WasKilled)
+
+                                        object[] args = new object[] { ED._deployable, damageQuantity };
+                                        Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnDeployableDecay", false, args);
+                                        if (hook == Hook.Success && args[1] != null && args[1] is float)
+                                            damageQuantity = (float)args[1];
+                                        else if (hook == Hook.Failure)
+                                            damageQuantity = 0;
+
+                                        if (damageQuantity > 0 && TakeDamage.HurtSelf(ED, damageQuantity, null) == LifeStatus.WasKilled)
                                         {
                                             return EnvDecay.ThinkResult.Done;
                                         }
@@ -4374,8 +4869,8 @@ namespace RustEssentials.Util
             }
         }
 
-        public static float lastDecayTime = 0;
-        public static float timeSinceDecay = 0;
+        public static Dictionary<StructureMaster, float> lastDecayTimes = new Dictionary<StructureMaster, float>();
+        public static Dictionary<StructureMaster, float> timeSinceDecays = new Dictionary<StructureMaster, float>();
         public static StructureMaster.DecayStatus doDecay(StructureMaster SM)
         {
             try
@@ -4402,15 +4897,21 @@ namespace RustEssentials.Util
                             return StructureMaster.DecayStatus.Delaying;
                         }
                         float num3 = 0.1f;
-                        if (lastDecayTime == 0)
-                            lastDecayTime = UnityEngine.Time.time;
-                        timeSinceDecay += UnityEngine.Time.time - lastDecayTime;
-                        lastDecayTime = UnityEngine.Time.time;
 
-                        if (timeSinceDecay < 1)
+                        if (!lastDecayTimes.ContainsKey(SM))
+                            lastDecayTimes.Add(SM, 0);
+                        if (!timeSinceDecays.ContainsKey(SM))
+                            timeSinceDecays.Add(SM, 0);
+
+                        if (lastDecayTimes[SM] == 0)
+                            lastDecayTimes[SM] = UnityEngine.Time.time;
+                        timeSinceDecays[SM] += UnityEngine.Time.time - lastDecayTimes[SM];
+                        lastDecayTimes[SM] = UnityEngine.Time.time;
+
+                        if (timeSinceDecays[SM] < 1)
                             return StructureMaster.DecayStatus.PentUpDecay;
 
-                        timeSinceDecay = 0;
+                        timeSinceDecays[SM] = 0;
 
 
                         //SM._pentUpDecayTime += secondsSinceDecay;
@@ -4450,6 +4951,14 @@ namespace RustEssentials.Util
                                             if (damage != null)
                                             {
                                                 float damageQuantity = ((damage.maxHealth * num3) * UnityEngine.Random.Range(0.75f, 1.25f)) /* * SM._decayRate */;
+
+                                                object[] args = new object[] { component, damageQuantity };
+                                                Hook hook = Vars.callHook("RustEssentialsAPI.Hooks", "OnStructureDecay", false, args);
+                                                if (hook == Hook.Success && args[1] != null && args[1] is float)
+                                                    damageQuantity = (float)args[1];
+                                                else if (hook == Hook.Failure)
+                                                    damageQuantity = 0;
+
                                                 if (((component.type == StructureComponent.StructureComponentType.Wall) || (component.type == StructureComponent.StructureComponentType.Doorway)) || (component.type == StructureComponent.StructureComponentType.WindowWall))
                                                 {
                                                     RaycastHit hit;
@@ -4825,7 +5334,8 @@ namespace RustEssentials.Util
                                                                     {
                                                                         chase = BasicWildLifeAI.AISound.ChaseClose;
                                                                     }
-                                                                    HWAI.NetworkSound(chase);
+                                                                    if (chase != null)
+                                                                        HWAI.NetworkSound(chase);
                                                                     HWAI.chaseSoundClock.ResetRandomDurationSeconds(1.5, 2.5);
                                                                 }
                                                                 HWAI._wildMove.SetMoveTarget(HWAI._targetTD.gameObject, HWAI.runSpeed);
@@ -5099,6 +5609,7 @@ namespace RustEssentials.Util
 
                 if (Vars.checkMode == 1)
                     Vars.REB.StartCoroutine(Antihack.individualMovementCheck(forCharacter));
+                Vars.callHook("RustEssentialsAPI.Hooks", "OnSpawnPlayer", false, playerFor.userID.ToString(), forCharacter, zero);
             }
             return forCharacter;
         }
