@@ -1664,39 +1664,42 @@ namespace RustEssentials.Util
             if (playerClient != null && playerClient.controllable != null)
             {
                 Inventory inventory = playerClient.controllable.GetComponent<Inventory>();
-                int slot = 0;
-
-                if (itemName.Contains("Helmet"))
-                    slot = 36;
-                if (itemName.Contains("Vest"))
-                    slot = 37;
-                if (itemName.Contains("Pants"))
-                    slot = 38;
-                if (itemName.Contains("Boots"))
-                    slot = 39;
-
-                if (slot > 0)
+                if (inventory != null)
                 {
-                    if (replaceCurrent)
-                        inventory.RemoveItem(slot);
+                    int slot = 0;
 
-                    amount = Math.Min(amount, 50);
-                    for (int i = 1; i <= amount; i++)
+                    if (itemName.Contains("Helmet"))
+                        slot = 36;
+                    if (itemName.Contains("Vest"))
+                        slot = 37;
+                    if (itemName.Contains("Pants"))
+                        slot = 38;
+                    if (itemName.Contains("Boots"))
+                        slot = 39;
+
+                    if (slot > 0)
                     {
-                        if (!inventory.IsSlotOccupied(slot) && autoEquip)
-                            inventory.AddItemAmount(DatablockDictionary.GetByName(itemName), 1, Inventory.Slot.Preference.Define(Inventory.Slot.Kind.Armor, false, Inventory.Slot.KindFlags.Armor));
-                        else
+                        if (replaceCurrent)
+                            inventory.RemoveItem(slot);
+
+                        amount = Math.Min(amount, 50);
+                        for (int i = 1; i <= amount; i++)
                         {
-                            if (hasVacantSlots(inventory))
-                                inventory.AddItemAmount(DatablockDictionary.GetByName(itemName), 1);
-                            else if (Vars.enableDropItem)
+                            if (!inventory.IsSlotOccupied(slot) && autoEquip)
+                                inventory.AddItemAmount(DatablockDictionary.GetByName(itemName), 1, Inventory.Slot.Preference.Define(Inventory.Slot.Kind.Armor, false, Inventory.Slot.KindFlags.Armor));
+                            else
                             {
-                                dropItem(playerClient, itemName, 1, -1, -1, null);
-                                didDropItems = true;
+                                if (hasVacantSlots(inventory))
+                                    inventory.AddItemAmount(DatablockDictionary.GetByName(itemName), 1);
+                                else if (Vars.enableDropItem)
+                                {
+                                    dropItem(playerClient, itemName, 1, -1, -1, null);
+                                    didDropItems = true;
+                                }
                             }
                         }
+                        return true;
                     }
-                    return true;
                 }
             }
             return false;

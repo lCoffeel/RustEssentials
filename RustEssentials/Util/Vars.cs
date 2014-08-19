@@ -523,7 +523,7 @@ namespace RustEssentials.Util
         {
             Vars.conLog.Info("Shutdown executed. Reason:");
             Vars.conLog.Info(reason);
-            Vars.callHook("RustEssentialsAPI.Hooks", "OnServerShutdown", false);
+            Vars.callHook("RustEssentialsAPI.Hooks", "OnServerShutdown", false, reason);
         }
 
         public static string filterNames(string playerName, string uid)

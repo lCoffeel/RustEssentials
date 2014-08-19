@@ -512,12 +512,12 @@ namespace RustEssentials.Util
             sb.AppendLine("[Settings]");
             sb.AppendLine("# If true, the \"RustEssentials\" folder will be placed in the \"save\" folder.");
             sb.AppendLine("useDefaultPaths=true");
+            sb.AppendLine("# Sets the directory path for the \"RustEssentials\" folder.");
+            sb.AppendLine("configPath=");
             sb.AppendLine("# Sets the directory path for log files. Leave this blank if you want it to stay inside the \"RustEssentials\" folder.");
             sb.AppendLine("logPath=");
             sb.AppendLine("# Sets the directory path for loot tables. Leave this blank if you want it to stay inside the \"RustEssentials\" folder.");
             sb.AppendLine("tablesPath=");
-            sb.AppendLine("# Sets the directory path for the \"RustEssentials\" folder.");
-            sb.AppendLine("configPath=");
             sb.AppendLine("# Sets the directory path for the \"BigBrother\" folder. Leave this blank if you want it to stay inside the \"RustEssentials\\Logs\" folder.");
             sb.AppendLine("bigBrotherPath=");
             sb.AppendLine("# Sets the directory path for the \"Storage Logs\" folder. Leave this blank if you want it to stay inside the \"RustEssentials\\Logs\\BigBrother\" folder.");

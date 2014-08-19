@@ -81,54 +81,70 @@ namespace RustEssentials.Util
                                             if (value.StartsWith(".\\"))
                                                 value = Vars.rootDir + value.Substring(1);
 
-                                            if (!Vars.useDefaultPaths && value != "")
+                                            if (!Vars.useDefaultPaths)
                                             {
-                                                Vars.logsDir = Path.Combine(value, "Logs");
+                                                if (value != "")
+                                                    Vars.logsDir = Path.Combine(value, "Logs");
+                                                else
+                                                    Vars.logsDir = Path.Combine(Vars.essentialsDir, "Logs");
                                             }
                                             break;
                                         case "tablesPath":
                                             if (value.StartsWith(".\\"))
                                                 value = Vars.rootDir + value.Substring(1);
 
-                                            if (!Vars.useDefaultPaths && value != "")
+                                            if (!Vars.useDefaultPaths)
                                             {
-                                                Vars.tablesDir = Path.Combine(value, "Tables");
+                                                if (value != "")
+                                                    Vars.tablesDir = Path.Combine(value, "Tables");
+                                                else
+                                                    Vars.tablesDir = Path.Combine(Vars.essentialsDir, "Tables");
                                             }
                                             break;
                                         case "configPath":
                                             if (value.StartsWith(".\\"))
                                                 value = Vars.rootDir + value.Substring(1);
 
-                                            if (!Vars.useDefaultPaths && value != "")
+                                            if (!Vars.useDefaultPaths)
                                             {
-                                                Vars.essentialsDir = Path.Combine(value, "RustEssentials");
+                                                if (value != "")
+                                                    Vars.essentialsDir = Path.Combine(value, "RustEssentials");
                                             }
                                             break;
                                         case "bigBrotherPath":
                                             if (value.StartsWith(".\\"))
                                                 value = Vars.rootDir + value.Substring(1);
 
-                                            if (!Vars.useDefaultPaths && value != "")
+                                            if (!Vars.useDefaultPaths)
                                             {
-                                                Vars.bigBrotherDir = Path.Combine(value, "BigBrother");
+                                                if (value != "")
+                                                    Vars.bigBrotherDir = Path.Combine(value, "BigBrother");
+                                                else
+                                                    Vars.bigBrotherDir = Path.Combine(Vars.logsDir, "BigBrother");
                                             }
                                             break;
                                         case "storageLogsPath":
                                             if (value.StartsWith(".\\"))
                                                 value = Vars.rootDir + value.Substring(1);
 
-                                            if (!Vars.useDefaultPaths && value != "")
+                                            if (!Vars.useDefaultPaths)
                                             {
-                                                Vars.storageLogsDir = Path.Combine(value, "Storage Logs");
+                                                if (value != "")
+                                                    Vars.storageLogsDir = Path.Combine(value, "Storage Logs");
+                                                else
+                                                    Vars.storageLogsDir = Path.Combine(Vars.bigBrotherDir, "Storage Logs");
                                             }
                                             break;
                                         case "sleeperDeathLogsPath":
                                             if (value.StartsWith(".\\"))
                                                 value = Vars.rootDir + value.Substring(1);
 
-                                            if (!Vars.useDefaultPaths && value != "")
+                                            if (!Vars.useDefaultPaths)
                                             {
-                                                Vars.sleeperDeathLogsDir = Path.Combine(value, "Sleeper Death Logs");
+                                                if (value != "")
+                                                    Vars.sleeperDeathLogsDir = Path.Combine(value, "Sleeper Death Logs");
+                                                else
+                                                    Vars.sleeperDeathLogsDir = Path.Combine(Vars.bigBrotherDir, "Sleeper Death Logs");
                                             }
                                             break;
                                     }

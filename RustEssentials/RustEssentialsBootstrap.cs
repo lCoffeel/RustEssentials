@@ -179,11 +179,6 @@ namespace RustEssentials
             {
                 if (!Vars.useDefaultPaths)
                 {
-                    Vars.logsDir = Path.Combine(Vars.essentialsDir, "Logs");
-                    Vars.tablesDir = Path.Combine(Vars.essentialsDir, "Tables");
-                    Vars.bigBrotherDir = Path.Combine(Vars.logsDir, "BigBrother");
-                    Vars.storageLogsDir = Path.Combine(Vars.bigBrotherDir, "Storage Logs");
-                    Vars.sleeperDeathLogsDir = Path.Combine(Vars.bigBrotherDir, "Sleeper Death Logs");
                     Vars.cfgFile = Path.Combine(Vars.essentialsDir, "config.ini");
                     Vars.whiteListFile = Path.Combine(Vars.essentialsDir, "whitelist.txt");
                     Vars.ranksFile = Path.Combine(Vars.essentialsDir, "ranks.ini");
@@ -205,7 +200,6 @@ namespace RustEssentials
                     Vars.requestCooldownsFile = Path.Combine(Vars.essentialsDir, "tpaPer_cooldowns.dat");
                     Vars.requestCooldownsAllFile = Path.Combine(Vars.essentialsDir, "tpaAll_cooldowns.dat");
                     Vars.itemControllerFile = Path.Combine(Vars.essentialsDir, "controller.ini");
-                    
                     Vars.deathsFile = Path.Combine(Vars.essentialsDir, "deaths.dat");
                     Vars.decayFile = Path.Combine(Vars.essentialsDir, "decay.ini");
                     Vars.donorKitsFile = Path.Combine(Vars.essentialsDir, "donorkits.ini");

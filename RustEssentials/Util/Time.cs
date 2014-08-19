@@ -23,8 +23,12 @@ namespace RustEssentials.Util
             }
             if (!b && getDayLength() >= 999999999f && getNightLength() >= 999999999f)
             {
-                setDayLength(45f);
-                setNightLength(15f);
+                float dayLength = 45f;
+                float nightLength = 15f;
+                float.TryParse(Config.dayLength, out dayLength);
+                float.TryParse(Config.nightLength, out nightLength);
+                setDayLength(dayLength);
+                setNightLength(nightLength);
             }
         }
 
@@ -48,7 +52,7 @@ namespace RustEssentials.Util
             env.daylength = f;
         }
 
-        public static double getTime()
+        public static float getTime()
         {
             return EnvironmentControlCenter.Singleton.GetTime();
         }
