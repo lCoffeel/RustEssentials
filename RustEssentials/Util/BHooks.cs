@@ -2407,8 +2407,6 @@ namespace RustEssentials.Util
                                         Vars.playerKills[killerUID] += 1;
 
                                     Data.updateKillsData(killerUID, Vars.playerKills[killerUID]);
-
-                                    Vars.diedToBetty.RemoveByID(playerClient.userID);
                                     return;
                                 }
 
@@ -4315,10 +4313,6 @@ namespace RustEssentials.Util
             {
                 return false;
             }
-            foreach (var v in RT.resourcesAvailable)
-            {
-                Vars.conLog.Info(v.AmountLeft() + " : " + v.ResourceItemName);
-            }
             ResourceGivePair item = RT.resourcesAvailable[UnityEngine.Random.Range(0, RT.resourcesAvailable.Count)];
             string currentItem = reciever.activeItem.datablock.name;
             float factor = 1;
@@ -5790,7 +5784,20 @@ namespace RustEssentials.Util
             {
                 return false;
             }
-            if (!Vars.bettyDeathDeleteItems)
+
+            bool dropBag = true;
+
+            if (inventory.networkView != null && inventory.networkView.owner != null)
+            {
+                PlayerClient playerClient = Vars.getPlayerClient(inventory.networkView.owner);
+                if (playerClient != null && Vars.diedToBetty.KilledByBetty(playerClient.userID))
+                {
+                    dropBag = !Vars.bettyDeathDeleteItems;
+                    Vars.diedToBetty.RemoveByID(playerClient.userID);
+                }
+            }
+
+            if (dropBag)
             {
                 try
                 {
