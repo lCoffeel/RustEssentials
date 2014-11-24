@@ -26,7 +26,20 @@ namespace RustEssentials.Util
         {
             if (ConsoleNetworker.singleton != null)
             {
-                ConsoleNetworker.singleton.networkView.RPC<string>("CL_ConsoleMessage", players, fullString);
+                List<uLink.NetworkPlayer> newPlayers = new List<uLink.NetworkPlayer>();
+                if (Vars.modMessageRanks.Count > 0)
+                {
+                    foreach (var netPlayer in players)
+                    {
+                        PlayerClient player;
+                        if (Vars.getPlayerClient(netPlayer, out player))
+                        {
+                            if (Vars.modMessageRanks.Contains(Vars.findRank(player.userID)))
+                                newPlayers.Add(netPlayer);
+                        }
+                    }
+                }
+                ConsoleNetworker.singleton.networkView.RPC<string>("CL_ConsoleMessage", newPlayers.Count > 0 ? newPlayers : players, fullString);
             }
         }
 
@@ -34,7 +47,19 @@ namespace RustEssentials.Util
         {
             if (ConsoleNetworker.singleton != null)
             {
-                ConsoleNetworker.singleton.networkView.RPC<string>("CL_ConsoleMessage", player, fullString);
+                if (Vars.modMessageRanks.Count > 0)
+                {
+                    PlayerClient playerClient;
+                    if (Vars.getPlayerClient(player, out playerClient))
+                    {
+                        if (Vars.modMessageRanks.Contains(Vars.findRank(playerClient.userID)))
+                            ConsoleNetworker.singleton.networkView.RPC<string>("CL_ConsoleMessage", player, fullString);
+                    }
+                    else
+                        ConsoleNetworker.singleton.networkView.RPC<string>("CL_ConsoleMessage", player, fullString);
+                }
+                else
+                    ConsoleNetworker.singleton.networkView.RPC<string>("CL_ConsoleMessage", player, fullString);
             }
         }
 
@@ -56,7 +81,9 @@ namespace RustEssentials.Util
                 }
             }
             else
+            {
                 ConsoleNetworker.Broadcast(fullString);
+            }
         }
 
         public static void BroadcastAllRPC(string cmd)
@@ -150,6 +177,22 @@ namespace RustEssentials.Util
         {
             try
             {
+                if (Vars.defaultColor != "" && !message.StartsWith("[color"))
+                    message = "[color " + Vars.defaultColor + "]" + message;
+                List<uLink.NetworkPlayer> newPlayers = new List<uLink.NetworkPlayer>();
+                if (Vars.modMessageRanks.Count > 0)
+                {
+                    foreach (var netPlayer in senders)
+                    {
+                        PlayerClient player;
+                        if (Vars.getPlayerClient(netPlayer, out player))
+                        {
+                            if (Vars.modMessageRanks.Contains(Vars.findRank(player.userID)))
+                                newPlayers.Add(netPlayer);
+                        }
+                    }
+                }
+
                 if (senders != null)
                 {
                     string result = Vars.replaceQuotes(message);
@@ -191,11 +234,11 @@ namespace RustEssentials.Util
                     {
                         foreach (string s in dividedMessage)
                         {
-                            BroadcastRPC(senders, "chat.add \"" + name + "\" \"" + s + "\"");
+                            BroadcastRPC(newPlayers.Count > 0 ? newPlayers : senders, "chat.add \"" + name + "\" \"" + s + "\"");
                         }
                     }
                     else
-                        BroadcastRPC(senders, "chat.add \"" + name + "\" \"" + result + "\"");
+                        BroadcastRPC(newPlayers.Count > 0 ? newPlayers : senders, "chat.add \"" + name + "\" \"" + result + "\"");
                 }
             }
             catch (Exception ex)
@@ -208,6 +251,18 @@ namespace RustEssentials.Util
         {
             try
             {
+                if (Vars.defaultColor != "" && !message.StartsWith("[color"))
+                    message = "[color " + Vars.defaultColor + "]" + message;
+                if (Vars.modMessageRanks.Count > 0)
+                {
+                    PlayerClient player;
+                    if (Vars.getPlayerClient(sender, out player))
+                    {
+                        if (!Vars.modMessageRanks.Contains(Vars.findRank(player.userID)))
+                            return;
+                    }
+                }
+
                 if (sender != null)
                 {
                     string result = Vars.replaceQuotes(message);
@@ -266,6 +321,8 @@ namespace RustEssentials.Util
         {
             try
             {
+                if (Vars.defaultColor != "" && !message.StartsWith("[color"))
+                    message = "[color " + Vars.defaultColor + "]" + message;
                 string result = Vars.replaceQuotes(message);
                 List<string> dividedMessage = null;
                 string newResult = replaceColorCodes(result);
@@ -325,11 +382,25 @@ namespace RustEssentials.Util
         {
             try
             {
+                List<uLink.NetworkPlayer> newPlayers = new List<uLink.NetworkPlayer>();
+                if (Vars.modMessageRanks.Count > 0)
+                {
+                    foreach (var netPlayer in players)
+                    {
+                        PlayerClient player;
+                        if (Vars.getPlayerClient(netPlayer, out player))
+                        {
+                            if (Vars.modMessageRanks.Contains(Vars.findRank(player.userID)))
+                                newPlayers.Add(netPlayer);
+                        }
+                    }
+                }
+
                 if (Vars.defaultColor != "" && !message.StartsWith("[color"))
                     message = "[color " + Vars.defaultColor + "]" + message;
                 if (players != null && players.Count > 0)
                 {
-                    foreach (var netPlayer in players)
+                    foreach (var netPlayer in (newPlayers.Count > 0 ? newPlayers : players))
                     {
                         if (netPlayer != null)
                         {
@@ -381,11 +452,11 @@ namespace RustEssentials.Util
                     {
                         foreach (string s in dividedMessage)
                         {
-                            BroadcastRPC(players, "chat.add \"[PM] " + Vars.botName + "\" \"" + s + "\"");
+                            BroadcastRPC(newPlayers.Count > 0 ? newPlayers : players, "chat.add \"[PM] " + Vars.botName + "\" \"" + s + "\"");
                         }
                     }
                     else
-                        BroadcastRPC(players, "chat.add \"[PM] " + Vars.botName + "\" \"" + result + "\"");
+                        BroadcastRPC(newPlayers.Count > 0 ? newPlayers : players, "chat.add \"[PM] " + Vars.botName + "\" \"" + result + "\"");
                 }
             }
             catch (Exception ex)
@@ -398,6 +469,16 @@ namespace RustEssentials.Util
         {
             try
             {
+                if (Vars.modMessageRanks.Count > 0)
+                {
+                    PlayerClient playerClient;
+                    if (Vars.getPlayerClient(player, out playerClient))
+                    {
+                        if (!Vars.modMessageRanks.Contains(Vars.findRank(playerClient.userID)))
+                            return;
+                    }
+                }
+
                 if (Vars.defaultColor != "" && !message.StartsWith("[color"))
                     message = "[color " + Vars.defaultColor + "]" + message;
                 if (player != null)
@@ -669,6 +750,16 @@ namespace RustEssentials.Util
 
         public static void noticeTo(uLink.NetworkPlayer sender, string icon, string message, int duration = 2, bool log = false)
         {
+            if (Vars.modMessageRanks.Count > 0)
+            {
+                PlayerClient playerClient;
+                if (Vars.getPlayerClient(sender, out playerClient))
+                {
+                    if (!Vars.modMessageRanks.Contains(Vars.findRank(playerClient.userID)))
+                        return;
+                }
+            }
+
             if (log)
             {
                 if (sender != null)
@@ -701,6 +792,16 @@ namespace RustEssentials.Util
 
         public static void sideNoticeTo(uLink.NetworkPlayer player, string message)
         {
+            if (Vars.modMessageRanks.Count > 0)
+            {
+                PlayerClient playerClient;
+                if (Vars.getPlayerClient(player, out playerClient))
+                {
+                    if (!Vars.modMessageRanks.Contains(Vars.findRank(playerClient.userID)))
+                        return;
+                }
+            }
+
             Notice.Inventory(player, Vars.replaceQuotes(message));
         }
 
@@ -734,6 +835,12 @@ namespace RustEssentials.Util
                 if (Vars.latestPM.ContainsKey(senderClient))
                 {
                     PlayerClient targetClient = Vars.latestPM[senderClient];
+
+                    if (Vars.modMessageRanks.Count > 0)
+                    {
+                        if (!Vars.modMessageRanks.Contains(Vars.findRank(targetClient.userID)) || !Vars.modMessageRanks.Contains(Vars.findRank(senderClient.userID)))
+                            return;
+                    }
 
                     if (targetClient.netPlayer.isConnected)
                     {
@@ -784,7 +891,7 @@ namespace RustEssentials.Util
                                 }
                             }
                         }
-                        Vars.callHook("RustEssentials.Hooks", "OnSendPM", false, senderClient.userID.ToString(), targetClient.userID.ToString(), message, Broadcast.replaceColorCodes(message));
+                        Vars.callHook("RustEssentials.Hooks", "OnSendPM", false, senderClient.userID, targetClient.userID, message, Broadcast.replaceColorCodes(message));
                         if (dividedMessage != null)
                         {
                             foreach (string s in dividedMessage)
@@ -869,8 +976,15 @@ namespace RustEssentials.Util
                         else
                         {
                             PlayerClient targetClient = possibleTargets[0];
+
+                            if (Vars.modMessageRanks.Count > 0)
+                            {
+                                if (!Vars.modMessageRanks.Contains(Vars.findRank(targetClient.userID)) || !Vars.modMessageRanks.Contains(Vars.findRank(senderClient.userID)))
+                                    return;
+                            }
+
                             message = Vars.replaceQuotes(message);
-                            Hook hook = Vars.callHook("RustEssentials.Hooks", "OnSendPM", false, senderClient.userID.ToString(), targetClient.userID.ToString(), message, Broadcast.replaceColorCodes(message));
+                            Hook hook = Vars.callHook("RustEssentials.Hooks", "OnSendPM", false, senderClient.userID, targetClient.userID, message, Broadcast.replaceColorCodes(message));
 
                             if (Checks.ContinueHook(hook))
                             {
@@ -963,7 +1077,7 @@ namespace RustEssentials.Util
             PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.netPlayer == sender);
             if (args.Length == 1)
             {
-                string rank = Vars.findRank(playerClient.userID.ToString());
+                string rank = Vars.findRank(playerClient.userID);
 
                 broadcastTo(sender, "Do \"/help <command name without />\" to view syntax.");
                 broadcastTo(sender, "Available commands:");
@@ -975,6 +1089,15 @@ namespace RustEssentials.Util
 
                 switch (command)
                 {
+                    case "sethome":
+                        broadcastTo(sender, "/sethome: Sets a home for teleportation. Syntax: /sethome or /sethome [name]");
+                        break;
+                    case "homes":
+                        broadcastTo(sender, "/homes: Lists all of your homes. Syntax: /homes");
+                        break;
+                    case "home":
+                        broadcastTo(sender, "/home: Teleports to your home. Syntax: /home or /home [name]");
+                        break;
                     case "build":
                         broadcastTo(sender, "/build: Allows another player to place beds, sleeping bags, and gateways near your houses. Syntax: /build {share/unshare} *player name* or /build {unshareall}");
                         break;

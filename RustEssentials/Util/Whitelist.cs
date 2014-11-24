@@ -22,11 +22,7 @@ namespace RustEssentials.Util
             {
                 Vars.startTimer();
                 readWhitelist();
-                TimerPlus t = new TimerPlus();
-                t.AutoReset = true;
-                t.Interval = Vars.refreshInterval;
-                t.timerCallback = new TimerCallback(readWhitelistElapsed);
-                t.Start();
+                TimerPlus.Create(Vars.refreshInterval, true, readWhitelistElapsed);
             }
             else
             {
@@ -59,7 +55,9 @@ namespace RustEssentials.Util
                                 if (line.Length >= 17)
                                 {
                                     lineIndex++;
-                                    Vars.whitelist.Add(line);
+                                    ulong UID;
+                                    if (ulong.TryParse(line, out UID))
+                                        Vars.whitelist.Add(UID);
                                     //Vars.conLog.Info("Adding to whitelist... (" + line + ")");
                                 }
                             }
@@ -110,7 +108,7 @@ namespace RustEssentials.Util
                     if (Vars.whitelist.Count > 0 && Vars.useAsMembers)
                     {
                         if (!Vars.rankList.ContainsKey("Member"))
-                            Vars.rankList.Add("Member", new List<string>());
+                            Vars.rankList.Add("Member", new List<ulong>());
 
                         Vars.rankList["Member"] = Vars.whitelist;
                     }
@@ -147,7 +145,9 @@ namespace RustEssentials.Util
                             if (line.Length >= 17)
                             {
                                 lineIndex++;
-                                Vars.whitelist.Add(line);
+                                ulong UID;
+                                if (ulong.TryParse(line, out UID))
+                                    Vars.whitelist.Add(UID);
                                 //Vars.conLog.Info("Adding to whitelist... (" + line + ")");
                             }
                         }
@@ -202,7 +202,7 @@ namespace RustEssentials.Util
                     if (Vars.useAsMembers)
                     {
                         if (!Vars.rankList.ContainsKey("Member"))
-                            Vars.rankList.Add("Member", new List<string>());
+                            Vars.rankList.Add("Member", new List<ulong>());
 
                         Vars.conLog.Info("Member list loaded with " + lineIndex + " entries.");
                         Vars.rankList["Member"] = Vars.whitelist;

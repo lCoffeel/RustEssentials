@@ -65,7 +65,7 @@ namespace RustEssentials.Util
                 {
                     center = TE.transform.TransformPoint(new Vector3(0f, 0f, 0.1f));
                 }
-                KeyValuePair<string, Dictionary<string, string>>[] ownersFaction = Array.FindAll(Vars.factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(ownerUID.ToString()));
+                Faction ownersFaction = Vars.factions.GetByMember(ownerUID);
 
                 float highestValue = Vars.bleedingRadius;
                 if (Vars.breakLegsRadius > highestValue)
@@ -96,21 +96,18 @@ namespace RustEssentials.Util
                             }
                             else
                             {
-                                if (ownersFaction.Count() > 0)
+                                if (ownersFaction != null)
                                 {
-                                    if (ownersFaction[0].Value.ContainsKey(targetChar.netUser.userID.ToString()))
+                                    if (ownersFaction.members.Get(targetChar.netUser.userID) != null)
                                     {
                                         canHurt = Vars.bettyHurtFaction;
                                     }
                                     else
                                     {
-                                        if (Vars.alliances.ContainsKey(ownersFaction[0].Key))
+                                        Faction targetFaction = Vars.factions.GetByMember(targetChar.netUser.userID);
+                                        if (targetFaction != null && ownersFaction.allies.Contains(targetFaction.name))
                                         {
-                                            KeyValuePair<string, Dictionary<string, string>>[] targetsFaction = Array.FindAll(Vars.factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(targetChar.netUser.userID.ToString()));
-                                            if (targetsFaction.Count() > 0 && Vars.alliances[ownersFaction[0].Key].Contains(targetsFaction[0].Key))
-                                                canHurt = Vars.bettyHurtAlly;
-                                            else
-                                                canHurt = true;
+                                            canHurt = Vars.bettyHurtAlly;
                                         }
                                         else
                                             canHurt = true;
@@ -203,6 +200,7 @@ namespace RustEssentials.Util
                             {
                                 bettyList.Remove(go.GetComponent<BouncingBetty>());
                                 Data.remBettyData(ownerUID.ToString(), bettyPos);
+                                GameObject.Destroy(go.GetComponent<BouncingBetty>());
                                 NetCull.Destroy(go);
                             }
 
@@ -226,7 +224,10 @@ namespace RustEssentials.Util
                             bettyExplode(bettyPos, explosionPos, ownerUID);
 
                             if (go != null)
+                            {
+                                GameObject.Destroy(go.GetComponent<BouncingBetty>());
                                 NetCull.Destroy(go);
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -388,6 +389,7 @@ namespace RustEssentials.Util
                                 {
                                     Data.remBettyData(playerClient.userID.ToString(), go.GetComponent<BouncingBetty>().bettyPos);
                                     bettyList.Remove(go.GetComponent<BouncingBetty>());
+                                    GameObject.Destroy(go.GetComponent<BouncingBetty>());
                                     NetCull.Destroy(go);
 
                                     Broadcast.sideNoticeTo(playerClient.netPlayer, "1 x Bouncing Betty");
@@ -429,6 +431,7 @@ namespace RustEssentials.Util
                                             {
                                                 Data.remBettyData(playerClient.userID.ToString(), bettyPos);
                                                 bettyList.Remove(go.GetComponent<BouncingBetty>());
+                                                GameObject.Destroy(go.GetComponent<BouncingBetty>());
                                                 NetCull.Destroy(go);
                                             }
 
@@ -452,7 +455,10 @@ namespace RustEssentials.Util
                                             bettyExplode(bettyPos, explosionPos, playerClient.userID);
 
                                             if (go != null)
+                                            {
+                                                GameObject.Destroy(go.GetComponent<BouncingBetty>());
                                                 NetCull.Destroy(go);
+                                            }
                                         }
                                     }
                                     catch (Exception ex)
@@ -495,10 +501,11 @@ namespace RustEssentials.Util
                 {
                     try
                     {
-                        KeyValuePair<string, Dictionary<string, string>>[] ownersFaction = Array.FindAll(Vars.factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(bouncingBetty.ownerID.ToString()));
+                        Faction ownersFaction = Vars.factions.GetByMember(bouncingBetty.ownerID);
 
-                        foreach (Character c in Vars.AllCharacters.Values.ToArray())
+                        foreach (var player in Vars.AllCharacters)
                         {
+                            var c = player.Value;
                             if (c != null && c.alive)
                             {
                                 if (Vector3.Distance(bettyPos, c.eyesOrigin) < Vars.activateRadius && !Checks.hasObstruction(bettyPos, c.eyesOrigin, c.gameObject))
@@ -509,21 +516,18 @@ namespace RustEssentials.Util
                                     }
                                     else
                                     {
-                                        if (ownersFaction.Count() > 0)
+                                        if (ownersFaction != null)
                                         {
-                                            if (ownersFaction[0].Value.ContainsKey(c.netUser.userID.ToString()))
+                                            if (ownersFaction.members.Get(c.netUser.userID) != null)
                                             {
                                                 hasNearby = Vars.factionActivateBetty;
                                             }
                                             else
                                             {
-                                                if (Vars.alliances.ContainsKey(ownersFaction[0].Key))
+                                                Faction targetFaction = Vars.factions.GetByMember(c.netUser.userID);
+                                                if (targetFaction != null && ownersFaction.allies.Contains(targetFaction.name))
                                                 {
-                                                    KeyValuePair<string, Dictionary<string, string>>[] targetsFaction = Array.FindAll(Vars.factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(c.netUser.userID.ToString()));
-                                                    if (targetsFaction.Count() > 0 && Vars.alliances[ownersFaction[0].Key].Contains(targetsFaction[0].Key))
-                                                        hasNearby = Vars.allyActivateBetty;
-                                                    else
-                                                        hasNearby = true;
+                                                    hasNearby = Vars.allyActivateBetty;
                                                 }
                                                 else
                                                     hasNearby = true;
@@ -592,17 +596,11 @@ namespace RustEssentials.Util
         }
     }
 
-    [Serializable]
-    public class BouncingBetty : Facepunch.MonoBehaviour
+    public class BouncingBetty : MonoBehaviour
     {
         public ulong ownerID;
         public string ownerName;
         public Vector3 bettyPos;
-
-        public void Awake()
-        {
-            DontDestroyOnLoad(this.gameObject);
-        }
     }
 
     public class BettyList<T> : List<T> where T : BouncingBetty
@@ -622,9 +620,9 @@ namespace RustEssentials.Util
             return bettyCount >= Vars.bettiesPerPlayer;
         }
 
-        public bool Update(ulong userID, string newUserName)
+        public bool UpdateList(ulong userID, string newUserName)
         {
-            if (Vars.vanishedList.Contains(userID.ToString()))
+            if (Vars.vanishedList.Contains(userID))
                 return false;
 
             List<int> bettyIndexes = new List<int>();

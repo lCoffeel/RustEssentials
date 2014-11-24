@@ -688,22 +688,14 @@ namespace RustEssentials.Util
                 return false;
         }
 
-        public static bool ofEqualRank(string lowerRank, bool lowerIsUID, string higherRank, bool higherIsUID)
+        public static bool ofEqualRank(ulong lowerUID, ulong higherUID)
         {
-            int lowerRankLevel;
-            int higherRankLevel;
+            return (Vars.findRankPriority(Vars.findRank(lowerUID)) == Vars.findRankPriority(Vars.findRank(higherUID)));
+        }
 
-            if (lowerIsUID)
-                lowerRankLevel = Vars.findRankPriority(Vars.findRank(lowerRank));
-            else
-                lowerRankLevel = Vars.findRankPriority(lowerRank);
-
-            if (higherIsUID)
-                higherRankLevel = Vars.findRankPriority(Vars.findRank(higherRank));
-            else
-                higherRankLevel = Vars.findRankPriority(higherRank);
-
-            return (lowerRankLevel == higherRankLevel);
+        public static bool ofEqualRank(string lowerRank, string higherRank)
+        {
+            return (Vars.findRankPriority(lowerRank) == Vars.findRankPriority(higherRank));
         }
 
         public static bool nearHouse(Vector3 sourcePos, float radius, ulong userID = 0, bool excludeOwner = true)
@@ -722,7 +714,7 @@ namespace RustEssentials.Util
                         if (main is StructureMaster)
                         {
                             StructureMaster master = main as StructureMaster;
-                            bool isShared = Vars.buildSharingData.ContainsKey(master.ownerID.ToString()) && Vars.buildSharingData[master.ownerID.ToString()].Contains(userID.ToString());
+                            bool isShared = Vars.buildSharingData.ContainsKey(master.ownerID) && Vars.buildSharingData[master.ownerID].Contains(userID);
                             if (excludeOwner && (master.ownerID == userID || isShared))
                                 return false;
                             else
@@ -732,7 +724,7 @@ namespace RustEssentials.Util
                     else if (hit.collider.gameObject.GetComponent<DeployableObject>() != null)
                     {
                         DeployableObject deployable = hit.collider.gameObject.GetComponent<DeployableObject>();
-                        bool isShared = Vars.buildSharingData.ContainsKey(deployable.ownerID.ToString()) && Vars.buildSharingData[deployable.ownerID.ToString()].Contains(userID.ToString());
+                        bool isShared = Vars.buildSharingData.ContainsKey(deployable.ownerID) && Vars.buildSharingData[deployable.ownerID].Contains(userID);
                         if (excludeOwner && (deployable.ownerID == userID || isShared))
                             return false;
                         else
@@ -744,22 +736,14 @@ namespace RustEssentials.Util
             return false;
         }
 
-        public static bool ofLowerRank(string lowerRank, bool lowerIsUID, string higherRank, bool higherIsUID)
+        public static bool ofLowerRank(ulong lowerUID, ulong higherUID)
         {
-            int lowerRankLevel;
-            int higherRankLevel;
+            return (Vars.findRankPriority(Vars.findRank(lowerUID)) < Vars.findRankPriority(Vars.findRank(higherUID)));
+        }
 
-            if (lowerIsUID)
-                lowerRankLevel = Vars.findRankPriority(Vars.findRank(lowerRank));
-            else
-                lowerRankLevel = Vars.findRankPriority(lowerRank);
-
-            if (higherIsUID)
-                higherRankLevel = Vars.findRankPriority(Vars.findRank(higherRank));
-            else
-                higherRankLevel = Vars.findRankPriority(higherRank);
-
-            return (lowerRankLevel < higherRankLevel);
+        public static bool ofLowerRank(string lowerRank, string higherRank)
+        {
+            return (Vars.findRankPriority(lowerRank) < Vars.findRankPriority(higherRank));
         }
 
         public static bool ArrayContains(object[] objArray, object obj)

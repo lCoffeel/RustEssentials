@@ -26,166 +26,163 @@ public class chat : ConsoleSystem
 
         string playerName = arg.argUser.user.Displayname;
         string clientName = arg.argUser.playerClient.userName;
-        string UID = arg.argUser.user.Userid.ToString();
+        ulong UID = arg.argUser.userID;
         string message = arg.GetString(0, "text");
         List<string> dividedMessage = null;
 
 
         if (playerName != null && message.Length > 0)
         {
-            if (message.StartsWith("/"))
+            if (!string.IsNullOrEmpty(message) && !string.IsNullOrEmpty(message.Split(' ')[0]) && message.StartsWith("/"))
             {
                 Vars.conLog.Chat("<CMD> " + playerName + ": " + message);
                 if (serverlog)
                 {
                     Debug.Log("[CHAT] <CMD> " + playerName + ": " + message);
                 }
-                //Thread t = new Thread(() => Commands.CMD(arg));
-                //t.Start();
-                Commands.CMD(arg);
+
+                if (Commands.CMD(arg) || Vars.commandsToChat.Count == 0 || !Vars.commandsToChat.Contains(Vars.findRank(UID))) // If the command was successful || unsuccessful (unknown or no permission) and commands should be sent to chat
+                    return;
+            }
+
+            playerName = Vars.filterNames(playerName, UID);
+            string consoleMessage = message.Replace("[PM]", "").Replace("[PM to]", "").Replace("[PM from]", "").Replace("[PM From]", "").Replace("[PM To]", "").Replace("[F]", "");
+            message = message.Replace("\"", "\\\"").Replace("[PM]", "").Replace("[PM to]", "").Replace("[PM from]", "").Replace("[PM From]", "").Replace("[PM To]", "").Replace("[F]", "");
+            if (Vars.censorship)
+            {
+                List<string> splitMessage = new List<string>(message.Split(' '));
+                foreach (string s in splitMessage)
+                {
+                    if (Vars.illegalWords.Contains(s.Replace(".", "").Replace("!", "").Replace(",", "").Replace("?", "").Replace(";", "")))
+                    {
+                        string curseWord = Array.Find(Vars.illegalWords.ToArray(), (string str) => str.Equals(s.Replace(".", "").Replace("!", "").Replace(",", "").Replace("?", "").Replace(";", "")));
+                        string asterisks = "";
+                        for (int i = 0; i < s.Replace(".", "").Replace("!", "").Replace(",", "").Replace("?", "").Replace(";", "").Length; i++)
+                        {
+                            asterisks += "*";
+                        }
+                        string theRest = s.Replace(s, "");
+                        string fullString = (s.StartsWith(theRest) ? theRest + asterisks : asterisks + theRest);
+                        splitMessage[splitMessage.IndexOf(s)] = fullString;
+                    }
+                }
+                message = string.Join(" ", splitMessage.ToArray());
+            }
+
+            string newResult = Broadcast.replaceColorCodes(message);
+            if (newResult.Length > Vars.wordWrapLimit && Vars.enableWordWrap)
+            {
+                dividedMessage = new List<string>();
+                string oldMessage = message;
+                string lastColorCode = "";
+
+                while (oldMessage.Length > 0)
+                {
+                    string substring;
+                    if (newResult.Length > Vars.wordWrapLimit)
+                    {
+                        substring = Broadcast.disregardColorCodes(oldMessage, out newResult);
+                        oldMessage = oldMessage.Substring(substring.Length);
+                    }
+                    else
+                    {
+                        substring = oldMessage;
+                        oldMessage = "";
+                    }
+                    dividedMessage.Add((lastColorCode != "" ? lastColorCode : "") + substring);
+                    if (substring.Contains("[color"))
+                    {
+                        int colorIndex = substring.LastIndexOf("[color");
+                        string startingFromColor = substring.Substring(colorIndex);
+                        if (startingFromColor.Contains("]"))
+                        {
+                            int bracketIndex = startingFromColor.IndexOf("]");
+                            lastColorCode = startingFromColor.Substring(0, bracketIndex + 1);
+                        }
+                    }
+                }
+            }
+            bool didBroadcast = false;
+            if (!Vars.inDirect.Contains(UID) && !Vars.inGlobal.Contains(UID) && !Vars.inFaction.Contains(UID))
+            {
+                Vars.inGlobal.Add(UID);
+            }
+            if (!Vars.inDirectV.Contains(UID) && !Vars.inGlobalV.Contains(UID))
+            {
+                Vars.inDirectV.Add(UID);
+            }
+            if (clientName.Length == 0)
+            {
+                Broadcast.broadcastTo(arg.argUser.networkPlayer, "You cannot chat while vanished!");
                 return;
             }
-            else
+            if (Vars.catchBroadcastErrors)
             {
-                playerName = Vars.filterNames(playerName, UID);
-                string consoleMessage = message.Replace("[PM]", "").Replace("[PM to]", "").Replace("[PM from]", "").Replace("[PM From]", "").Replace("[PM To]", "").Replace("[F]", "");
-                message = message.Replace("\"", "\\\"").Replace("[PM]", "").Replace("[PM to]", "").Replace("[PM from]", "").Replace("[PM From]", "").Replace("[PM To]", "").Replace("[F]", "");
-                if (Vars.censorship)
-                {
-                    List<string> splitMessage = new List<string>(message.Split(' '));
-                    foreach (string s in splitMessage)
-                    {
-                        if (Vars.illegalWords.Contains(s.ToLower().Replace(".", "").Replace("!", "").Replace(",", "").Replace("?", "").Replace(";", "")))
-                        {
-                            string curseWord = Array.Find(Vars.illegalWords.ToArray(), (string str) => str.Equals(s.ToLower().Replace(".", "").Replace("!", "").Replace(",", "").Replace("?", "").Replace(";", "")));
-                            string asterisks = "";
-                            for (int i = 0; i < s.Replace(".", "").Replace("!", "").Replace(",", "").Replace("?", "").Replace(";", "").Length; i++)
-                            {
-                                asterisks += "*";
-                            }
-                            string theRest = s.Replace(s, "");
-                            string fullString = (s.StartsWith(theRest) ? theRest + asterisks : asterisks + theRest);
-                            splitMessage[splitMessage.IndexOf(s)] = fullString;
-                        }
-                    }
-                    message = string.Join(" ", splitMessage.ToArray());
-                }
-
-                string newResult = Broadcast.replaceColorCodes(message);
-                if (newResult.Length > Vars.wordWrapLimit && Vars.enableWordWrap)
-                {
-                    dividedMessage = new List<string>();
-                    string oldMessage = message;
-                    string lastColorCode = "";
-
-                    while (oldMessage.Length > 0)
-                    {
-                        string substring;
-                        if (newResult.Length > Vars.wordWrapLimit)
-                        {
-                            substring = Broadcast.disregardColorCodes(oldMessage, out newResult);
-                            oldMessage = oldMessage.Substring(substring.Length);
-                        }
-                        else
-                        {
-                            substring = oldMessage;
-                            oldMessage = "";
-                        }
-                        dividedMessage.Add((lastColorCode != "" ? lastColorCode : "") + substring);
-                        if (substring.Contains("[color"))
-                        {
-                            int colorIndex = substring.LastIndexOf("[color");
-                            string startingFromColor = substring.Substring(colorIndex);
-                            if (startingFromColor.Contains("]"))
-                            {
-                                int bracketIndex = startingFromColor.IndexOf("]");
-                                lastColorCode = startingFromColor.Substring(0, bracketIndex + 1);
-                            }
-                        }
-                    }
-                }
-                bool didBroadcast = false;
-                if (!Vars.inDirect.Contains(UID) && !Vars.inGlobal.Contains(UID) && !Vars.inFaction.Contains(UID))
-                {
-                    Vars.inGlobal.Add(UID);
-                }
-                if (!Vars.inDirectV.Contains(UID) && !Vars.inGlobalV.Contains(UID))
-                {
-                    Vars.inDirectV.Add(UID);
-                }
-                if (clientName.Length == 0)
-                {
-                    Broadcast.broadcastTo(arg.argUser.networkPlayer, "You cannot chat while vanished!");
-                    return;
-                }
-                if (Vars.catchBroadcastErrors)
-                {
-                    try
-                    {
-                        continueSending(UID, playerName, message, consoleMessage, arg, dividedMessage, out didBroadcast);
-                    }
-                    catch (Exception ex)
-                    {
-                        Vars.conLog.logToFile("Something went wrong when submitting chat message:", "error");
-                        Vars.conLog.logToFile(ex.ToString(), "error");
-                        if (!didBroadcast)
-                        {
-                            if (!Vars.mutedUsers.Contains(UID))
-                            {
-                                Hook hook = Vars.callHook("RustEssentials.Hooks", "OnSendChat", false, UID, message, Broadcast.replaceColorCodes(message), Chat.Global);
-                                if (Checks.ContinueHook(hook))
-                                {
-                                    if (dividedMessage != null)
-                                    {
-                                        foreach (string s in dividedMessage)
-                                        {
-                                            Broadcast.BroadcastChat("chat.add \"" + (Vars.removeTag ? "" : "<G> ") + playerName + "\" \"" + s.Trim() + "\"");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        Broadcast.BroadcastChat("chat.add \"" + (Vars.removeTag ? "" : "<G> ") + playerName + "\" \"" + message + "\"");
-                                    }
-                                    Vars.conLog.Chat("<G> " + playerName + ": " + message);
-                                    if (serverlog)
-                                    {
-                                        Debug.Log("[CHAT] <G> " + playerName + ": " + consoleMessage);
-                                    }
-                                    if (Vars.sendChatToConsoles)
-                                        Broadcast.broadcastToAllConsoles("[color #FFA154]<G> [color #66CCFF]" + playerName + ": [color white]" + consoleMessage);
-                                }
-                            }
-                            else
-                            {
-                                if (Vars.muteTimes.ContainsKey(UID))
-                                {
-                                    double timeLeft = Math.Round((Vars.muteTimes[UID].TimeLeft / 1000));
-                                    TimeSpan timeSpan = TimeSpan.FromMilliseconds(timeLeft);
-
-                                    string timeString = "";
-
-                                    timeString += timeSpan.Hours + " hours, ";
-                                    timeString += timeSpan.Minutes + " minutes, and ";
-                                    timeString += timeSpan.Seconds + " seconds";
-                                    string secondsLeft = "You have been muted for " + timeString + " on global chat.";
-                                    Broadcast.broadcastTo(arg.argUser.networkPlayer, secondsLeft);
-                                }
-                                else
-                                    Broadcast.broadcastTo(arg.argUser.networkPlayer, "You have been muted on global chat.");
-                            }
-                        }
-                        return;
-                    }
-                }
-                else
+                try
                 {
                     continueSending(UID, playerName, message, consoleMessage, arg, dividedMessage, out didBroadcast);
                 }
+                catch (Exception ex)
+                {
+                    Vars.conLog.logToFile("Something went wrong when submitting chat message:", "error");
+                    Vars.conLog.logToFile(ex.ToString(), "error");
+                    if (!didBroadcast)
+                    {
+                        if (!Vars.mutedUsers.Contains(UID))
+                        {
+                            Hook hook = Vars.callHook("RustEssentials.Hooks", "OnSendChat", false, UID, message, Broadcast.replaceColorCodes(message), Chat.Global);
+                            if (Checks.ContinueHook(hook))
+                            {
+                                if (dividedMessage != null)
+                                {
+                                    foreach (string s in dividedMessage)
+                                    {
+                                        Broadcast.BroadcastChat("chat.add \"" + (Vars.removeTag ? "" : "<G> ") + playerName + "\" \"" + s.Trim() + "\"");
+                                    }
+                                }
+                                else
+                                {
+                                    Broadcast.BroadcastChat("chat.add \"" + (Vars.removeTag ? "" : "<G> ") + playerName + "\" \"" + message + "\"");
+                                }
+                                Vars.conLog.Chat("<G> " + playerName + ": " + message);
+                                if (serverlog)
+                                {
+                                    Debug.Log("[CHAT] <G> " + playerName + ": " + consoleMessage);
+                                }
+                                if (Vars.sendChatToConsoles)
+                                    Broadcast.broadcastToAllConsoles("[color #FFA154]<G> [color #66CCFF]" + playerName + ": [color white]" + consoleMessage);
+                            }
+                        }
+                        else
+                        {
+                            if (Vars.muteTimes.ContainsKey(UID))
+                            {
+                                double timeLeft = Math.Round((Vars.muteTimes[UID].timeLeft / 1000));
+                                TimeSpan timeSpan = TimeSpan.FromMilliseconds(timeLeft);
+
+                                string timeString = "";
+
+                                timeString += timeSpan.Hours + " hours, ";
+                                timeString += timeSpan.Minutes + " minutes, and ";
+                                timeString += timeSpan.Seconds + " seconds";
+                                string secondsLeft = "You have been muted for " + timeString + " on global chat.";
+                                Broadcast.broadcastTo(arg.argUser.networkPlayer, secondsLeft);
+                            }
+                            else
+                                Broadcast.broadcastTo(arg.argUser.networkPlayer, "You have been muted on global chat.");
+                        }
+                    }
+                    return;
+                }
+            }
+            else
+            {
+                continueSending(UID, playerName, message, consoleMessage, arg, dividedMessage, out didBroadcast);
             }
         }
     }
 
-    public static void continueSending(string UID, string playerName, string message, string consoleMessage, Arg arg, List<string> dividedMessage, out bool didBroadcast)
+    public static void continueSending(ulong UID, string playerName, string message, string consoleMessage, Arg arg, List<string> dividedMessage, out bool didBroadcast)
     {
         didBroadcast = false;
         if (Vars.inDirect.Contains(UID))
@@ -256,7 +253,7 @@ public class chat : ConsoleSystem
                 {
                     if (Vars.muteTimes.ContainsKey(UID))
                     {
-                        double timeLeft = Math.Round((Vars.muteTimes[UID].TimeLeft / 1000));
+                        double timeLeft = Math.Round((Vars.muteTimes[UID].timeLeft / 1000));
                         TimeSpan timeSpan = TimeSpan.FromMilliseconds(timeLeft);
 
                         string timeString = "";
@@ -314,7 +311,7 @@ public class chat : ConsoleSystem
                 {
                     if (Vars.muteTimes.ContainsKey(UID))
                     {
-                        double timeLeft = Math.Round((Vars.muteTimes[UID].TimeLeft / 1000));
+                        double timeLeft = Math.Round((Vars.muteTimes[UID].timeLeft / 1000));
                         TimeSpan timeSpan = TimeSpan.FromMilliseconds(timeLeft);
 
                         string timeString = "";
@@ -360,9 +357,9 @@ public class chat : ConsoleSystem
         }
         if (Vars.inFaction.Contains(UID))
         {
-            KeyValuePair<string, Dictionary<string, string>>[] possibleFactions = Array.FindAll(Vars.factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(arg.argUser.userID.ToString()));
+            Faction faction = Vars.factions.GetByMember(arg.argUser.userID);
 
-            if (possibleFactions.Length > 0)
+            if (faction != null)
             {
                 Hook hook = Vars.callHook("RustEssentials.Hooks", "OnSendChat", false, UID, message, Broadcast.replaceColorCodes(message), Chat.Faction);
                 if (Checks.ContinueHook(hook))
@@ -377,33 +374,33 @@ public class chat : ConsoleSystem
                         Vars.REB.StartCoroutine(Vars.sendToFaction(arg.argUser.playerClient, playerName, message, consoleMessage));
                         didBroadcast = true;
                     }
-                    Vars.conLog.Chat("<F [" + possibleFactions[0].Key + "]> " + playerName + ": " + message);
+                    Vars.conLog.Chat("<F [" + faction.name + "]> " + playerName + ": " + message);
                     if (serverlog)
                     {
-                        Debug.Log("[CHAT] <F [" + possibleFactions[0].Key + "]> " + playerName + ": " + consoleMessage);
+                        Debug.Log("[CHAT] <F [" + faction.name + "]> " + playerName + ": " + consoleMessage);
                     }
-                    if (!Vars.historyFaction.ContainsKey(possibleFactions[0].Key))
-                        Vars.historyFaction.Add(possibleFactions[0].Key, new List<string>());
+                    if (!Vars.historyFaction.ContainsKey(faction.name))
+                        Vars.historyFaction.Add(faction.name, new List<string>());
                     if (dividedMessage != null)
                     {
                         foreach (string s in dividedMessage)
                         {
-                            if (Vars.historyFaction[possibleFactions[0].Key].Count > 50)
-                                Vars.historyFaction[possibleFactions[0].Key].RemoveAt(0);
-                            if (!Vars.historyFaction.ContainsKey(possibleFactions[0].Key))
-                                Vars.historyFaction.Add(possibleFactions[0].Key, new List<string>() { { "* <F> " + playerName + "$:|:$" + s.Trim() } });
+                            if (Vars.historyFaction[faction.name].Count > 50)
+                                Vars.historyFaction[faction.name].RemoveAt(0);
+                            if (!Vars.historyFaction.ContainsKey(faction.name))
+                                Vars.historyFaction.Add(faction.name, new List<string>() { { "* <F> " + playerName + "$:|:$" + s.Trim() } });
                             else
-                                ((List<string>)Vars.historyFaction[possibleFactions[0].Key]).Add("* <F> " + playerName + "$:|:$" + s.Trim());
+                                ((List<string>)Vars.historyFaction[faction.name]).Add("* <F> " + playerName + "$:|:$" + s.Trim());
                         }
                     }
                     else
                     {
-                        if (Vars.historyFaction[possibleFactions[0].Key].Count > 50)
-                            Vars.historyFaction[possibleFactions[0].Key].RemoveAt(0);
-                        if (!Vars.historyFaction.ContainsKey(possibleFactions[0].Key))
-                            Vars.historyFaction.Add(possibleFactions[0].Key, new List<string>() { { "* <F> " + playerName + "$:|:$" + message } });
+                        if (Vars.historyFaction[faction.name].Count > 50)
+                            Vars.historyFaction[faction.name].RemoveAt(0);
+                        if (!Vars.historyFaction.ContainsKey(faction.name))
+                            Vars.historyFaction.Add(faction.name, new List<string>() { { "* <F> " + playerName + "$:|:$" + message } });
                         else
-                            ((List<string>)Vars.historyFaction[possibleFactions[0].Key]).Add("* <F> " + playerName + "$:|:$" + message);
+                            ((List<string>)Vars.historyFaction[faction.name]).Add("* <F> " + playerName + "$:|:$" + message);
                     }
                 }
             }
@@ -459,7 +456,7 @@ public class chat : ConsoleSystem
                 {
                     if (Vars.muteTimes.ContainsKey(UID))
                     {
-                        double timeLeft = Math.Round((Vars.muteTimes[UID].TimeLeft / 1000));
+                        double timeLeft = Math.Round((Vars.muteTimes[UID].timeLeft / 1000));
                         TimeSpan timeSpan = TimeSpan.FromMilliseconds(timeLeft);
 
                         string timeString = "";

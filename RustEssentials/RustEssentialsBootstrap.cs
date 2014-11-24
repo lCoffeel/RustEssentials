@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Reflection;
 using Facepunch;
+using Facepunch.Utility;
 using UnityEngine;
 using uLink;
 using Rust;
@@ -45,8 +46,15 @@ namespace RustEssentials
         public void Start()
         {
             SetConsoleCtrlHandler(new HandlerRoutine(ConsoleCtrlCheck), true);
-            EmbeddedAssembly.Load("RustEssentials.Asm.System.Data.dll", "System.Data.dll");
-            EmbeddedAssembly.Load("RustEssentials.Asm.Newtonsoft.Json.dll", "Newtonsoft.Json.dll");
+            try
+            {
+                EmbeddedAssembly.Load("RustEssentials.Asm.Newtonsoft.Json.dll", "Newtonsoft.Json.dll");
+            }
+            catch (Exception ex)
+            {
+                Vars.conLog.Error("Something went wrong when loading Newtonsoft.Json.dll as an embdedded assembly:");
+                Vars.conLog.Error(ex.ToString());
+            }
             AppDomain.CurrentDomain.AssemblyResolve += resolveAssembly;
 
             Bundling.OnceLoaded += new Bundling.OnLoadedEventHandler(AssetsReady);
@@ -59,10 +67,6 @@ namespace RustEssentials
             return EmbeddedAssembly.Get(args.Name);
         }
 
-        public void Update()
-        {
-        }
-
         public void AssetsReady()
         {
             Vars.REB = this;
@@ -73,7 +77,16 @@ namespace RustEssentials
 
             getVersion();
             getAssembly();
-            _load.loadPathConfig();
+
+            string commandLine = CommandLine.GetSwitch("-essentialsdir", Vars.essentialsDir);
+            if (!string.IsNullOrEmpty(commandLine))
+            {
+                Vars.essentialsDir = commandLine.Replace("/", "\\");
+                Vars.usingEssentialsDirOverride = true;
+            }
+            else
+                _load.loadPathConfig();
+
             createFiles();
             Vars.conLog.startLogging();
             Vars.conLog.startLoggingChat();
@@ -96,22 +109,25 @@ namespace RustEssentials
             _load.loadController();
             Data.readDoorData();
             Data.readRemoverData();
-            Data.readFactionData();
+            Data.readFactions();
+            Data.readHomes();
             Data.readCooldownData();
             Data.readWarpCooldownData();
             Data.readZoneData();
             Data.readRequestData();
             Data.readRequestAllData();
-            Data.readAlliesData();
             Data.readKillsData();
             Data.readDeathsData();
+            Data.readOffenseData();
             Vars.originalLootTables = DatablockDictionary._lootSpawnLists;
             _load.loadTables();
             _load.loadDefaultLoadout();
             _load.loadDecay();
-            Vars.threadMainUpdate();
-            Vars.threadSecUpdate();
-            Vars.threadSpeedHackUpdate();
+            Vars.REB.StartCoroutine(Vars.mainUpdate());
+            Vars.REB.StartCoroutine(Vars.secondaryUpdate());
+            if (Vars.checkMode == 0)
+                Vars.REB.StartCoroutine(Vars.speedHackUpdate());
+            TimerPlus.Create(30000, true, Vars.checkPings);
 
             //Vars.conLog.Info("====");
             try
@@ -177,8 +193,14 @@ namespace RustEssentials
         {
             try
             {
-                if (!Vars.useDefaultPaths)
+                if (!Vars.useDefaultPaths || Vars.usingEssentialsDirOverride)
                 {
+                    Vars.logsDir = Path.Combine(Vars.essentialsDir, "Logs");
+                    Vars.tablesDir = Path.Combine(Vars.essentialsDir, "Tables");
+                    Vars.bigBrotherDir = Path.Combine(Vars.logsDir, "BigBrother");
+                    Vars.storageLogsDir = Path.Combine(Vars.bigBrotherDir, "Storage Logs");
+                    Vars.sleeperDeathLogsDir = Path.Combine(Vars.bigBrotherDir, "Sleeper Death Logs");
+
                     Vars.cfgFile = Path.Combine(Vars.essentialsDir, "config.ini");
                     Vars.whiteListFile = Path.Combine(Vars.essentialsDir, "whitelist.txt");
                     Vars.ranksFile = Path.Combine(Vars.essentialsDir, "ranks.ini");
@@ -193,6 +215,7 @@ namespace RustEssentials
                     Vars.warpsFile = Path.Combine(Vars.essentialsDir, "warps.ini");
                     Vars.doorsFile = Path.Combine(Vars.essentialsDir, "door_data.dat");
                     Vars.removerDataFile = Path.Combine(Vars.essentialsDir, "remover_data.dat");
+                    Vars.bettyFile = Path.Combine(Vars.essentialsDir, "bouncing_betties.dat");
                     Vars.factionsFile = Path.Combine(Vars.essentialsDir, "factions.dat");
                     Vars.alliesFile = Path.Combine(Vars.essentialsDir, "allies.dat");
                     Vars.cooldownsFile = Path.Combine(Vars.essentialsDir, "kit_cooldowns.dat");
@@ -229,6 +252,7 @@ namespace RustEssentials
                         { Vars.doorsFile },
                         { Vars.removerDataFile },
                         { Vars.factionsFile },
+                        { Vars.homesFile },
                         { Vars.alliesFile },
                         { Vars.cooldownsFile },
                         { Vars.warpCooldownsFile },
@@ -242,8 +266,10 @@ namespace RustEssentials
                         { Vars.killsFile },
                         { Vars.deathsFile },
                         { Vars.decayFile },
+                        { Vars.bettyFile },
                         //{ Vars.donorKitsFile },
-                        { Vars.pathsFile }
+                        { Vars.pathsFile },
+                        { Vars.offenseFile }
                     };
 
                     Vars.textForFiles = new Dictionary<string, StringBuilder>()
@@ -277,7 +303,7 @@ namespace RustEssentials
                     if (!File.Exists(s))
                     {
                         File.Create(s).Close();
-                        if (Vars.textForFiles.Keys.Contains(s))
+                        if (Vars.textForFiles.ContainsKey(s))
                         {
                             File.WriteAllText(s, Vars.textForFiles[s].ToString());
                         }

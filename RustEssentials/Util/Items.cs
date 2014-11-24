@@ -86,22 +86,22 @@ namespace RustEssentials.Util
                     string kitName = args[1];
                     string kitNameToLower = kitName.ToLower();
                     List<Item> kitItems = new List<Item>();
-                    if (Vars.kits.Keys.Contains(kitNameToLower)) // If kit exists
+                    if (Vars.kits.ContainsKey(kitNameToLower)) // If kit exists
                     {
-                        if (Vars.kitsForRanks.Keys.Contains(Vars.findRank(senderClient.userID.ToString()))) // If kit exist for my rank
+                        if (Vars.kitsForRanks.ContainsKey(Vars.findRank(senderClient.userID))) // If kit exist for my rank
                         {
-                            if (Vars.kitsForRanks[Vars.findRank(senderClient.userID.ToString())].Contains(kitNameToLower)) // If the kit I requested is permitted for my rank
+                            if (Vars.kitsForRanks[Vars.findRank(senderClient.userID)].Contains(kitNameToLower)) // If the kit I requested is permitted for my rank
                             {
                                 bool b = true;
-                                if (Vars.activeKitCooldowns.Keys.Contains(senderClient.userID.ToString()))
+                                if (Vars.activeKitCooldowns.ContainsKey(senderClient.userID))
                                 {
-                                    if (Vars.activeKitCooldowns[senderClient.userID.ToString()].Values.Contains(kitNameToLower))
+                                    if (Vars.activeKitCooldowns[senderClient.userID].ContainsValue(kitNameToLower))
                                     {
-                                        foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID.ToString()])
+                                        foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID])
                                         {
                                             if (kv.Value == kitNameToLower)
                                             {
-                                                if (kv.Key.isNull || Math.Round((kv.Key.TimeLeft / 1000)) > 0)
+                                                if (kv.Key.isNull || Math.Round((kv.Key.timeLeft / 1000)) > 0)
                                                     b = false;
                                             }
                                         }
@@ -113,43 +113,39 @@ namespace RustEssentials.Util
                                     kitItems = Vars.kits[kitNameToLower];
                                     Broadcast.noticeTo(senderClient.netPlayer, "☻", "You were given the " + kitName + " kit.");
 
-                                    if (Vars.kitCooldowns.Keys.Contains(kitNameToLower)) // If a cooldown is set for this kit, set my cool down
+                                    if (Vars.kitCooldowns.ContainsKey(kitNameToLower)) // If a cooldown is set for this kit, set my cool down
                                     {
                                         if (Vars.kitCooldowns[kitNameToLower] > -1)
                                         {
-                                            TimerPlus t = new TimerPlus();
-                                            t.AutoReset = false;
-                                            t.Interval = Vars.kitCooldowns[kitNameToLower];
-                                            t.timerCallback = new TimerCallback((senderObject) => Vars.restoreKit(kitNameToLower, senderClient.userID.ToString()));
-                                            t.Start();
+                                            TimerPlus t = TimerPlus.Create(Vars.kitCooldowns[kitNameToLower], false, Vars.restoreKit, kitNameToLower, senderClient.userID);
 
-                                            if (!Vars.activeKitCooldowns.Keys.Contains(senderClient.userID.ToString()))
-                                                Vars.activeKitCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
+                                            if (!Vars.activeKitCooldowns.ContainsKey(senderClient.userID))
+                                                Vars.activeKitCooldowns.Add(senderClient.userID, new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
                                             else
-                                                Vars.activeKitCooldowns[senderClient.userID.ToString()].Add(t, kitNameToLower);
+                                                Vars.activeKitCooldowns[senderClient.userID].Add(t, kitNameToLower);
                                         }
                                         else
                                         {
                                             TimerPlus t = new TimerPlus();
                                             t.isNull = true;
-                                            if (!Vars.activeKitCooldowns.Keys.Contains(senderClient.userID.ToString()))
-                                                Vars.activeKitCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
+                                            if (!Vars.activeKitCooldowns.ContainsKey(senderClient.userID))
+                                                Vars.activeKitCooldowns.Add(senderClient.userID, new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
                                             else
-                                                Vars.activeKitCooldowns[senderClient.userID.ToString()].Add(t, kitNameToLower);
+                                                Vars.activeKitCooldowns[senderClient.userID].Add(t, kitNameToLower);
                                         }
                                     }
                                 }
                                 else // If I am on cool down
                                 {
-                                    foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID.ToString()])
+                                    foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID])
                                     {
                                         if (kv.Value == kitNameToLower)
                                         {
                                             // Return how long I have to wait
                                             if (!kv.Key.isNull)
                                             {
-                                                double timeLeft = Math.Round((kv.Key.TimeLeft / 1000));
-                                                TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.TimeLeft);
+                                                double timeLeft = Math.Round((kv.Key.timeLeft / 1000));
+                                                TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.timeLeft);
 
                                                 string timeString = "";
 
@@ -168,20 +164,20 @@ namespace RustEssentials.Util
                             }
                             else // If I am not allowed to use this kit
                             {
-                                if (Vars.kitsForUIDs.ContainsKey(senderClient.userID.ToString()))
+                                if (Vars.kitsForUIDs.ContainsKey(senderClient.userID))
                                 {
-                                    if (Vars.kitsForUIDs[senderClient.userID.ToString()].Contains(kitNameToLower))
+                                    if (Vars.kitsForUIDs[senderClient.userID].Contains(kitNameToLower))
                                     {
                                         bool b = true;
-                                        if (Vars.activeKitCooldowns.Keys.Contains(senderClient.userID.ToString()))
+                                        if (Vars.activeKitCooldowns.ContainsKey(senderClient.userID))
                                         {
-                                            if (Vars.activeKitCooldowns[senderClient.userID.ToString()].Values.Contains(kitNameToLower))
+                                            if (Vars.activeKitCooldowns[senderClient.userID].ContainsValue(kitNameToLower))
                                             {
-                                                foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID.ToString()])
+                                                foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID])
                                                 {
                                                     if (kv.Value == kitNameToLower)
                                                     {
-                                                        if (kv.Key.isNull || Math.Round((kv.Key.TimeLeft / 1000)) > 0)
+                                                        if (kv.Key.isNull || Math.Round((kv.Key.timeLeft / 1000)) > 0)
                                                             b = false;
                                                     }
                                                 }
@@ -193,43 +189,39 @@ namespace RustEssentials.Util
                                             kitItems = Vars.kits[kitNameToLower];
                                             Broadcast.noticeTo(senderClient.netPlayer, "☻", "You were given the " + kitName + " kit.");
 
-                                            if (Vars.kitCooldowns.Keys.Contains(kitNameToLower)) // If a cooldown is set for this kit, set my cool down
+                                            if (Vars.kitCooldowns.ContainsKey(kitNameToLower)) // If a cooldown is set for this kit, set my cool down
                                             {
                                                 if (Vars.kitCooldowns[kitNameToLower] > -1)
                                                 {
-                                                    TimerPlus t = new TimerPlus();
-                                                    t.AutoReset = false;
-                                                    t.Interval = Vars.kitCooldowns[kitNameToLower];
-                                                    t.timerCallback = new TimerCallback((senderObject) => Vars.restoreKit(kitNameToLower, senderClient.userID.ToString()));
-                                                    t.Start();
+                                                    TimerPlus t = TimerPlus.Create(Vars.kitCooldowns[kitNameToLower], false, Vars.restoreKit, kitNameToLower, senderClient.userID);
 
-                                                    if (!Vars.activeKitCooldowns.Keys.Contains(senderClient.userID.ToString()))
-                                                        Vars.activeKitCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
+                                                    if (!Vars.activeKitCooldowns.ContainsKey(senderClient.userID))
+                                                        Vars.activeKitCooldowns.Add(senderClient.userID, new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
                                                     else
-                                                        Vars.activeKitCooldowns[senderClient.userID.ToString()].Add(t, kitNameToLower);
+                                                        Vars.activeKitCooldowns[senderClient.userID].Add(t, kitNameToLower);
                                                 }
                                                 else
                                                 {
                                                     TimerPlus t = new TimerPlus();
                                                     t.isNull = true;
-                                                    if (!Vars.activeKitCooldowns.Keys.Contains(senderClient.userID.ToString()))
-                                                        Vars.activeKitCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
+                                                    if (!Vars.activeKitCooldowns.ContainsKey(senderClient.userID))
+                                                        Vars.activeKitCooldowns.Add(senderClient.userID, new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
                                                     else
-                                                        Vars.activeKitCooldowns[senderClient.userID.ToString()].Add(t, kitNameToLower);
+                                                        Vars.activeKitCooldowns[senderClient.userID].Add(t, kitNameToLower);
                                                 }
                                             }
                                         }
                                         else // If I am on cool down
                                         {
-                                            foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID.ToString()])
+                                            foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID])
                                             {
                                                 if (kv.Value == kitNameToLower)
                                                 {
                                                     if (!kv.Key.isNull)
                                                     {
                                                         // Return how long I have to wait
-                                                        double timeLeft = Math.Round((kv.Key.TimeLeft / 1000));
-                                                        TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.TimeLeft);
+                                                        double timeLeft = Math.Round((kv.Key.timeLeft / 1000));
+                                                        TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.timeLeft);
 
                                                         string timeString = "";
 
@@ -262,15 +254,15 @@ namespace RustEssentials.Util
                             if (Vars.unassignedKits.Contains(kitNameToLower)) // If the kit is actually unassigned to a rank
                             {
                                 bool b = true;
-                                if (Vars.activeKitCooldowns.Keys.Contains(senderClient.userID.ToString()))
+                                if (Vars.activeKitCooldowns.ContainsKey(senderClient.userID))
                                 {
-                                    if (Vars.activeKitCooldowns[senderClient.userID.ToString()].Values.Contains(kitNameToLower))
+                                    if (Vars.activeKitCooldowns[senderClient.userID].ContainsValue(kitNameToLower))
                                     {
-                                        foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID.ToString()])
+                                        foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID])
                                         {
                                             if (kv.Value == kitNameToLower)
                                             {
-                                                if (kv.Key.isNull || Math.Round((kv.Key.TimeLeft / 1000)) > 0)
+                                                if (kv.Key.isNull || Math.Round((kv.Key.timeLeft / 1000)) > 0)
                                                     b = false;
                                             }
                                         }
@@ -282,43 +274,39 @@ namespace RustEssentials.Util
                                     kitItems = Vars.kits[kitNameToLower];
                                     Broadcast.noticeTo(senderClient.netPlayer, "☻", "You were given the " + kitName + " kit.");
 
-                                    if (Vars.kitCooldowns.Keys.Contains(kitNameToLower)) // If a cooldown is set for this kit, set my cool down
+                                    if (Vars.kitCooldowns.ContainsKey(kitNameToLower)) // If a cooldown is set for this kit, set my cool down
                                     {
                                         if (Vars.kitCooldowns[kitNameToLower] > -1)
                                         {
-                                            TimerPlus t = new TimerPlus();
-                                            t.AutoReset = false;
-                                            t.Interval = Vars.kitCooldowns[kitNameToLower];
-                                            t.timerCallback = new TimerCallback((senderObject) => Vars.restoreKit(kitNameToLower, senderClient.userID.ToString()));
-                                            t.Start();
+                                            TimerPlus t = TimerPlus.Create(Vars.kitCooldowns[kitNameToLower], false, Vars.restoreKit, kitNameToLower, senderClient.userID);
 
-                                            if (!Vars.activeKitCooldowns.Keys.Contains(senderClient.userID.ToString()))
-                                                Vars.activeKitCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
+                                            if (!Vars.activeKitCooldowns.ContainsKey(senderClient.userID))
+                                                Vars.activeKitCooldowns.Add(senderClient.userID, new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
                                             else
-                                                Vars.activeKitCooldowns[senderClient.userID.ToString()].Add(t, kitNameToLower);
+                                                Vars.activeKitCooldowns[senderClient.userID].Add(t, kitNameToLower);
                                         }
                                         else
                                         {
                                             TimerPlus t = new TimerPlus();
                                             t.isNull = true;
-                                            if (!Vars.activeKitCooldowns.Keys.Contains(senderClient.userID.ToString()))
-                                                Vars.activeKitCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
+                                            if (!Vars.activeKitCooldowns.ContainsKey(senderClient.userID))
+                                                Vars.activeKitCooldowns.Add(senderClient.userID, new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
                                             else
-                                                Vars.activeKitCooldowns[senderClient.userID.ToString()].Add(t, kitNameToLower);
+                                                Vars.activeKitCooldowns[senderClient.userID].Add(t, kitNameToLower);
                                         }
                                     }
                                 }
                                 else // If I am on cool down
                                 {
-                                    foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID.ToString()])
+                                    foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID])
                                     {
                                         if (kv.Value == kitNameToLower)
                                         {
                                             if (!kv.Key.isNull)
                                             {
                                                 // Return how long I have to wait
-                                                double timeLeft = Math.Round((kv.Key.TimeLeft / 1000));
-                                                TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.TimeLeft);
+                                                double timeLeft = Math.Round((kv.Key.timeLeft / 1000));
+                                                TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.timeLeft);
 
                                                 string timeString = "";
 
@@ -337,20 +325,20 @@ namespace RustEssentials.Util
                             }
                             else // If the kit is truly assigned to rank, just not mine
                             {
-                                if (Vars.kitsForUIDs.ContainsKey(senderClient.userID.ToString()))
+                                if (Vars.kitsForUIDs.ContainsKey(senderClient.userID))
                                 {
-                                    if (Vars.kitsForUIDs[senderClient.userID.ToString()].Contains(kitNameToLower))
+                                    if (Vars.kitsForUIDs[senderClient.userID].Contains(kitNameToLower))
                                     {
                                         bool b = true;
-                                        if (Vars.activeKitCooldowns.Keys.Contains(senderClient.userID.ToString()))
+                                        if (Vars.activeKitCooldowns.ContainsKey(senderClient.userID))
                                         {
-                                            if (Vars.activeKitCooldowns[senderClient.userID.ToString()].Values.Contains(kitNameToLower))
+                                            if (Vars.activeKitCooldowns[senderClient.userID].ContainsValue(kitNameToLower))
                                             {
-                                                foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID.ToString()])
+                                                foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID])
                                                 {
                                                     if (kv.Value == kitNameToLower)
                                                     {
-                                                        if (kv.Key.isNull || Math.Round((kv.Key.TimeLeft / 1000)) > 0)
+                                                        if (kv.Key.isNull || Math.Round((kv.Key.timeLeft / 1000)) > 0)
                                                             b = false;
                                                     }
                                                 }
@@ -362,43 +350,39 @@ namespace RustEssentials.Util
                                             kitItems = Vars.kits[kitNameToLower];
                                             Broadcast.noticeTo(senderClient.netPlayer, "☻", "You were given the " + kitName + " kit.");
 
-                                            if (Vars.kitCooldowns.Keys.Contains(kitNameToLower)) // If a cooldown is set for this kit, set my cool down
+                                            if (Vars.kitCooldowns.ContainsKey(kitNameToLower)) // If a cooldown is set for this kit, set my cool down
                                             {
                                                 if (Vars.kitCooldowns[kitNameToLower] > -1)
                                                 {
-                                                    TimerPlus t = new TimerPlus();
-                                                    t.AutoReset = false;
-                                                    t.Interval = Vars.kitCooldowns[kitNameToLower];
-                                                    t.timerCallback = new TimerCallback((senderObj) => Vars.restoreKit(kitNameToLower, senderClient.userID.ToString()));
-                                                    t.Start();
+                                                    TimerPlus t = TimerPlus.Create(Vars.kitCooldowns[kitNameToLower], false, Vars.restoreKit, kitNameToLower, senderClient.userID);
 
-                                                    if (!Vars.activeKitCooldowns.Keys.Contains(senderClient.userID.ToString()))
-                                                        Vars.activeKitCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
+                                                    if (!Vars.activeKitCooldowns.ContainsKey(senderClient.userID))
+                                                        Vars.activeKitCooldowns.Add(senderClient.userID, new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
                                                     else
-                                                        Vars.activeKitCooldowns[senderClient.userID.ToString()].Add(t, kitNameToLower);
+                                                        Vars.activeKitCooldowns[senderClient.userID].Add(t, kitNameToLower);
                                                 }
                                                 else
                                                 {
                                                     TimerPlus t = new TimerPlus();
                                                     t.isNull = true;
-                                                    if (!Vars.activeKitCooldowns.Keys.Contains(senderClient.userID.ToString()))
-                                                        Vars.activeKitCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
+                                                    if (!Vars.activeKitCooldowns.ContainsKey(senderClient.userID))
+                                                        Vars.activeKitCooldowns.Add(senderClient.userID, new Dictionary<TimerPlus, string>() { { t, kitNameToLower } });
                                                     else
-                                                        Vars.activeKitCooldowns[senderClient.userID.ToString()].Add(t, kitNameToLower);
+                                                        Vars.activeKitCooldowns[senderClient.userID].Add(t, kitNameToLower);
                                                 }
                                             }
                                         }
                                         else // If I am on cool down
                                         {
-                                            foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID.ToString()])
+                                            foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeKitCooldowns[senderClient.userID])
                                             {
                                                 if (kv.Value == kitNameToLower)
                                                 {
                                                     if (!kv.Key.isNull)
                                                     {
                                                         // Return how long I have to wait
-                                                        double timeLeft = Math.Round((kv.Key.TimeLeft / 1000));
-                                                        TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.TimeLeft);
+                                                        double timeLeft = Math.Round((kv.Key.timeLeft / 1000));
+                                                        TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.timeLeft);
 
                                                         string timeString = "";
 
@@ -554,7 +538,7 @@ namespace RustEssentials.Util
                             }
                         }
                         itemName = string.Join(" ", playerNameList.ToArray()).Replace("\"", "").Trim();
-                        if (!Vars.itemIDs.Values.Contains(itemName))
+                        if (!Vars.itemIDs.ContainsValue(itemName))
                             Broadcast.broadcastTo(senderClient.netPlayer, "No such item name \"" + itemName + "\".");
                         else
                         {
@@ -593,7 +577,7 @@ namespace RustEssentials.Util
                             catch (Exception ex)
                             {
                                 itemName = args[1];
-                                if (!Vars.itemIDs.Values.Contains(itemName))
+                                if (!Vars.itemIDs.ContainsValue(itemName))
                                     Broadcast.broadcastTo(senderClient.netPlayer, "No such item name \"" + itemName + "\".");
                             }
 
@@ -609,7 +593,7 @@ namespace RustEssentials.Util
                                 catch (Exception ex) { Broadcast.broadcastTo(senderClient.netPlayer, "Amount must be an integer!"); }
                             }
 
-                            if (Vars.itemIDs.Values.Contains(itemName))
+                            if (Vars.itemIDs.ContainsValue(itemName))
                             {
                                 addItem(targetClient, itemName, amount);
                                 if (b)
@@ -654,7 +638,7 @@ namespace RustEssentials.Util
                             }
                         }
                         itemName = string.Join(" ", playerNameList.ToArray()).Replace("\"", "").Trim();
-                        if (Vars.itemIDs.Values.Contains(itemName))
+                        if (Vars.itemIDs.ContainsValue(itemName))
                         {
                             int amount = 1;
                             if (args.Count() - 1 > lastIndex)
@@ -706,7 +690,7 @@ namespace RustEssentials.Util
                                 catch (Exception ex) { Vars.conLog.Error("GAS #2: " + ex.ToString()); }
                             }
 
-                            if (Vars.itemIDs.Values.Contains(itemName))
+                            if (Vars.itemIDs.ContainsValue(itemName))
                             {
                                 List<PlayerClient> playerClients = new List<PlayerClient>();
                                 foreach (PlayerClient pc in Vars.AllPlayerClients) { playerClients.Add(pc); }
@@ -752,7 +736,7 @@ namespace RustEssentials.Util
                             }
                         }
                         itemName = string.Join(" ", playerNameList.ToArray()).Replace("\"", "").Trim();
-                        if (!Vars.itemIDs.Values.Contains(itemName))
+                        if (!Vars.itemIDs.ContainsValue(itemName))
                             Broadcast.broadcastTo(senderClient.netPlayer, "No such item name \"" + itemName + "\".");
                         else
                         {
@@ -791,7 +775,7 @@ namespace RustEssentials.Util
                             catch (Exception ex)
                             {
                                 itemName = args[1];
-                                if (!Vars.itemIDs.Values.Contains(itemName))
+                                if (!Vars.itemIDs.ContainsValue(itemName))
                                 {
                                     Broadcast.broadcastTo(senderClient.netPlayer, "No such item name \"" + itemName + "\".");
                                     return;
@@ -810,7 +794,7 @@ namespace RustEssentials.Util
                                 catch (Exception ex) { Broadcast.broadcastTo(senderClient.netPlayer, "Amount must be an integer!"); }
                             }
 
-                            if (Vars.itemIDs.Values.Contains(itemName))
+                            if (Vars.itemIDs.ContainsValue(itemName))
                             {
                                 List<PlayerClient> playerClients = new List<PlayerClient>();
                                 foreach (PlayerClient pc in Vars.AllPlayerClients) { playerClients.Add(pc); }
@@ -856,7 +840,7 @@ namespace RustEssentials.Util
                             }
                         }
                         itemName = string.Join(" ", playerNameList.ToArray()).Replace("\"", "").Trim();
-                        if (Vars.itemIDs.Values.Contains(itemName))
+                        if (Vars.itemIDs.ContainsValue(itemName))
                         {
                             int amount = 1;
                             int playerAmount = 1;
@@ -934,7 +918,7 @@ namespace RustEssentials.Util
                                 catch (Exception ex) { Vars.conLog.Error("GRS #5: " + ex.ToString()); }
                             }
 
-                            if (Vars.itemIDs.Values.Contains(itemName))
+                            if (Vars.itemIDs.ContainsValue(itemName))
                             {
                                 Vars.REB.StartCoroutine(giveawayItem(itemName, amount, playerAmount));
                             }
@@ -1902,7 +1886,7 @@ namespace RustEssentials.Util
                                 }
                             }
                             itemName = string.Join(" ", playerNameList.ToArray()).Replace("\"", "").Trim();
-                            if (!Vars.itemIDs.Values.Contains(itemName))
+                            if (!Vars.itemIDs.ContainsValue(itemName))
                                 Broadcast.broadcastTo(senderClient.netPlayer, "No such item name \"" + itemName + "\".");
                             else
                             {
@@ -1956,7 +1940,7 @@ namespace RustEssentials.Util
                                 catch (Exception ex)
                                 {
                                     itemName = args[1];
-                                    if (!Vars.itemIDs.Values.Contains(itemName))
+                                    if (!Vars.itemIDs.ContainsValue(itemName))
                                     {
                                         Broadcast.broadcastTo(senderClient.netPlayer, "No such item name \"" + itemName + "\".");
                                         return;
@@ -1987,7 +1971,7 @@ namespace RustEssentials.Util
                                     catch (Exception ex) { Broadcast.broadcastTo(senderClient.netPlayer, "Player amount must be an integer!"); }
                                 }
 
-                                if (Vars.itemIDs.Values.Contains(itemName))
+                                if (Vars.itemIDs.ContainsValue(itemName))
                                 {
                                     Vars.REB.StartCoroutine(giveawayItem(itemName, amount, playerAmount));
                                 }
@@ -2023,7 +2007,7 @@ namespace RustEssentials.Util
             {
                 if (senderClient != null)
                 {
-                    if (Vars.enableRSVoting)
+                    if (Vars.enableRSVoting && !Vars.enableTRSVoting)
                     {
                         try
                         {
@@ -2224,7 +2208,7 @@ namespace RustEssentials.Util
                             Vars.conLog.Error("VOTED #7: " + ex.ToString());
                         }
                     }
-                    else if (Vars.enableTRSVoting)
+                    else if (Vars.enableTRSVoting && !Vars.enableRSVoting)
                     {
                         try
                         {
@@ -2336,7 +2320,7 @@ namespace RustEssentials.Util
                         {
                             if (pc.controllable.GetComponent<Inventory>() != null)
                             {
-                                if (!Vars.vanishedList.Contains(pc.userID.ToString()) && !Vars.lastWinners.Contains(pc.userID.ToString()) && pc.userName.Length > 0)
+                                if (!Vars.vanishedList.Contains(pc.userID) && !Vars.lastWinners.Contains(pc.userID) && pc.userName.Length > 0)
                                 {
                                     possibleWinners.Add(pc);
                                 }
@@ -2360,7 +2344,7 @@ namespace RustEssentials.Util
                         {
                             winners.Add(randomClient);
                             winnerNames.Add(randomClient.userName);
-                            Vars.lastWinners.Add(randomClient.userID.ToString());
+                            Vars.lastWinners.Add(randomClient.userID);
                             possibleWinners.Remove(randomClient);
                             curIndex++;
                         }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,23 +21,27 @@ namespace RustEssentials.Util
                 List<string> cooldownFileData = File.ReadAllLines(Vars.requestCooldownsFile).ToList();
                 foreach (string s in cooldownFileData)
                 {
-                    string UID = s.Split('=')[0];
+                    string UIDString = s.Split('=')[0];
                     string requestsString = s.Split('=')[1];
 
-                    foreach (string s2 in requestsString.Split(';'))
+                    ulong UID;
+                    if (ulong.TryParse(UIDString, out UID))
                     {
-                        string otherUID = s2.Split(':')[0];
-                        string cooldown = s2.Split(':')[1];
+                        foreach (string s2 in requestsString.Split(';'))
+                        {
+                            string otherUIDString = s2.Split(':')[0];
+                            string cooldown = s2.Split(':')[1];
+                            
+                            ulong otherUID;
+                            if (ulong.TryParse(otherUIDString, out otherUID))
+                            {
+                                TimerPlus t = TimerPlus.Create(Convert.ToInt64(cooldown), false, Vars.unblockRequests, otherUID, UID);
+                                if (!Vars.blockedRequestsPer.ContainsKey(UID))
+                                    Vars.blockedRequestsPer.Add(UID, new Dictionary<ulong, TimerPlus>());
 
-                        TimerPlus t = new TimerPlus();
-                        t.AutoReset = false;
-                        t.Interval = Convert.ToInt64(cooldown);
-                        t.timerCallback = new TimerCallback((senderObject) => Vars.unblockRequests(otherUID, UID));
-                        t.Start();
-                        if (!Vars.blockedRequestsPer.ContainsKey(UID))
-                            Vars.blockedRequestsPer.Add(UID, new Dictionary<string, TimerPlus>());
-
-                        Vars.blockedRequestsPer[UID].Add(otherUID, t);
+                                Vars.blockedRequestsPer[UID].Add(otherUID, t);
+                            }
+                        }
                     }
                 }
             }
@@ -54,14 +59,14 @@ namespace RustEssentials.Util
             {
                 Dictionary<string, List<string>> blockedPeoplePer = new Dictionary<string, List<string>>();
 
-                foreach (KeyValuePair<string, Dictionary<string, TimerPlus>> kv in Vars.blockedRequestsPer)
+                foreach (KeyValuePair<ulong, Dictionary<ulong, TimerPlus>> kv in Vars.blockedRequestsPer)
                 {
-                    string UID = kv.Key;
+                    string UID = kv.Key.ToString();
                     if (!blockedPeoplePer.ContainsKey(UID))
                         blockedPeoplePer.Add(UID, new List<string>());
-                    foreach (KeyValuePair<string, TimerPlus> kv2 in kv.Value)
+                    foreach (KeyValuePair<ulong, TimerPlus> kv2 in kv.Value)
                     {
-                        string otherUID = kv2.Key;
+                        string otherUID = kv2.Key.ToString();
                         blockedPeoplePer[UID].Add(otherUID);
                         updateRequestData(UID, otherUID, Vars.requestCooldown, kv2.Value);
                     }
@@ -95,7 +100,7 @@ namespace RustEssentials.Util
                         List<string> allRequests = currentRequests.Split(';').ToList();
                         int index = Array.FindIndex(allRequests.ToArray(), (string s) => s.StartsWith(otherUID));
 
-                        allRequests[index] = otherUID + ":" + t.TimeLeft;
+                        allRequests[index] = otherUID + ":" + t.timeLeft;
 
                         fullString = UID + "=" + string.Join(";", allRequests.ToArray());
                     }
@@ -213,16 +218,16 @@ namespace RustEssentials.Util
                 List<string> cooldownFileData = File.ReadAllLines(Vars.requestCooldownsAllFile).ToList();
                 foreach (string s in cooldownFileData)
                 {
-                    string UID = s.Split('=')[0];
+                    string UIDString = s.Split('=')[0];
                     string cooldown = s.Split('=')[1];
+                    ulong UID;
 
-                    TimerPlus t = new TimerPlus();
-                    t.AutoReset = false;
-                    t.Interval = Convert.ToInt64(cooldown);
-                    t.timerCallback = new TimerCallback((senderObject) => Vars.unblockRequests("", UID));
-                    t.Start();
-                    if (!Vars.blockedRequestsAll.ContainsKey(UID))
-                        Vars.blockedRequestsAll.Add(UID, t);
+                    if (ulong.TryParse(UIDString, out UID))
+                    {
+                        TimerPlus t = TimerPlus.Create(Convert.ToInt64(cooldown), false, Vars.unblockRequests, "", UID);
+                        if (!Vars.blockedRequestsAll.ContainsKey(UID))
+                            Vars.blockedRequestsAll.Add(UID, t);
+                    }
                 }
             }
             catch (Exception ex)
@@ -239,9 +244,9 @@ namespace RustEssentials.Util
             {
                 List<string> blockedPeopleAll = new List<string>();
 
-                foreach (KeyValuePair<string, TimerPlus> kv in Vars.blockedRequestsAll)
+                foreach (KeyValuePair<ulong, TimerPlus> kv in Vars.blockedRequestsAll)
                 {
-                    string UID = kv.Key;
+                    string UID = kv.Key.ToString();
                     if (!blockedPeopleAll.Contains(UID))
                         blockedPeopleAll.Add(UID);
 
@@ -343,12 +348,13 @@ namespace RustEssentials.Util
                 List<string> deathsFileData = File.ReadAllLines(Vars.deathsFile).ToList();
                 foreach (string s in deathsFileData)
                 {
-                    string UID = s.Split('=')[0];
+                    string UIDString = s.Split('=')[0];
                     string deathsString = s.Split('=')[1];
                     int deaths;
+                    ulong UID;
                     if (int.TryParse(deathsString, out deaths))
                     {
-                        if (!Vars.playerDeaths.ContainsKey(UID))
+                        if (ulong.TryParse(UIDString, out UID) && !Vars.playerDeaths.ContainsKey(UID))
                             Vars.playerDeaths.Add(UID, deaths);
                     }
                 }
@@ -407,12 +413,13 @@ namespace RustEssentials.Util
                 List<string> killsFileData = File.ReadAllLines(Vars.killsFile).ToList();
                 foreach (string s in killsFileData)
                 {
-                    string UID = s.Split('=')[0];
+                    string UIDString = s.Split('=')[0];
                     string killsString = s.Split('=')[1];
                     int kills;
+                    ulong UID;
                     if (int.TryParse(killsString, out kills))
                     {
-                        if (!Vars.playerKills.ContainsKey(UID))
+                        if (ulong.TryParse(UIDString, out UID) && !Vars.playerKills.ContainsKey(UID))
                             Vars.playerKills.Add(UID, kills);
                     }
                 }
@@ -469,9 +476,9 @@ namespace RustEssentials.Util
             try
             {
                 Dictionary<string, List<string>> kits = new Dictionary<string, List<string>>();
-                foreach (KeyValuePair<string, Dictionary<TimerPlus, string>> kv in Vars.activeKitCooldowns)
+                foreach (KeyValuePair<ulong, Dictionary<TimerPlus, string>> kv in Vars.activeKitCooldowns)
                 {
-                    string UID = kv.Key;
+                    string UID = kv.Key.ToString();
                     if (!kits.ContainsKey(UID))
                         kits.Add(UID, new List<string>());
                     foreach (KeyValuePair<TimerPlus, string> kv2 in kv.Value)
@@ -502,43 +509,43 @@ namespace RustEssentials.Util
                 List<string> cooldownFileData = File.ReadAllLines(Vars.cooldownsFile).ToList();
                 foreach (string s in cooldownFileData)
                 {
-                    string UID = s.Split('=')[0];
+                    string UIDString = s.Split('=')[0];
                     string kitsString = s.Split('=')[1];
 
-                    foreach (string s2 in kitsString.Split(';'))
+                    ulong UID;
+                    if (ulong.TryParse(UIDString, out UID))
                     {
-                        string kitName = s2.Split(':')[0].ToLower();
-                        string cooldown = s2.Split(':')[1];
-                        if (!cooldown.Contains("-"))
+                        foreach (string s2 in kitsString.Split(';'))
                         {
-                            TimerPlus t = new TimerPlus();
-                            t.AutoReset = false;
-                            t.Interval = Convert.ToInt64(cooldown);
-                            t.timerCallback = new TimerCallback((senderObj) => Vars.restoreKit(kitName, UID));
-                            t.Start();
+                            string kitName = s2.Split(':')[0].ToLower();
+                            string cooldown = s2.Split(':')[1];
+                            if (!cooldown.Contains("-"))
+                            {
+                                TimerPlus t = TimerPlus.Create(Convert.ToInt64(cooldown), false, Vars.restoreKit, kitName, UID);
 
-                            if (!Vars.activeKitCooldowns.ContainsKey(UID))
-                            {
-                                Vars.activeKitCooldowns.Add(UID, new Dictionary<TimerPlus, string>() { { t, kitName } });
+                                if (!Vars.activeKitCooldowns.ContainsKey(UID))
+                                {
+                                    Vars.activeKitCooldowns.Add(UID, new Dictionary<TimerPlus, string>() { { t, kitName } });
+                                }
+                                else
+                                {
+                                    if (!Vars.activeKitCooldowns[UID].ContainsValue(kitName))
+                                        Vars.activeKitCooldowns[UID].Add(t, kitName);
+                                }
                             }
-                            else
+                            else if (cooldown == "-1")
                             {
-                                if (!Vars.activeKitCooldowns[UID].ContainsValue(kitName))
-                                    Vars.activeKitCooldowns[UID].Add(t, kitName);
-                            }
-                        }
-                        else if (cooldown == "-1")
-                        {
-                            TimerPlus t = new TimerPlus();
-                            t.isNull = true;
-                            if (!Vars.activeKitCooldowns.ContainsKey(UID))
-                            {
-                                Vars.activeKitCooldowns.Add(UID, new Dictionary<TimerPlus, string>() { { t, kitName } });
-                            }
-                            else
-                            {
-                                if (!Vars.activeKitCooldowns[UID].ContainsValue(kitName))
-                                    Vars.activeKitCooldowns[UID].Add(t, kitName);
+                                TimerPlus t = new TimerPlus();
+                                t.isNull = true;
+                                if (!Vars.activeKitCooldowns.ContainsKey(UID))
+                                {
+                                    Vars.activeKitCooldowns.Add(UID, new Dictionary<TimerPlus, string>() { { t, kitName } });
+                                }
+                                else
+                                {
+                                    if (!Vars.activeKitCooldowns[UID].ContainsValue(kitName))
+                                        Vars.activeKitCooldowns[UID].Add(t, kitName);
+                                }
                             }
                         }
                     }
@@ -656,8 +663,8 @@ namespace RustEssentials.Util
                         List<string> allKits = currentKits.Split(';').ToList();
                         int index = Array.FindIndex(allKits.ToArray(), (string s) => s.StartsWith(kitName));
 
-                        if (!t.isNull && t.TimeLeft > 0)
-                            allKits[index] = kitName + ":" + t.TimeLeft;
+                        if (!t.isNull && t.timeLeft > 0)
+                            allKits[index] = kitName + ":" + t.timeLeft;
                         else if (t.isNull)
                             allKits[index] = kitName + ":-1";
                         else
@@ -700,315 +707,36 @@ namespace RustEssentials.Util
 
         #endregion
 
-        #region Allies
-
-        #region Read Allies
-        public static void readAlliesData()
-        {
-            try
-            {
-                List<string> alliesFileData = File.ReadAllLines(Vars.alliesFile).ToList();
-                foreach (string s in alliesFileData)
-                {
-                    if (s.Contains("="))
-                    {
-                        string factionName = s.Split('=')[0];
-                        string alliesString = s.Split('=')[1];
-
-                        if (!Vars.alliances.ContainsKey(factionName))
-                            Vars.alliances.Add(factionName, new List<string>());
-                        else
-                            Vars.conLog.Error("Faction [" + factionName + "] and their alliances are already loaded!");
-
-                        foreach (string s2 in alliesString.Split(';'))
-                        {
-                            string alliedFactionName = s2;
-
-                            if (!Vars.alliances[factionName].Contains(alliedFactionName))
-                                Vars.alliances[factionName].Add(alliedFactionName);
-                            else
-                                Vars.conLog.Error("Faction [" + factionName + "] already allied with faction [" + alliedFactionName + "]!");
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Vars.conLog.Error("RAD #1: " + ex.ToString());
-            }
-        }
-        #endregion
-
-        #region Add Allies
-        public static void addAlliesData(string factionName, string alliedFactionName)
-        {
-            try
-            {
-                List<string> alliesFileData = File.ReadAllLines(Vars.alliesFile).ToList();
-                List<string> factionNames = new List<string>();
-                foreach (string str in alliesFileData)
-                {
-                    factionNames.Add(str.Split('=')[0]);
-                }
-                if (factionNames.Contains(factionName))
-                {
-                    string currentAlliances = Array.Find(alliesFileData.ToArray(), (string s) => s.StartsWith(factionName)).Split('=')[1];
-                    string fullString = factionName + "=" + currentAlliances;
-
-                    fullString += ";" + alliedFactionName;
-
-                    int index = Array.FindIndex(alliesFileData.ToArray(), (string s) => s.StartsWith(factionName));
-                    alliesFileData[index] = fullString;
-                }
-                else
-                {
-                    alliesFileData.Add(factionName + "=" + alliedFactionName);
-                }
-                if (factionNames.Contains(alliedFactionName))
-                {
-                    string currentAlliances = Array.Find(alliesFileData.ToArray(), (string s) => s.StartsWith(alliedFactionName)).Split('=')[1];
-                    string fullString = alliedFactionName + "=" + currentAlliances;
-
-                    fullString += ";" + factionName;
-
-                    int index = Array.FindIndex(alliesFileData.ToArray(), (string s) => s.StartsWith(alliedFactionName));
-                    alliesFileData[index] = fullString;
-                }
-                else
-                {
-                    alliesFileData.Add(alliedFactionName + "=" + factionName);
-                }
-                using (StreamWriter sw = new StreamWriter(Vars.alliesFile, false))
-                {
-                    foreach (string s in alliesFileData)
-                    {
-                        sw.WriteLine(s);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Vars.conLog.Error("AAD: " + ex.ToString());
-            }
-        }
-        #endregion
-
-        #region Remove Allies
-        public static void remAlliesData(string factionName, string alliedFactionName)
-        {
-            try
-            {
-                List<string> alliesFileData = File.ReadAllLines(Vars.alliesFile).ToList();
-                if (alliedFactionName == "disband")
-                {
-                    string fullLine = Array.Find(alliesFileData.ToArray(), (string s) => s.StartsWith(factionName));
-                    alliesFileData.Remove(fullLine);
-                    foreach (string line in alliesFileData)
-                    {
-                        if (line.Contains(factionName))
-                        {
-                            string currentAlliesString = line.Split('=')[1];
-                            List<string> newAllies = new List<string>();
-                            foreach (string s in currentAlliesString.Split(';'))
-                            {
-                                if (s != factionName)
-                                    newAllies.Add(s);
-                            }
-                            string fullString = line.Split('=')[0] + "=" + string.Join(";", newAllies.ToArray());
-                            alliesFileData[alliesFileData.IndexOf(line)] = fullString;
-                        }
-                    }
-                }
-                else
-                {
-                    foreach (string line in alliesFileData)
-                    {
-                        if (line.StartsWith(factionName))
-                        {
-                            string currentAlliesString = Array.Find(alliesFileData.ToArray(), (string s) => s.StartsWith(factionName)).Split('=')[1];
-                            List<string> newAllies = new List<string>();
-                            foreach (string s in currentAlliesString.Split(';'))
-                            {
-                                if (s != alliedFactionName)
-                                    newAllies.Add(s);
-                            }
-                            string fullString = factionName + "=" + string.Join(";", newAllies.ToArray());
-                            alliesFileData[alliesFileData.IndexOf(line)] = fullString;
-                        }
-                        if (line.StartsWith(alliedFactionName))
-                        {
-                            string currentAlliesString = Array.Find(alliesFileData.ToArray(), (string s) => s.StartsWith(alliedFactionName)).Split('=')[1];
-                            List<string> newAllies = new List<string>();
-                            foreach (string s in currentAlliesString.Split(';'))
-                            {
-                                if (s != factionName)
-                                    newAllies.Add(s);
-                            }
-                            string fullString = alliedFactionName + "=" + string.Join(";", newAllies.ToArray());
-                            alliesFileData[alliesFileData.IndexOf(line)] = fullString;
-                        }
-                    }
-                }
-                using (StreamWriter sw = new StreamWriter(Vars.alliesFile, false))
-                {
-                    foreach (string s in alliesFileData)
-                    {
-                        sw.WriteLine(s);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Vars.conLog.Error("RAD #2: " + ex.ToString());
-            }
-        }
-        #endregion
-
-        #endregion
-
         #region Factions
 
+        #region Save Factions
+        public static void saveFactions()
+        {
+            File.WriteAllText(Vars.factionsFile, JsonConvert.SerializeObject(Vars.factions, Formatting.Indented));
+        }
+        #endregion
+
         #region Read Factions
-        public static void readFactionData()
+        public static void readFactions()
         {
-            try
+            if (File.Exists(Vars.factionsFile))
             {
-                List<string> factionFileData = File.ReadAllLines(Vars.factionsFile).ToList();
-                foreach (string s in factionFileData)
+                string objectString = File.ReadAllText(Vars.factionsFile);
+                if (objectString.Length > 0)
                 {
-                    if (s.Contains("="))
+                    try
                     {
-                        string factionName = s.Split('=')[0];
-                        string membersString = s.Split('=')[1];
-
-                        if (!Vars.factions.ContainsKey(factionName))
-                            Vars.factions.Add(factionName, new Dictionary<string, string>());
-                        else
-                            Vars.conLog.Error("#1: Faction [" + factionName + "] already loaded!");
-                        if (!Vars.factionsByNames.ContainsKey(factionName))
-                            Vars.factionsByNames.Add(factionName, new Dictionary<string, string>());
-                        else
-                            Vars.conLog.Error("#2: Faction [" + factionName + "] already loaded!");
-
-                        foreach (string s2 in membersString.Split(';'))
+                        Vars.factions = JsonConvert.DeserializeObject<FactionList>(objectString);
+                        foreach (var faction in Vars.factions)
                         {
-                            string nameAndUID = s2.Split(':')[0];
-                            string rank = s2.Split(':')[1];
-                            string name = nameAndUID.Substring(1, nameAndUID.IndexOf(')') - 1);
-                            string UID = nameAndUID.Substring(nameAndUID.LastIndexOf(')') + 1);
-
-                            if (!Vars.factions[factionName].ContainsKey(UID))
-                                Vars.factions[factionName].Add(UID, rank);
-                            else
-                                Vars.conLog.Error("A: Faction [" + factionName + "] already includes UID \"" + UID + "\"!");
-                            if (!Vars.factionsByNames[factionName].ContainsKey(UID))
-                                Vars.factionsByNames[factionName].Add(UID, name);
-                            else
-                                Vars.conLog.Error("B: Faction [" + factionName + "] already includes UID \"" + UID + "\"!");
+                            faction.home.origin = new Vector3(faction.home.x, faction.home.y, faction.home.z);
                         }
                     }
-                }
-            }
-            catch (Exception ex)
-            {
-                Vars.conLog.Error("RFD #1: " + ex.ToString());
-            }
-        }
-        #endregion
-
-        #region Add Faction
-        public static void addFactionData(string factionName, string userName, string userID, string rank)
-        {
-            try
-            {
-                List<string> factionFileData = File.ReadAllLines(Vars.factionsFile).ToList();
-                List<string> factionNames = new List<string>();
-                foreach (string str in factionFileData)
-                {
-                    factionNames.Add(str.Split('=')[0]);
-                }
-                if (factionNames.Contains(factionName))
-                {
-                    string currentMembers = Array.Find(factionFileData.ToArray(), (string s) => s.StartsWith(factionName)).Split('=')[1];
-                    string fullString = factionName + "=" + currentMembers;
-
-                    fullString += ";(" + userName + ")" + userID + ":" + rank;
-
-                    int index = Array.FindIndex(factionFileData.ToArray(), (string s) => s.StartsWith(factionName));
-                    factionFileData[index] = fullString;
-                }
-                else
-                {
-                    factionFileData.Add(factionName + "=(" + userName + ")" + userID + ":" + rank);
-                }
-                using (StreamWriter sw = new StreamWriter(Vars.factionsFile, false))
-                {
-                    foreach (string s in factionFileData)
+                    catch (Exception ex)
                     {
-                        sw.WriteLine(s);
+                        Vars.conLog.Error(ex.ToString());
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Vars.conLog.Error("AFD: " + ex.ToString());
-            }
-        }
-        #endregion
-
-        #region Remove Faction
-        public static void remFactionData(string factionName, string userName, string rank)
-        {
-            try
-            {
-                List<string> factionFileData = File.ReadAllLines(Vars.factionsFile).ToList();
-                if (userName == "disband")
-                {
-                    string fullLine = Array.Find(factionFileData.ToArray(), (string s) => s.StartsWith(factionName));
-                    factionFileData.Remove(fullLine);
-                }
-                else
-                {
-                    foreach (string line in factionFileData)
-                    {
-                        if (line.StartsWith(factionName))
-                        {
-                            string currentMembersString = Array.Find(factionFileData.ToArray(), (string s) => s.StartsWith(factionName)).Split('=')[1];
-                            Dictionary<string, string> currentMembers = new Dictionary<string, string>();
-                            foreach (string s in currentMembersString.Split(';'))
-                            {
-                                string name = s.Substring(1, s.LastIndexOf(')') - 1);
-                                string UID = s.Substring(s.LastIndexOf(')') + 1, 17);
-                                if (!currentMembers.ContainsKey(name))
-                                    currentMembers.Add(name, UID);
-                            }
-                            string fullString = factionName + "=" + currentMembersString;
-
-                            if (currentMembersString.StartsWith("(" + userName + ")"))
-                            {
-                                fullString = fullString.Replace("(" + userName + ")" + currentMembers[userName] + ":" + rank + ";", "");
-                                factionFileData[factionFileData.IndexOf(line)] = fullString;
-                            }
-                            else
-                            {
-                                fullString = fullString.Replace(";(" + userName + ")" + currentMembers[userName] + ":" + rank, "");
-                                factionFileData[factionFileData.IndexOf(line)] = fullString;
-                            }
-                            break;
-                        }
-                    }
-                }
-                using (StreamWriter sw = new StreamWriter(Vars.factionsFile, false))
-                {
-                    foreach (string s in factionFileData)
-                    {
-                        sw.WriteLine(s);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Vars.conLog.Error("RFD #2: " + ex.ToString());
             }
         }
         #endregion
@@ -1197,27 +925,31 @@ namespace RustEssentials.Util
             try
             {
                 string ownerName = ownerClient.userName;
-                string ownerUID = ownerClient.userID.ToString();
+                ulong ownerUID = ownerClient.userID;
 
                 if (Vars.vanishedList.Contains(ownerUID))
                     return;
 
                 List<string> bettyFileData = File.ReadAllLines(Vars.bettyFile).ToList();
-                List<string> bettyOwners = new List<string>();
+                List<ulong> bettyOwners = new List<ulong>();
                 foreach (string str in bettyFileData)
                 {
                     string ownerInfo = str.Split('=')[0];
-                    
+
                     if (ownerInfo.Contains("-"))
-                        bettyOwners.Add(ownerInfo.Split('-')[0]);
+                    {
+                        ulong parsedID;
+                        if (ulong.TryParse(ownerInfo.Split('-')[0], out parsedID))
+                            bettyOwners.Add(parsedID);
+                    }
                 }
 
                 if (bettyOwners.Contains(ownerUID))
                 {
-                    string currentBetties = Array.Find(bettyFileData.ToArray(), (string s) => s.StartsWith(ownerUID)).Split('=')[1];
+                    string currentBetties = Array.Find(bettyFileData.ToArray(), (string s) => s.StartsWith(ownerUID.ToString())).Split('=')[1];
                     string fullString = ownerUID + "-" + ownerName + "=" + currentBetties;
 
-                    int index = Array.FindIndex(bettyFileData.ToArray(), (string s) => s.StartsWith(ownerUID));
+                    int index = Array.FindIndex(bettyFileData.ToArray(), (string s) => s.StartsWith(ownerUID.ToString()));
                     bettyFileData[index] = fullString;
                 }
 
@@ -1250,7 +982,18 @@ namespace RustEssentials.Util
                 {
                     string owner = s.Split('=')[0];
                     string partnerString = s.Split('=')[1];
-                    Vars.removerSharingData.Add(owner, partnerString);
+                    ulong ownerID;
+                    if (ulong.TryParse(owner, out ownerID))
+                    {
+                        List<ulong> partners = new List<ulong>();
+                        foreach (string s2 in partnerString.Split(':'))
+                        {
+                            ulong partnerID;
+                            if (ulong.TryParse(s2, out partnerID))
+                                partners.Add(partnerID);
+                        }
+                        Vars.removerSharingData.Add(ownerID, partners);
+                    }
                 }
             }
             catch (Exception ex)
@@ -1370,7 +1113,18 @@ namespace RustEssentials.Util
                 {
                     string owner = s.Split('=')[0];
                     string partnerString = s.Split('=')[1];
-                    Vars.removerSharingData.Add(owner, partnerString);
+                    ulong ownerID;
+                    if (ulong.TryParse(owner, out ownerID))
+                    {
+                        List<ulong> partners = new List<ulong>();
+                        foreach (string s2 in partnerString.Split(':'))
+                        {
+                            ulong partnerID;
+                            if (ulong.TryParse(s2, out partnerID))
+                                partners.Add(partnerID);
+                        }
+                        Vars.removerSharingData.Add(ownerID, partners);
+                    }
                 }
             }
             catch (Exception ex)
@@ -1490,7 +1244,18 @@ namespace RustEssentials.Util
                 {
                     string owner = s.Split('=')[0];
                     string partnerString = s.Split('=')[1];
-                    Vars.sharingData.Add(owner, partnerString);
+                    ulong ownerID;
+                    if (ulong.TryParse(owner, out ownerID))
+                    {
+                        List<ulong> partners = new List<ulong>();
+                        foreach (string s2 in partnerString.Split(':'))
+                        {
+                            ulong partnerID;
+                            if (ulong.TryParse(s2, out partnerID))
+                                partners.Add(partnerID);
+                        }
+                        Vars.sharingData.Add(ownerID, partners);
+                    }
                 }
             }
             catch (Exception ex)
@@ -1592,6 +1357,106 @@ namespace RustEssentials.Util
             catch (Exception ex)
             {
                 Vars.conLog.Error("RDD #2: " + ex.ToString());
+            }
+        }
+        #endregion
+
+        #endregion
+
+        #region Offenses
+
+        #region Read Offenses
+        public static void readOffenseData()
+        {
+            try
+            {
+                List<string> offenseDataFile = File.ReadAllLines(Vars.offenseFile).ToList();
+                foreach (string s in offenseDataFile)
+                {
+                    string user = s.Split('=')[0];
+                    string offenses = s.Split('=')[1];
+                    ulong userID;
+                    int offenseCount;
+                    if (ulong.TryParse(user, out userID) && int.TryParse(offenses, out offenseCount))
+                    {
+                        Vars.playerOffenses.Add(userID, offenseCount);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Vars.conLog.Error("ROD #1: " + ex.ToString());
+            }
+        }
+        #endregion
+
+        #region Set Offenses
+        public static void setOffenseData(ulong userID, int offenseCount)
+        {
+            try
+            {
+                List<string> offenseDataFile = File.ReadAllLines(Vars.offenseFile).ToList();
+                List<string> users = new List<string>();
+                foreach (string str in offenseDataFile)
+                {
+                    users.Add(str.Split('=')[0]);
+                }
+
+                if (users.Contains(userID.ToString()))
+                {
+                    string fullString = userID + "=" + offenseCount;
+
+                    int index = Array.FindIndex(offenseDataFile.ToArray(), (string s) => s.StartsWith(userID.ToString()));
+                    offenseDataFile[index] = fullString;
+                }
+                else
+                {
+                    offenseDataFile.Add(userID + "=" + offenseCount);
+                }
+
+                using (StreamWriter sw = new StreamWriter(Vars.offenseFile, false))
+                {
+                    foreach (string s in offenseDataFile)
+                    {
+                        sw.WriteLine(s);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Vars.conLog.Error("AOD: " + ex.ToString());
+            }
+        }
+        #endregion
+
+        #region Remove Offense
+        public static void remOffenseData(ulong userID)
+        {
+            try
+            {
+                List<string> offenseDataFile = File.ReadAllLines(Vars.offenseFile).ToList();
+                foreach (string line in offenseDataFile)
+                {
+                    if (line.StartsWith(userID.ToString()))
+                    {
+                        string currentOffenseCount = Array.Find(offenseDataFile.ToArray(), (string s) => s.StartsWith(userID.ToString())).Split('=')[1];
+                        string fullString = userID + "=" + currentOffenseCount;
+
+                        offenseDataFile.Remove(fullString);
+                        break;
+                    }
+                }
+                using (StreamWriter sw = new StreamWriter(Vars.offenseFile, false))
+                {
+                    foreach (string s in offenseDataFile)
+                    {
+                        sw.WriteLine(s);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Vars.conLog.Error("ROD #2: " + ex.ToString());
             }
         }
         #endregion
@@ -1871,14 +1736,15 @@ namespace RustEssentials.Util
             bool foundPos = false;
             foreach (string s in warpFileData)
             {
-                if (s.ToLower().StartsWith("[" + warpName + ".") && s.EndsWith("]") && !lookingForPos)
+                string line = s.ToLower();
+                if ((line.StartsWith("[" + warpName + ".") && line.EndsWith("]") || line == "[" + warpName + "]") && !lookingForPos)
                 {
                     endLine = startLine;
                     lookingForPos = true;
                     foundWarp = true;
                 }
 
-                if (s.ToLower().StartsWith("(") && s.EndsWith(")") && s.Contains(",") && lookingForPos)
+                if (line.StartsWith("(") && s.EndsWith(")") && line.Contains(",") && lookingForPos)
                 {
                     foundPos = true;
                     break;
@@ -1925,9 +1791,9 @@ namespace RustEssentials.Util
             try
             {
                 Dictionary<string, List<string>> warps = new Dictionary<string, List<string>>();
-                foreach (KeyValuePair<string, Dictionary<TimerPlus, string>> kv in Vars.activeWarpCooldowns)
+                foreach (KeyValuePair<ulong, Dictionary<TimerPlus, string>> kv in Vars.activeWarpCooldowns)
                 {
-                    string UID = kv.Key;
+                    string UID = kv.Key.ToString();
                     if (!warps.ContainsKey(UID))
                         warps.Add(UID, new List<string>());
                     foreach (KeyValuePair<TimerPlus, string> kv2 in kv.Value)
@@ -1936,7 +1802,7 @@ namespace RustEssentials.Util
                         warps[UID].Add(warpName);
                         if (Vars.warpCooldowns.ContainsKey(warpName))
                         {
-                            string cooldown = Vars.kitCooldowns[warpName].ToString();
+                            string cooldown = Vars.warpCooldowns[warpName].ToString();
                             updateWarpCooldownData(UID, warpName, cooldown, kv2.Key);
                         }
                     }
@@ -1958,29 +1824,29 @@ namespace RustEssentials.Util
                 List<string> warpCooldownsData = File.ReadAllLines(Vars.warpCooldownsFile).ToList();
                 foreach (string s in warpCooldownsData)
                 {
-                    string UID = s.Split('=')[0];
+                    string UIDString = s.Split('=')[0];
                     string warpsString = s.Split('=')[1];
 
-                    foreach (string s2 in warpsString.Split(';'))
+                    ulong UID;
+                    if (ulong.TryParse(UIDString, out UID))
                     {
-                        string warpName = s2.Split(':')[0].ToLower();
-                        string cooldown = s2.Split(':')[1];
-                        if (!cooldown.Contains("-"))
+                        foreach (string s2 in warpsString.Split(';'))
                         {
-                            TimerPlus t = new TimerPlus();
-                            t.AutoReset = false;
-                            t.Interval = Convert.ToInt64(cooldown);
-                            t.timerCallback = new TimerCallback((senderObj) => Vars.restoreWarp(warpName, UID));
-                            t.Start();
+                            string warpName = s2.Split(':')[0].ToLower();
+                            string cooldown = s2.Split(':')[1];
+                            if (!cooldown.Contains("-"))
+                            {
+                                TimerPlus t = TimerPlus.Create(Convert.ToInt64(cooldown), false, Vars.restoreWarp, warpName, UID);
 
-                            if (!Vars.activeWarpCooldowns.ContainsKey(UID))
-                            {
-                                Vars.activeWarpCooldowns.Add(UID, new Dictionary<TimerPlus, string>() { { t, warpName } });
-                            }
-                            else
-                            {
-                                if (!Vars.activeWarpCooldowns[UID].ContainsValue(warpName))
-                                    Vars.activeWarpCooldowns[UID].Add(t, warpName);
+                                if (!Vars.activeWarpCooldowns.ContainsKey(UID))
+                                {
+                                    Vars.activeWarpCooldowns.Add(UID, new Dictionary<TimerPlus, string>() { { t, warpName } });
+                                }
+                                else
+                                {
+                                    if (!Vars.activeWarpCooldowns[UID].ContainsValue(warpName))
+                                        Vars.activeWarpCooldowns[UID].Add(t, warpName);
+                                }
                             }
                         }
                     }
@@ -2098,8 +1964,8 @@ namespace RustEssentials.Util
                         List<string> allWarps = currentWarps.Split(';').ToList();
                         int index = Array.FindIndex(allWarps.ToArray(), (string s) => s.StartsWith(warpName));
 
-                        if (t.TimeLeft > 0)
-                            allWarps[index] = warpName + ":" + t.TimeLeft;
+                        if (t.timeLeft > 0)
+                            allWarps[index] = warpName + ":" + t.timeLeft;
                         else
                             allWarps.RemoveAt(index);
 
@@ -2134,6 +2000,38 @@ namespace RustEssentials.Util
             catch (Exception ex)
             {
                 Vars.conLog.Error("UWCDD: " + ex.ToString());
+            }
+        }
+        #endregion
+
+        #endregion
+
+        #region Homes
+
+        #region Save Homes
+        public static void saveHomes()
+        {
+            File.WriteAllText(Vars.homesFile, JsonConvert.SerializeObject(Homes.homes, Formatting.Indented));   
+        }
+        #endregion
+
+        #region Read Homes
+        public static void readHomes()
+        {
+            if (File.Exists(Vars.homesFile))
+            {
+                string objectString = File.ReadAllText(Vars.homesFile);
+                if (objectString.Length > 0)
+                {
+                    try
+                    {
+                        Homes.homes = JsonConvert.DeserializeObject<HomeList>(objectString);
+                    }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error(ex.ToString());
+                    }
+                }
             }
         }
         #endregion

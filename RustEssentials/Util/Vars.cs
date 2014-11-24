@@ -49,6 +49,7 @@ namespace RustEssentials.Util
         public static string removerBlacklistFile = Path.Combine(essentialsDir, "remover_blacklist.ini");
         public static string buildDataFile = Path.Combine(essentialsDir, "build_data.dat");
         public static string factionsFile = Path.Combine(essentialsDir, "factions.dat");
+        public static string homesFile = Path.Combine(essentialsDir, "homes.dat");
         public static string bettyFile = Path.Combine(essentialsDir, "bouncing_betties.dat");
         public static string alliesFile = Path.Combine(essentialsDir, "allies.dat");
         public static string cooldownsFile = Path.Combine(essentialsDir, "kit_cooldowns.dat");
@@ -57,6 +58,7 @@ namespace RustEssentials.Util
         public static string requestCooldownsAllFile = Path.Combine(essentialsDir, "tpaAll_cooldowns.dat");
         public static string itemControllerFile = Path.Combine(essentialsDir, "controller.ini");
         public static string zonesFile = Path.Combine(essentialsDir, "zones.dat");
+        public static string offenseFile = Path.Combine(essentialsDir, "offense.dat");
         public static string killsFile = Path.Combine(essentialsDir, "kills.dat");
         public static string deathsFile = Path.Combine(essentialsDir, "deaths.dat");
         public static string decayFile = Path.Combine(essentialsDir, "decay.ini");
@@ -124,7 +126,7 @@ namespace RustEssentials.Util
         public static bool craftAtBench = true;
         public static bool enableFallSound = true;
         public static bool enableDurability = true;
-        public static bool enableRemover = false;
+        public static bool enableRemover = true;
         public static bool returnItems = true;
         public static bool enableTRSVoting = false;
         public static bool enableRSVoting = false;
@@ -198,6 +200,13 @@ namespace RustEssentials.Util
         public static bool multiplyMaxAIResources = false;
         public static bool sendAHToConsole = true;
         public static bool versionOnJoin = true;
+        public static bool enableWithGuns = false;
+        public static bool enableOneHit = false;
+        public static bool confirmOneHit = true;
+        public static bool enableTimedRemover = false;
+        public static bool enableKickBanMessages = true;
+        public static bool enableMuteMessageToAll = true;
+        public static bool usingEssentialsDirOverride = false;
 
         public static string whitelistKickCMD = "Whitelist was enabled and you are not whitelisted.";
         public static string whitelistKickJoin = "You are not whitelisted!";
@@ -250,7 +259,6 @@ namespace RustEssentials.Util
         public static int logCap = 15;
         public static int storageLogsCap = 15;
         public static int sleeperDeathLogsCap = 15;
-        public static int maxMembers = 15;
         public static int minimumNameCount = 2;
         public static int maximumNameCount = 15;
         public static int requestDelay = 10;
@@ -271,8 +279,15 @@ namespace RustEssentials.Util
         public static int maxLightsPerPerson = 10;
         public static int maxLightsPerHouse = 30;
         public static int checkMode = 0;
+        public static int maximumPing = 0;
+        public static int memberLimit = 15;
+        public static int homeLimit = 1;
 
         public static long requestCooldown = 900000;
+        public static long factionHomeCooldown = 1800000;
+        public static long homeCooldown = 900000;
+        public static long factionHomeDelay = 30000;
+        public static long homeDelay = 30000;
         public static double dropInterval = 3600000;
         public static long refreshInterval = 15000;
         public static double nudityRefreshInterval = 5000;
@@ -281,6 +296,7 @@ namespace RustEssentials.Util
         public static long decayStructureInterval = 2100000;
         public static long decayWoodDelayInterval = 172800;
         public static long decayMetalDelayInterval = 345600;
+        public static long removerDeactivateInterval = 60000;
 
         public static float calculateInterval = 0.8f;
         public static float wandDistance = 50f;
@@ -310,6 +326,7 @@ namespace RustEssentials.Util
         public static float maxLightsRange = 50f;
         public static float bedAndBagDistance = 0f;
         public static float gatewayDistance = 4.5f;
+        public static float pingLimit = 0;
         public static float removerAttackDelay = 10f;
         // SAVED VARIABLES END
 
@@ -330,6 +347,7 @@ namespace RustEssentials.Util
             { removerBlacklistFile },
             { removerDataFile },
             { factionsFile },
+            { homesFile },
             { bettyFile },
             { alliesFile },
             { cooldownsFile },
@@ -344,8 +362,10 @@ namespace RustEssentials.Util
             { killsFile },
             { deathsFile },
             { decayFile },
+            { buildDataFile },
             //{ donorKitsFile },
-            { pathsFile }
+            { pathsFile },
+            { offenseFile }
         };
         public static List<string> allDirs = new List<string>()
         {
@@ -357,52 +377,55 @@ namespace RustEssentials.Util
             { storageLogsDir },
             { sleeperDeathLogsDir }
         };
-        public static List<string> whitelist = new List<string>();
+        public static List<ulong> whitelist = new List<ulong>();
         public static List<string> totalCommands = new List<string>();
-        public static List<string> inGlobal = new List<string>();
-        public static List<string> inDirect = new List<string>();
-        public static List<string> inFaction = new List<string>();
-        public static List<string> inGlobalV = new List<string>();
-        public static List<string> inDirectV = new List<string>();
-        public static List<string> inFactionV = new List<string>();
-        public static List<string> mutedUsers = new List<string>();
+        public static List<ulong> inGlobal = new List<ulong>();
+        public static List<ulong> inDirect = new List<ulong>();
+        public static List<ulong> inFaction = new List<ulong>();
+        public static List<ulong> inGlobalV = new List<ulong>();
+        public static List<ulong> inDirectV = new List<ulong>();
+        public static List<ulong> inFactionV = new List<ulong>();
+        public static List<ulong> mutedUsers = new List<ulong>();
         public static List<string> historyGlobal = new List<string>();
         public static List<string> historyDirect = new List<string>();
-        public static List<string> kickQueue = new List<string>();
-        public static List<string> groupMembers = new List<string>();
-        public static List<string> completeDoorAccess = new List<string>();
-        public static List<string> bettyPickupAccess = new List<string>();
-        public static List<string> godList = new List<string>();
-        public static List<string> destroyerList = new List<string>();
-        public static List<string> oposList = new List<string>();
-        public static List<string> removerList = new List<string>();
-        public static List<string> destroyerAllList = new List<string>();
-        public static List<string> elevatorList = new List<string>();
-        public static List<string> ownershipList = new List<string>();
-        public static List<string> hiddenList = new List<string>();
+        public static List<ulong> kickQueue = new List<ulong>();
+        public static List<ulong> groupMembers = new List<ulong>();
+        public static List<ulong> completeDoorAccess = new List<ulong>();
+        public static List<ulong> bettyPickupAccess = new List<ulong>();
+        public static List<ulong> godList = new List<ulong>();
+        public static List<ulong> destroyerList = new List<ulong>();
+        public static List<ulong> oposList = new List<ulong>();
+        public static List<ulong> removerList = new List<ulong>();
+        public static List<ulong> destroyerAllList = new List<ulong>();
+        public static List<ulong> elevatorList = new List<ulong>();
+        public static List<ulong> ownershipList = new List<ulong>();
+        public static List<ulong> hiddenList = new List<ulong>();
         public static List<string> unassignedWarps = new List<string>();
         public static List<string> unassignedKits = new List<string>();
-        public static List<string> emptyPrefixes = new List<string>();
-        public static List<string> vanishedList = new List<string>();
-        public static List<string> portalList = new List<string>();
-        public static List<string> bypassList = new List<string>();
-        public static List<string> explosiveBulletList = new List<string>();
-        public static List<string> unlAmmoList = new List<string>();
-        public static List<string> infAmmoList = new List<string>();
-        public static List<string> buildList = new List<string>();
-        public static List<string> craftList = new List<string>();
+        public static List<ulong> emptyPrefixes = new List<ulong>();
+        public static List<ulong> vanishedList = new List<ulong>();
+        public static List<ulong> portalList = new List<ulong>();
+        public static List<ulong> bypassList = new List<ulong>();
+        public static List<ulong> explosiveBulletList = new List<ulong>();
+        public static List<ulong> unlAmmoList = new List<ulong>();
+        public static List<ulong> infAmmoList = new List<ulong>();
+        public static List<ulong> buildList = new List<ulong>();
+        public static List<ulong> craftList = new List<ulong>();
         public static List<string> restrictItems = new List<string>();
         public static List<string> restrictCrafting = new List<string>();
         public static List<string> restrictResearch = new List<string>();
         public static List<string> permitResearch = new List<string>();
         public static List<string> restrictBlueprints = new List<string>();
-        public static List<string> lastWinners = new List<string>();
+        public static List<ulong> lastWinners = new List<ulong>();
         public static List<string> noninheritedKits = new List<string>();
         public static List<string> noninheritedWarps = new List<string>();
         public static List<string> excludeFromSleepers = new List<string>();
         public static List<string> excludeFromFamilyCheck = new List<string>();
         public static List<string> removerObjectBlacklist = new List<string>();
-        public static List<string> wasHit = new List<string>();
+        public static List<ulong> wasHit = new List<ulong>();
+        public static List<string> modMessageRanks = new List<string>();
+        public static List<string> commandsToChat = new List<string>();
+        public static List<GameObject> animalCorpses = new List<GameObject>();
         public static BettyKillList<BouncingBettyKill> diedToBetty = new BettyKillList<BouncingBettyKill>();
         public static List<Items.Item> TRSItems = new List<Items.Item>();
         public static List<Items.Item> bettyRecipe = new List<Items.Item>();
@@ -413,16 +436,18 @@ namespace RustEssentials.Util
         public static Dictionary<ulong, List<Items.Item>> oldPlayerArmor = new Dictionary<ulong, List<Items.Item>>();
         public static Dictionary<ulong, List<Items.Item>> oldPlayerInventory = new Dictionary<ulong, List<Items.Item>>();
         public static Dictionary<PlayerClient, double> allyShotMessages = new Dictionary<PlayerClient, double>();
+        public static Dictionary<GameObject, double> removerTimes = new Dictionary<GameObject, double>();
+        public static Dictionary<ulong, TimerPlus> removerTimers = new Dictionary<ulong, TimerPlus>();
         public static List<HostileWildlifeAI> ignoringAIList = new List<HostileWildlifeAI>();
         public static List<PlayerClient> AllPlayerClients = new List<PlayerClient>();
         public static Dictionary<PlayerClient, string> playerIPs = new Dictionary<PlayerClient, string>();
         public static Dictionary<ulong, int> playerOffenses = new Dictionary<ulong, int>();
-        public static Dictionary<string, uLink.NetworkPlayer> notifyList = new Dictionary<string, uLink.NetworkPlayer>();
+        public static Dictionary<ulong, uLink.NetworkPlayer> notifyList = new Dictionary<ulong, uLink.NetworkPlayer>();
         public static Zones safeZones = new Zones();
         public static Zones warZones = new Zones();
-        public static List<string> followGhostList = new List<string>();
-        public static Dictionary<string, Vector3> ghostList = new Dictionary<string, Vector3>();
-        public static Dictionary<string, Vector3> ghostPositions = new Dictionary<string, Vector3>();
+        public static List<ulong> followGhostList = new List<ulong>();
+        public static Dictionary<ulong, Vector3> ghostList = new Dictionary<ulong, Vector3>();
+        public static Dictionary<ulong, Vector3> ghostPositions = new Dictionary<ulong, Vector3>();
         public static Dictionary<PlayerClient, Vector2> firstPoints = new Dictionary<PlayerClient, Vector2>();
         public static Dictionary<PlayerClient, Vector2> secondPoints = new Dictionary<PlayerClient, Vector2>();
         public static Dictionary<PlayerClient, Vector2> thirdPoints = new Dictionary<PlayerClient, Vector2>();
@@ -450,41 +475,41 @@ namespace RustEssentials.Util
         };
 
         public static Dictionary<GameObject, double> removerDelayedObjects = new Dictionary<GameObject, double>();
-        public static Dictionary<string, string> sharingData = new Dictionary<string, string>();
-        public static Dictionary<string, string> removerSharingData = new Dictionary<string, string>();
-        public static Dictionary<string, string> buildSharingData = new Dictionary<string, string>();
-        public static Dictionary<string, string> playerPrefixes = new Dictionary<string, string>();
+        public static Dictionary<ulong, List<ulong>> sharingData = new Dictionary<ulong, List<ulong>>();
+        public static Dictionary<ulong, List<ulong>> removerSharingData = new Dictionary<ulong, List<ulong>>();
+        public static Dictionary<ulong, List<ulong>> buildSharingData = new Dictionary<ulong, List<ulong>>();
+        public static Dictionary<ulong, string> playerPrefixes = new Dictionary<ulong, string>();
         public static Dictionary<string, string> rankPrefixes = new Dictionary<string, string>();
         public static Dictionary<string, string> currentBans = new Dictionary<string, string>();
         public static Dictionary<string, string> currentBanReasons = new Dictionary<string, string>();
-        public static Dictionary<string, int> playerKills = new Dictionary<string, int>();
-        public static Dictionary<string, int> playerDeaths = new Dictionary<string, int>();
+        public static Dictionary<ulong, int> playerKills = new Dictionary<ulong, int>();
+        public static Dictionary<ulong, int> playerDeaths = new Dictionary<ulong, int>();
         public static Dictionary<string, long> playerEcon = new Dictionary<string, long>();
         public static Dictionary<string, long> decayIntervals = new Dictionary<string, long>();
-        public static Dictionary<string, TimerPlus> blockedRequestsAll = new Dictionary<string, TimerPlus>();
-        public static Dictionary<string, float> wandList = new Dictionary<string, float>();
-        public static Dictionary<string, List<string>> previousArmor = new Dictionary<string, List<string>>();
+        public static Dictionary<ulong, TimerPlus> blockedRequestsAll = new Dictionary<ulong, TimerPlus>();
+        public static Dictionary<ulong, TimerPlus> blockedFHomes = new Dictionary<ulong, TimerPlus>();
+        public static Dictionary<ulong, TimerPlus> blockedHomes = new Dictionary<ulong, TimerPlus>();
+        public static Dictionary<ulong, float> wandList = new Dictionary<ulong, float>();
+        public static Dictionary<ulong, List<string>> previousArmor = new Dictionary<ulong, List<string>>();
         public static Dictionary<string, List<Items.Item>> donorKits = new Dictionary<string, List<Items.Item>>();
-        public static Dictionary<string, List<string>> rankList = new Dictionary<string, List<string>>();
+        public static Dictionary<string, List<ulong>> rankList = new Dictionary<string, List<ulong>>();
         public static Dictionary<string, List<string>> motdList = new Dictionary<string, List<string>>();
         public static Dictionary<string, List<string>> enabledCommands = new Dictionary<string, List<string>>();
         public static Dictionary<string, List<string>> kitsForRanks = new Dictionary<string, List<string>>();
-        public static Dictionary<string, List<string>> kitsForUIDs = new Dictionary<string, List<string>>();
+        public static Dictionary<ulong, List<string>> kitsForUIDs = new Dictionary<ulong, List<string>>();
         public static Dictionary<string, List<string>> warpsForRanks = new Dictionary<string, List<string>>();
-        public static Dictionary<string, List<string>> warpsForUIDs = new Dictionary<string, List<string>>();
-        public static Dictionary<string, List<string>> factionInvites = new Dictionary<string, List<string>>();
-        public static Dictionary<string, List<string>> alliances = new Dictionary<string, List<string>>();
+        public static Dictionary<ulong, List<string>> warpsForUIDs = new Dictionary<ulong, List<string>>();
+        public static Dictionary<ulong, List<string>> factionInvites = new Dictionary<ulong, List<string>>();
         public static Dictionary<string, LootSpawnList> originalLootTables = new Dictionary<string, LootSpawnList>();
         public static Dictionary<string, List<string>> historyFaction = new Dictionary<string, List<string>>();
-        public static Dictionary<string, TimerPlus> muteTimes = new Dictionary<string, TimerPlus>();
+        public static Dictionary<ulong, TimerPlus> muteTimes = new Dictionary<ulong, TimerPlus>();
         public static Dictionary<ulong, Vector3> frozenPlayers = new Dictionary<ulong, Vector3>();
         public static Dictionary<PlayerClient, PlayerClient> latestPM = new Dictionary<PlayerClient, PlayerClient>();
         public static Dictionary<PlayerClient, PlayerClient> latestRequests = new Dictionary<PlayerClient, PlayerClient>();
         public static Dictionary<ulong, ulong> latestFactionRequests = new Dictionary<ulong, ulong>();
         public static Dictionary<PlayerClient, Dictionary<PlayerClient, TimerPlus>> teleportRequests = new Dictionary<PlayerClient, Dictionary<PlayerClient, TimerPlus>>();
-        public static Dictionary<string, Dictionary<string, TimerPlus>> blockedRequestsPer = new Dictionary<string, Dictionary<string, TimerPlus>>();
-        public static Dictionary<string, Dictionary<string, string>> factions = new Dictionary<string, Dictionary<string, string>>();
-        public static Dictionary<string, Dictionary<string, string>> factionsByNames = new Dictionary<string, Dictionary<string, string>>();
+        public static Dictionary<ulong, Dictionary<ulong, TimerPlus>> blockedRequestsPer = new Dictionary<ulong, Dictionary<ulong, TimerPlus>>();
+        public static FactionList factions = new FactionList();
         public static Dictionary<int, string> itemIDs = new Dictionary<int, string>();
         public static Dictionary<string, List<Items.Item>> kits = new Dictionary<string, List<Items.Item>>();
         public static Dictionary<string, Vector3> warps = new Dictionary<string, Vector3>();
@@ -499,8 +524,8 @@ namespace RustEssentials.Util
         public static Dictionary<Zone, List<DeployableObject>> zoneObjects = new Dictionary<Zone, List<DeployableObject>>();
         public static Dictionary<Zone, List<EnvDecay>> zoneEnvDecays = new Dictionary<Zone, List<EnvDecay>>();
         public static Dictionary<Zone, List<StructureComponent>> zoneStructures = new Dictionary<Zone, List<StructureComponent>>();
-        public static Dictionary<string, Dictionary<TimerPlus, string>> activeKitCooldowns = new Dictionary<string, Dictionary<TimerPlus, string>>();
-        public static Dictionary<string, Dictionary<TimerPlus, string>> activeWarpCooldowns = new Dictionary<string, Dictionary<TimerPlus, string>>();
+        public static Dictionary<ulong, Dictionary<TimerPlus, string>> activeKitCooldowns = new Dictionary<ulong, Dictionary<TimerPlus, string>>();
+        public static Dictionary<ulong, Dictionary<TimerPlus, string>> activeWarpCooldowns = new Dictionary<ulong, Dictionary<TimerPlus, string>>();
         public static Dictionary<string, StringBuilder> textForFiles = new Dictionary<string, StringBuilder>()
         {
             { cfgFile, FileTexts.cfgText() },
@@ -526,17 +551,17 @@ namespace RustEssentials.Util
             Vars.callHook("RustEssentialsAPI.Hooks", "OnServerShutdown", false, reason);
         }
 
-        public static string filterNames(string playerName, string uid)
+        public static string filterNames(string playerName, ulong uid)
         {
             if (!emptyPrefixes.Contains(uid))
             {
                 if (!playerPrefixes.ContainsKey(uid))
                 {
-                    foreach (KeyValuePair<string, List<string>> kv in rankList)
+                    foreach (KeyValuePair<string, List<ulong>> kv in rankList)
                     {
                         if (kv.Value.Contains(uid))
                         {
-                            if (rankPrefixes.Keys.Contains(kv.Key))
+                            if (rankPrefixes.ContainsKey(kv.Key))
                             {
                                 playerName = (removePrefix ? "" : rankPrefixes[kv.Key] + " ") + playerName;
                                 break;
@@ -584,22 +609,6 @@ namespace RustEssentials.Util
 
             area /= 2;
             return (area < 0 ? -area : area);
-        }
-
-        public static void threadSecUpdate()
-        {
-            REB.StartCoroutine(secondaryUpdate());
-        }
-
-        public static void threadMainUpdate()
-        {
-            REB.StartCoroutine(mainUpdate());
-        }
-
-        public static void threadSpeedHackUpdate()
-        {
-            if (checkMode == 0)
-                REB.StartCoroutine(speedHackUpdate());
         }
 
         public static IEnumerator delayRemover(GameObject GO)
@@ -777,45 +786,6 @@ namespace RustEssentials.Util
                             warZone = null;
                             Vector2 playerPos = new Vector2(playerChar.transform.position.x, playerChar.transform.position.z);
 
-                            bool inZoneS = false;
-                            foreach (Zone zone in safeZones)
-                            {
-                                Vector2 point1 = zone.firstPoint;
-                                Vector2 point2 = zone.secondPoint;
-                                Vector2 point3 = zone.thirdPoint;
-                                Vector2 point4 = zone.fourthPoint;
-                                float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, playerPos) + Vector2.Distance(playerPos, point1)) / 2;
-                                float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, playerPos) + Vector2.Distance(playerPos, point2)) / 2;
-                                float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, playerPos) + Vector2.Distance(playerPos, point3)) / 2;
-                                float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, playerPos) + Vector2.Distance(playerPos, point4)) / 2;
-                                double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, playerPos)) * (s1 - Vector2.Distance(playerPos, point1)));
-                                double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, playerPos)) * (s2 - Vector2.Distance(playerPos, point2)));
-                                double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, playerPos)) * (s3 - Vector2.Distance(playerPos, point3)));
-                                double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, playerPos)) * (s4 - Vector2.Distance(playerPos, point4)));
-                                double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
-                                double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
-
-                                if (areaAdded <= (areaActual + 1))
-                                    inZoneS = true;
-
-                                if (inZoneS)
-                                {
-                                    safeZone = zone;
-                                    break;
-                                }
-                            }
-                            if (!inZoneS && inSafeZone.ContainsKey(pc))
-                            {
-                                Broadcast.noticeTo(pc.netPlayer, "⊛", "You have left the safe zone.");
-                                inSafeZone.Remove(pc);
-                            }
-
-                            if (!inSafeZone.ContainsKey(pc) && inZoneS)
-                            {
-                                Broadcast.noticeTo(pc.netPlayer, "⊛", "You have entered a safe zone. Players cannot harm you.");
-                                inSafeZone.Add(pc, safeZone);
-                            }
-
                             bool inZoneW = false;
                             foreach (Zone zone in warZones)
                             {
@@ -854,6 +824,45 @@ namespace RustEssentials.Util
                                 Broadcast.noticeTo(pc.netPlayer, "", "You have entered a war zone. Damage is multiplied by " + warDamage + "x.");
                                 inWarZone.Add(pc, warZone);
                             }
+
+                            bool inZoneS = false;
+                            foreach (Zone zone in safeZones)
+                            {
+                                Vector2 point1 = zone.firstPoint;
+                                Vector2 point2 = zone.secondPoint;
+                                Vector2 point3 = zone.thirdPoint;
+                                Vector2 point4 = zone.fourthPoint;
+                                float s1 = (Vector2.Distance(point1, point2) + Vector2.Distance(point2, playerPos) + Vector2.Distance(playerPos, point1)) / 2;
+                                float s2 = (Vector2.Distance(point2, point3) + Vector2.Distance(point3, playerPos) + Vector2.Distance(playerPos, point2)) / 2;
+                                float s3 = (Vector2.Distance(point3, point4) + Vector2.Distance(point4, playerPos) + Vector2.Distance(playerPos, point3)) / 2;
+                                float s4 = (Vector2.Distance(point4, point1) + Vector2.Distance(point1, playerPos) + Vector2.Distance(playerPos, point4)) / 2;
+                                double areaT1 = Math.Sqrt(s1 * (s1 - Vector2.Distance(point1, point2)) * (s1 - Vector2.Distance(point2, playerPos)) * (s1 - Vector2.Distance(playerPos, point1)));
+                                double areaT2 = Math.Sqrt(s2 * (s2 - Vector2.Distance(point2, point3)) * (s2 - Vector2.Distance(point3, playerPos)) * (s2 - Vector2.Distance(playerPos, point2)));
+                                double areaT3 = Math.Sqrt(s3 * (s3 - Vector2.Distance(point3, point4)) * (s3 - Vector2.Distance(point4, playerPos)) * (s3 - Vector2.Distance(playerPos, point3)));
+                                double areaT4 = Math.Sqrt(s4 * (s4 - Vector2.Distance(point4, point1)) * (s4 - Vector2.Distance(point1, playerPos)) * (s4 - Vector2.Distance(playerPos, point4)));
+                                double areaActual = PolygonArea(new Vector2[] { point1, point2, point3, point4 });
+                                double areaAdded = areaT1 + areaT2 + areaT3 + areaT4;
+
+                                if (areaAdded <= (areaActual + 1))
+                                    inZoneS = true;
+
+                                if (inZoneS)
+                                {
+                                    safeZone = zone;
+                                    break;
+                                }
+                            }
+                            if (!inZoneS && inSafeZone.ContainsKey(pc))
+                            {
+                                Broadcast.noticeTo(pc.netPlayer, "⊛", "You have left the safe zone.");
+                                inSafeZone.Remove(pc);
+                            }
+
+                            if (!inSafeZone.ContainsKey(pc) && inZoneS)
+                            {
+                                Broadcast.noticeTo(pc.netPlayer, "⊛", "You have entered a safe zone. Players cannot harm you.");
+                                inSafeZone.Add(pc, safeZone);
+                            }
                         }
                     }
                 }
@@ -871,7 +880,7 @@ namespace RustEssentials.Util
             //    PlayerClient client;
             //    if (((voice.distance > 0f) && PlayerClient.Find(voiceCom.networkViewOwner, out client)) && client.hasLastKnownPosition)
             //    {
-            //        float num = inGlobalV.Contains(client.userID.ToString()) ? (1000000000f * 1000000000f) : (voice.distance * voice.distance);
+            //        float num = inGlobalV.Contains(client.userID) ? (1000000000f * 1000000000f) : (voice.distance * voice.distance);
             //        Vector3 lastKnownPosition = client.lastKnownPosition;
             //        int num3 = 0;
             //        try
@@ -931,19 +940,19 @@ namespace RustEssentials.Util
             }
         }
 
-        public static Dictionary<string, decimal> sortDictionaryByValue(Dictionary<string, decimal> dictionary, bool ascending = false)
+        public static Dictionary<ulong, decimal> sortDictionaryByValue(Dictionary<ulong, decimal> dictionary, bool ascending = false)
         {
-            List<KeyValuePair<string, decimal>> tempList = new List<KeyValuePair<string, decimal>>(dictionary);
+            List<KeyValuePair<ulong, decimal>> tempList = new List<KeyValuePair<ulong, decimal>>(dictionary);
 
-            tempList.Sort(delegate(KeyValuePair<string, decimal> firstPair, KeyValuePair<string, decimal> secondPair)
+            tempList.Sort(delegate(KeyValuePair<ulong, decimal> firstPair, KeyValuePair<ulong, decimal> secondPair)
             {
                 if (ascending)
                     return firstPair.Value.CompareTo(secondPair.Value);
                 return secondPair.Value.CompareTo(firstPair.Value);
             });
 
-            Dictionary<string, decimal> mySortedDictionary = new Dictionary<string, decimal>();
-            foreach (KeyValuePair<string, decimal> pair in tempList)
+            Dictionary<ulong, decimal> mySortedDictionary = new Dictionary<ulong, decimal>();
+            foreach (KeyValuePair<ulong, decimal> pair in tempList)
             {
                 mySortedDictionary.Add(pair.Key, pair.Value);
             }
@@ -951,19 +960,19 @@ namespace RustEssentials.Util
             return mySortedDictionary;
         }
 
-        public static Dictionary<string, int> sortDictionaryByValue(Dictionary<string, int> dictionary, bool ascending = false)
+        public static Dictionary<ulong, int> sortDictionaryByValue(Dictionary<ulong, int> dictionary, bool ascending = false)
         {
-            List<KeyValuePair<string, int>> tempList = new List<KeyValuePair<string, int>>(dictionary);
+            List<KeyValuePair<ulong, int>> tempList = new List<KeyValuePair<ulong, int>>(dictionary);
 
-            tempList.Sort(delegate(KeyValuePair<string, int> firstPair, KeyValuePair<string, int> secondPair)
+            tempList.Sort(delegate(KeyValuePair<ulong, int> firstPair, KeyValuePair<ulong, int> secondPair)
             {
                 if (ascending)
                     return firstPair.Value.CompareTo(secondPair.Value);
                 return secondPair.Value.CompareTo(firstPair.Value);
             });
 
-            Dictionary<string, int> mySortedDictionary = new Dictionary<string, int>();
-            foreach (KeyValuePair<string, int> pair in tempList)
+            Dictionary<ulong, int> mySortedDictionary = new Dictionary<ulong, int>();
+            foreach (KeyValuePair<ulong, int> pair in tempList)
             {
                 mySortedDictionary.Add(pair.Key, pair.Value);
             }
@@ -1218,9 +1227,9 @@ namespace RustEssentials.Util
                 {
                     otherWarps.Add(s);
                 }
-                if (warpsForUIDs.ContainsKey(senderClient.userID.ToString()))
+                if (warpsForUIDs.ContainsKey(senderClient.userID))
                 {
-                    foreach (string s in Vars.warpsForUIDs[senderClient.userID.ToString()])
+                    foreach (string s in Vars.warpsForUIDs[senderClient.userID])
                     {
                         otherWarps.Add(s);
                     }
@@ -1269,9 +1278,9 @@ namespace RustEssentials.Util
                 {
                     otherKits.Add(s);
                 }
-                if (kitsForUIDs.ContainsKey(senderClient.userID.ToString()))
+                if (kitsForUIDs.ContainsKey(senderClient.userID))
                 {
-                    foreach (string s in Vars.kitsForUIDs[senderClient.userID.ToString()])
+                    foreach (string s in Vars.kitsForUIDs[senderClient.userID])
                     {
                         otherKits.Add(s);
                     }
@@ -1438,9 +1447,9 @@ namespace RustEssentials.Util
                                         warpsForRanks[s].Remove(warpNameUID);
                                     }
 
-                                    List<string> UIDsToChange = new List<string>();
+                                    List<ulong> UIDsToChange = new List<ulong>();
 
-                                    foreach (KeyValuePair<string, List<string>> kv in warpsForUIDs)
+                                    foreach (KeyValuePair<ulong, List<string>> kv in warpsForUIDs)
                                     {
                                         if (kv.Value.Contains(warpNameUID))
                                         {
@@ -1449,7 +1458,7 @@ namespace RustEssentials.Util
                                         }
                                     }
 
-                                    foreach (string s in UIDsToChange)
+                                    foreach (ulong s in UIDsToChange)
                                     {
                                         warpsForUIDs[s].Remove(warpNameUID);
                                     }
@@ -1463,12 +1472,12 @@ namespace RustEssentials.Util
                                     ulong UIDLong;
                                     if (ulong.TryParse(UID, out UIDLong))
                                     {
-                                        if (!warpsForUIDs.ContainsKey(UID))
-                                            warpsForUIDs.Add(UID, new List<string>());
+                                        if (!warpsForUIDs.ContainsKey(UIDLong))
+                                            warpsForUIDs.Add(UIDLong, new List<string>());
 
-                                        if (!warpsForUIDs[UID].Contains(warpNameUID))
+                                        if (!warpsForUIDs[UIDLong].Contains(warpNameUID))
                                         {
-                                            warpsForUIDs[UID].Add(warpNameUID);
+                                            warpsForUIDs[UIDLong].Add(warpNameUID);
                                             Data.editWarp(warpNameUID, UID, wasUnassigned);
                                             Broadcast.noticeTo(senderClient.netPlayer, "➟", "Warp [" + warpNameUID + "] is now owned by " + UID + "!", 4);
                                         }
@@ -1535,9 +1544,9 @@ namespace RustEssentials.Util
                                         warpsForRanks[s].Remove(warpNameRank);
                                     }
 
-                                    List<string> UIDsToChange = new List<string>();
+                                    List<ulong> UIDsToChange = new List<ulong>();
 
-                                    foreach (KeyValuePair<string, List<string>> kv in warpsForUIDs)
+                                    foreach (KeyValuePair<ulong, List<string>> kv in warpsForUIDs)
                                     {
                                         if (kv.Value.Contains(warpNameRank))
                                         {
@@ -1546,7 +1555,7 @@ namespace RustEssentials.Util
                                         }
                                     }
 
-                                    foreach (string s in UIDsToChange)
+                                    foreach (ulong s in UIDsToChange)
                                     {
                                         warpsForUIDs[s].Remove(warpNameRank);
                                     }
@@ -1628,15 +1637,15 @@ namespace RustEssentials.Util
                                     warpsForRanks[s].Remove(warpNameRem);
                                 }
 
-                                List<string> UIDsToChange = new List<string>();
+                                List<ulong> UIDsToChange = new List<ulong>();
 
-                                foreach (KeyValuePair<string, List<string>> kv in warpsForUIDs)
+                                foreach (KeyValuePair<ulong, List<string>> kv in warpsForUIDs)
                                 {
                                     if (kv.Value.Contains(warpNameRem))
                                         UIDsToChange.Add(kv.Key);
                                 }
 
-                                foreach (string s in UIDsToChange)
+                                foreach (ulong s in UIDsToChange)
                                 {
                                     warpsForUIDs[s].Remove(warpNameRem);
                                 }
@@ -1828,7 +1837,7 @@ namespace RustEssentials.Util
                                 {
                                     Broadcast.broadcastTo(senderClient.netPlayer, "Denied " + (targetClient.userName == "" ? targetClient.netUser.displayName : targetClient.userName) + "'s teleport request.");
                                     Broadcast.broadcastTo(targetClient.netPlayer, (senderClient.userName == "" ? senderClient.netUser.displayName : senderClient.userName) + " denied your teleport request.");
-                                    teleportRequests[senderClient][targetClient].Stop();
+                                    teleportRequests[senderClient][targetClient].dispose();
                                     teleportRequests[senderClient].Remove(targetClient);
                                 }
                                 else
@@ -1854,7 +1863,7 @@ namespace RustEssentials.Util
                                 {
                                     Broadcast.broadcastTo(senderClient.netPlayer, "Denied " + (targetClient.userName == "" ? targetClient.netUser.displayName : targetClient.userName) + "'s teleport request.");
                                     Broadcast.broadcastTo(targetClient.netPlayer, (senderClient.userName == "" ? senderClient.netUser.displayName : senderClient.userName) + " denied your teleport request.");
-                                    teleportRequests[senderClient][targetClient].Stop();
+                                    teleportRequests[senderClient][targetClient].dispose();
                                     teleportRequests[senderClient].Remove(targetClient);
                                 }
                                 else
@@ -1927,23 +1936,17 @@ namespace RustEssentials.Util
                                 REB.StartCoroutine(teleporting(targetClient, senderClient));
                                 isTeleporting.Add(targetClient);
                                 isAccepting.Add(senderClient);
-                                if (requestCooldownType == 1 && !blockedRequestsPer[targetClient.userID.ToString()].ContainsKey(senderClient.userID.ToString()))
+                                if (requestCooldownType == 1 && !blockedRequestsPer[targetClient.userID].ContainsKey(senderClient.userID))
                                 {
-                                    TimerPlus t1 = new TimerPlus();
-                                    t1.AutoReset = false;
-                                    t1.Interval = requestCooldown;
-                                    t1.timerCallback = new TimerCallback((senderObject) => unblockRequests(senderClient.userID.ToString(), targetClient.userID.ToString()));
-                                    t1.Start();
-                                    blockedRequestsPer[targetClient.userID.ToString()].Add(senderClient.userID.ToString(), t1);
+                                    TimerPlus t1 = TimerPlus.Create(requestCooldown, false, unblockRequests, senderClient.userID, targetClient.userID);
+
+                                    blockedRequestsPer[targetClient.userID].Add(senderClient.userID, t1);
                                 }
-                                if (requestCooldownType == 2 && !blockedRequestsAll.ContainsKey(targetClient.userID.ToString()))
+                                if (requestCooldownType == 2 && !blockedRequestsAll.ContainsKey(targetClient.userID))
                                 {
-                                    TimerPlus t1 = new TimerPlus();
-                                    t1.AutoReset = false;
-                                    t1.Interval = requestCooldown;
-                                    t1.timerCallback = new TimerCallback((senderObject) => unblockRequests(senderClient.userID.ToString(), targetClient.userID.ToString()));
-                                    t1.Start();
-                                    blockedRequestsAll.Add(targetClient.userID.ToString(), t1);
+                                    TimerPlus t1 = TimerPlus.Create(requestCooldown, false, unblockRequests, senderClient.userID, targetClient.userID);
+
+                                    blockedRequestsAll.Add(targetClient.userID, t1);
                                 }
                             }
                             else
@@ -1994,23 +1997,17 @@ namespace RustEssentials.Util
                                 isTeleporting.Add(targetClient);
                                 isAccepting.Add(senderClient);
 
-                                if (requestCooldownType == 1 && !blockedRequestsPer[targetClient.userID.ToString()].ContainsKey(senderClient.userID.ToString()))
+                                if (requestCooldownType == 1 && !blockedRequestsPer[targetClient.userID].ContainsKey(senderClient.userID))
                                 {
-                                    TimerPlus t1 = new TimerPlus();
-                                    t1.AutoReset = false;
-                                    t1.Interval = requestCooldown;
-                                    t1.timerCallback = new TimerCallback((senderObj) => unblockRequests(senderClient.userID.ToString(), targetClient.userID.ToString()));
-                                    t1.Start();
-                                    blockedRequestsPer[targetClient.userID.ToString()].Add(senderClient.userID.ToString(), t1);
+                                    TimerPlus t1 = TimerPlus.Create(requestCooldown, false, unblockRequests, senderClient.userID, targetClient.userID);
+
+                                    blockedRequestsPer[targetClient.userID].Add(senderClient.userID, t1);
                                 }
-                                if (requestCooldownType == 2 && !blockedRequestsAll.ContainsKey(targetClient.userID.ToString()))
+                                if (requestCooldownType == 2 && !blockedRequestsAll.ContainsKey(targetClient.userID))
                                 {
-                                    TimerPlus t1 = new TimerPlus();
-                                    t1.AutoReset = false;
-                                    t1.Interval = requestCooldown;
-                                    t1.timerCallback = new TimerCallback((senderObj) => unblockRequests(senderClient.userID.ToString(), targetClient.userID.ToString()));
-                                    t1.Start();
-                                    blockedRequestsAll.Add(targetClient.userID.ToString(), t1);
+                                    TimerPlus t1 = TimerPlus.Create(requestCooldown, false, unblockRequests, senderClient.userID, targetClient.userID);
+
+                                    blockedRequestsAll.Add(targetClient.userID, t1);
                                 }
                             }
                             else
@@ -2047,23 +2044,17 @@ namespace RustEssentials.Util
                         Broadcast.broadcastTo(targetClient.netPlayer, (requestDelay == 0 ? "Teleporting..." : "Teleporting to " + (senderClient.userName == "" ? senderClient.netUser.displayName : senderClient.userName) + " in " + requestDelay + " seconds. Do not move..."));
                         REB.StartCoroutine(teleporting(targetClient, senderClient));
                         isTeleporting.Add(targetClient);
-                        if (requestCooldownType == 1 && !blockedRequestsPer[targetClient.userID.ToString()].ContainsKey(senderClient.userID.ToString()))
+                        if (requestCooldownType == 1 && !blockedRequestsPer[targetClient.userID].ContainsKey(senderClient.userID))
                         {
-                            TimerPlus t1 = new TimerPlus();
-                            t1.AutoReset = false;
-                            t1.Interval = requestCooldown;
-                            t1.timerCallback = new TimerCallback((senderObj) => unblockRequests(senderClient.userID.ToString(), targetClient.userID.ToString()));
-                            t1.Start();
-                            blockedRequestsPer[targetClient.userID.ToString()].Add(senderClient.userID.ToString(), t1);
+                            TimerPlus t1 = TimerPlus.Create(requestCooldown, false, unblockRequests, senderClient.userID, targetClient.userID);
+
+                            blockedRequestsPer[targetClient.userID].Add(senderClient.userID, t1);
                         }
-                        if (requestCooldownType == 2 && !blockedRequestsAll.ContainsKey(targetClient.userID.ToString()))
+                        if (requestCooldownType == 2 && !blockedRequestsAll.ContainsKey(targetClient.userID))
                         {
-                            TimerPlus t1 = new TimerPlus();
-                            t1.AutoReset = false;
-                            t1.Interval = requestCooldown;
-                            t1.timerCallback = new TimerCallback((senderObj) => unblockRequests(senderClient.userID.ToString(), targetClient.userID.ToString()));
-                            t1.Start();
-                            blockedRequestsAll.Add(targetClient.userID.ToString(), t1);
+                            TimerPlus t1 = TimerPlus.Create(requestCooldown, false, unblockRequests, senderClient.userID, targetClient.userID);
+                            
+                            blockedRequestsAll.Add(targetClient.userID, t1);
                         }
                     }
                     else
@@ -2078,18 +2069,18 @@ namespace RustEssentials.Util
 
         public static IEnumerator warping(PlayerClient senderClient, Vector3 destination)
         {
-            if (Vars.wasHit.Contains(senderClient.userID.ToString()))
-                Vars.wasHit.Remove(senderClient.userID.ToString());
+            if (Vars.wasHit.Contains(senderClient.userID))
+                Vars.wasHit.Remove(senderClient.userID);
             int timeElapsed = 0;
             RustServerManagement serverManagement = RustServerManagement.Get();
 
             Vector3 oldPos = getPosition(senderClient);
             while (true)
             {
-                if (wasHit.Contains(senderClient.userID.ToString()))
+                if (wasHit.Contains(senderClient.userID))
                 {
                     isTeleporting.Remove(senderClient);
-                    wasHit.Remove(senderClient.userID.ToString());
+                    wasHit.Remove(senderClient.userID);
                     Broadcast.broadcastTo(senderClient.netPlayer, "Warp was interrupted due to damage.");
                     break;
                 }
@@ -2133,37 +2124,71 @@ namespace RustEssentials.Util
             }
         }
 
+        public static IEnumerator homeTeleporting(PlayerClient senderClient, Vector3 home, bool isFactionHome = false)
+        {
+            if (Vars.wasHit.Contains(senderClient.userID))
+                Vars.wasHit.Remove(senderClient.userID);
+            Vector3 oldPos = getPosition(senderClient);
+            int timeElapsed = 0;
+            RustServerManagement serverManagement = RustServerManagement.Get();
+            while (true)
+            {
+                if (wasHit.Contains(senderClient.userID))
+                {
+                    isTeleporting.Remove(senderClient);
+                    wasHit.Remove(senderClient.userID);
+                    Broadcast.broadcastTo(senderClient.netPlayer, (isFactionHome ? "Faction home " : "Home ") + "teleportation was interrupted due to damage.");
+                    break;
+                }
+                if (timeElapsed >= requestDelay)
+                {
+                    simulateTeleport(senderClient, home);
+                    isTeleporting.Remove(senderClient);
+                    break;
+                }
+                Vector3 newPos = getPosition(senderClient);
+                if (Vector3.Distance(oldPos, newPos) > 3)
+                {
+                    Broadcast.broadcastTo(senderClient.netPlayer, "You moved. Teleportation cancelled.");
+                    isTeleporting.Remove(senderClient);
+                    break;
+                }
+                yield return new WaitForSeconds(1);
+                timeElapsed++;
+            }
+        }
+
         public static IEnumerator teleporting(PlayerClient targetClient, PlayerClient senderClient)
         {
-            if (Vars.wasHit.Contains(senderClient.userID.ToString()))
-                Vars.wasHit.Remove(senderClient.userID.ToString());
-            if (Vars.wasHit.Contains(targetClient.userID.ToString()))
-                Vars.wasHit.Remove(targetClient.userID.ToString());
+            if (Vars.wasHit.Contains(senderClient.userID))
+                Vars.wasHit.Remove(senderClient.userID);
+            if (Vars.wasHit.Contains(targetClient.userID))
+                Vars.wasHit.Remove(targetClient.userID);
             Vector3 oldPos = getPosition(targetClient);
             int timeElapsed = 0;
             RustServerManagement serverManagement = RustServerManagement.Get();
             while (true)
             {
-                if (wasHit.Contains(targetClient.userID.ToString()))
+                if (wasHit.Contains(targetClient.userID))
                 {
-                    teleportRequests[senderClient][targetClient].Stop();
+                    teleportRequests[senderClient][targetClient].dispose();
                     teleportRequests[senderClient].Remove(targetClient);
                     latestRequests[senderClient] = null;
                     isTeleporting.Remove(targetClient);
                     isAccepting.Remove(senderClient);
-                    wasHit.Remove(targetClient.userID.ToString());
+                    wasHit.Remove(targetClient.userID);
                     Broadcast.broadcastTo(senderClient.netPlayer, "Teleport request from " + (targetClient.userName == "" ? targetClient.netUser.displayName : targetClient.userName) + " was interrupted because they took damage.");
                     Broadcast.broadcastTo(targetClient.netPlayer, "Teleport request to " + (senderClient.userName == "" ? senderClient.netUser.displayName : senderClient.userName) + " was interrupted due to damage.");
                     break;
                 }
-                if (wasHit.Contains(senderClient.userID.ToString()))
+                if (wasHit.Contains(senderClient.userID))
                 {
-                    teleportRequests[senderClient][targetClient].Stop();
+                    teleportRequests[senderClient][targetClient].dispose();
                     teleportRequests[senderClient].Remove(targetClient);
                     latestRequests[senderClient] = null;
                     isTeleporting.Remove(targetClient);
                     isAccepting.Remove(senderClient);
-                    wasHit.Remove(senderClient.userID.ToString());
+                    wasHit.Remove(senderClient.userID);
                     Broadcast.broadcastTo(senderClient.netPlayer, "Teleport request from " + (targetClient.userName == "" ? targetClient.netUser.displayName : targetClient.userName) + " was interrupted due to damage.");
                     Broadcast.broadcastTo(targetClient.netPlayer, "Teleport request to " + (senderClient.userName == "" ? senderClient.netUser.displayName : senderClient.userName) + " was interrupted because they took damage.");
                     break;
@@ -2172,7 +2197,7 @@ namespace RustEssentials.Util
                 {
                     Vector3 destinationPos = getPosition(senderClient);
                     simulateTeleport(targetClient, destinationPos);
-                    teleportRequests[senderClient][targetClient].Stop();
+                    teleportRequests[senderClient][targetClient].dispose();
                     teleportRequests[senderClient].Remove(targetClient);
                     latestRequests[senderClient] = null;
                     isTeleporting.Remove(targetClient);
@@ -2184,7 +2209,7 @@ namespace RustEssentials.Util
                 {
                     Broadcast.broadcastTo(senderClient.netPlayer, (targetClient.userName == "" ? targetClient.netUser.displayName : targetClient.userName) + " moved. Teleportation cancelled.");
                     Broadcast.broadcastTo(targetClient.netPlayer, "You moved. Teleportation cancelled.");
-                    teleportRequests[senderClient][targetClient].Stop();
+                    teleportRequests[senderClient][targetClient].dispose();
                     teleportRequests[senderClient].Remove(targetClient);
                     latestRequests[senderClient] = null;
                     isTeleporting.Remove(targetClient);
@@ -2237,21 +2262,25 @@ namespace RustEssentials.Util
                                 else
                                 {
                                     PlayerClient targetClient = possibleTargets[0];
-                                    if (requestCooldownType == 1 && blockedRequestsPer[senderClient.userID.ToString()].ContainsKey(targetClient.userID.ToString()))
+                                    if (requestCooldownType == 1 && blockedRequestsPer[senderClient.userID].ContainsKey(targetClient.userID))
                                     {
-                                        double timeLeft = Math.Round((blockedRequestsPer[senderClient.userID.ToString()][targetClient.userID.ToString()].TimeLeft / 1000));
+                                        double timeLeft = Math.Round((blockedRequestsPer[senderClient.userID][targetClient.userID].timeLeft / 1000));
                                         if (timeLeft > 0)
                                         {
-                                            Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to that player for " + timeLeft + " second(s).");
+                                            TimeSpan timeSpan = TimeSpan.FromMilliseconds(Vars.blockedFHomes[senderClient.userID].timeLeft);
+                                            string timeString = timeSpan.Minutes + " minutes, and " + timeSpan.Seconds + " seconds.";
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to that player for " + timeString);
                                             return;
                                         }
                                     }
-                                    if (requestCooldownType == 2 && blockedRequestsAll.ContainsKey(senderClient.userID.ToString()))
+                                    if (requestCooldownType == 2 && blockedRequestsAll.ContainsKey(senderClient.userID))
                                     {
-                                        double timeLeft = Math.Round((blockedRequestsAll[senderClient.userID.ToString()].TimeLeft / 1000));
+                                        double timeLeft = Math.Round((blockedRequestsAll[senderClient.userID].timeLeft / 1000));
                                         if (timeLeft > 0)
                                         {
-                                            Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to anyone for " + timeLeft + " second(s).");
+                                            TimeSpan timeSpan = TimeSpan.FromMilliseconds(Vars.blockedFHomes[senderClient.userID].timeLeft);
+                                            string timeString = timeSpan.Minutes + " minutes, and " + timeSpan.Seconds + " seconds.";
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to anyone for " + timeString);
                                             return;
                                         }
                                     }
@@ -2273,11 +2302,8 @@ namespace RustEssentials.Util
                                         }
                                         else
                                         {
-                                            TimerPlus t = new TimerPlus();
-                                            t.AutoReset = false;
-                                            t.Interval = 30000;
-                                            t.timerCallback = new TimerCallback((senderObj) => requestTimeout(targetClient, senderClient));
-                                            t.Start();
+                                            TimerPlus t = TimerPlus.Create(30000, false, requestTimeout, targetClient, senderClient);
+
                                             teleportRequests[targetClient].Add(senderClient, t);
                                             latestRequests[targetClient] = senderClient;
                                             Broadcast.broadcastTo(senderClient.netPlayer, "Teleport request sent to " + (targetClient.userName == "" ? targetClient.netUser.displayName : targetClient.userName) + ".");
@@ -2302,21 +2328,25 @@ namespace RustEssentials.Util
                                 else
                                 {
                                     PlayerClient targetClient = possibleTargets[0];
-                                    if (requestCooldownType == 1 && blockedRequestsPer[senderClient.userID.ToString()].ContainsKey(targetClient.userID.ToString()))
+                                    if (requestCooldownType == 1 && blockedRequestsPer[senderClient.userID].ContainsKey(targetClient.userID))
                                     {
-                                        double timeLeft = Math.Round((blockedRequestsPer[senderClient.userID.ToString()][targetClient.userID.ToString()].TimeLeft / 1000));
+                                        double timeLeft = Math.Round((blockedRequestsPer[senderClient.userID][targetClient.userID].timeLeft / 1000));
                                         if (timeLeft > 0)
                                         {
-                                            Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to that player for " + timeLeft + " second(s).");
+                                            TimeSpan timeSpan = TimeSpan.FromMilliseconds(Vars.blockedFHomes[senderClient.userID].timeLeft);
+                                            string timeString = timeSpan.Minutes + " minutes, and " + timeSpan.Seconds + " seconds.";
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to that player for " + timeString);
                                             return;
                                         }
                                     }
-                                    if (requestCooldownType == 2 && blockedRequestsAll.ContainsKey(senderClient.userID.ToString()))
+                                    if (requestCooldownType == 2 && blockedRequestsAll.ContainsKey(senderClient.userID))
                                     {
-                                        double timeLeft = Math.Round((blockedRequestsAll[senderClient.userID.ToString()].TimeLeft / 1000));
+                                        double timeLeft = Math.Round((blockedRequestsAll[senderClient.userID].timeLeft / 1000));
                                         if (timeLeft > 0)
                                         {
-                                            Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to anyone for " + timeLeft + " second(s).");
+                                            TimeSpan timeSpan = TimeSpan.FromMilliseconds(Vars.blockedFHomes[senderClient.userID].timeLeft);
+                                            string timeString = timeSpan.Minutes + " minutes, and " + timeSpan.Seconds + " seconds.";
+                                            Broadcast.broadcastTo(senderClient.netPlayer, "You cannot teleport to anyone for " + timeString);
                                             return;
                                         }
                                     }
@@ -2338,11 +2368,8 @@ namespace RustEssentials.Util
                                         }
                                         else
                                         {
-                                            TimerPlus t = new TimerPlus();
-                                            t.AutoReset = false;
-                                            t.Interval = 30000;
-                                            t.timerCallback = new TimerCallback((senderObj) => requestTimeout(targetClient, senderClient));
-                                            t.Start();
+                                            TimerPlus t = TimerPlus.Create(30000, false, requestTimeout, targetClient, senderClient);
+
                                             teleportRequests[targetClient].Add(senderClient, t);
                                             latestRequests[targetClient] = senderClient;
 
@@ -2374,31 +2401,75 @@ namespace RustEssentials.Util
             }
         }
 
-        public static void unblockRequests(string toRemove, string removeFrom)
+        public static void unblockRequests(params object[] args)
         {
-            if (blockedRequestsAll.ContainsKey(removeFrom))
+            if (args.Count() > 0)
             {
-                blockedRequestsAll.Remove(removeFrom);
-            }
-            if (blockedRequestsPer[removeFrom].ContainsKey(toRemove))
-            {
-                blockedRequestsPer[removeFrom].Remove(toRemove);
+                string toRemove = (string)args[0];
+                string removeFrom = (string)args[1];
+                ulong toRemoveUID;
+                ulong removeUIDFrom;
+
+                if (ulong.TryParse(toRemove, out toRemoveUID) && ulong.TryParse(removeFrom, out removeUIDFrom))
+                {
+                    if (blockedRequestsAll.ContainsKey(removeUIDFrom))
+                    {
+                        blockedRequestsAll.Remove(removeUIDFrom);
+                    }
+                    if (blockedRequestsPer[removeUIDFrom].ContainsKey(toRemoveUID))
+                    {
+                        blockedRequestsPer[removeUIDFrom].Remove(toRemoveUID);
+                    }
+                }
             }
         }
 
-        public static void requestTimeout(PlayerClient targetClient, PlayerClient senderClient)
+        public static void unblockFactionHomeTP(params object[] args)
         {
-            if (teleportRequests.ContainsKey(targetClient))
+            if (args.Count() > 0)
             {
-                if (teleportRequests[targetClient].ContainsKey(senderClient) && !isTeleporting.Contains(senderClient))
+                ulong toRemoveUID = (ulong)args[0];
+
+                if (blockedFHomes.ContainsKey(toRemoveUID))
                 {
-                    teleportRequests[targetClient].Remove(senderClient);
-                    Broadcast.broadcastTo(senderClient.netPlayer, "Request to teleport to " + (targetClient.userName == "" ? targetClient.netUser.displayName : targetClient.userName) + " has timed out.");
+                    blockedFHomes[toRemoveUID].dispose();
+                    blockedFHomes.Remove(toRemoveUID);
                 }
             }
-            else
+        }
+
+        public static void unblockHomeTP(params object[] args)
+        {
+            if (args.Count() > 0)
             {
-                Broadcast.broadcastTo(senderClient.netPlayer, "Request to teleport to " + (targetClient.userName == "" ? targetClient.netUser.displayName : targetClient.userName) + " has timed out.");
+                ulong toRemoveUID = (ulong)args[0];
+
+                if (blockedHomes.ContainsKey(toRemoveUID))
+                {
+                    blockedHomes[toRemoveUID].dispose();
+                    blockedHomes.Remove(toRemoveUID);
+                }
+            }
+        }
+
+        public static void requestTimeout(params object[] args)
+        {
+            if (args.Count() > 0)
+            {
+                PlayerClient targetClient = (PlayerClient)args[0];
+                PlayerClient senderClient = (PlayerClient)args[1];
+                if (teleportRequests.ContainsKey(targetClient))
+                {
+                    if (teleportRequests[targetClient].ContainsKey(senderClient) && !isTeleporting.Contains(senderClient))
+                    {
+                        teleportRequests[targetClient].Remove(senderClient);
+                        Broadcast.broadcastTo(senderClient.netPlayer, "Request to teleport to " + (targetClient.userName == "" ? targetClient.netUser.displayName : targetClient.userName) + " has timed out.");
+                    }
+                }
+                else
+                {
+                    Broadcast.broadcastTo(senderClient.netPlayer, "Request to teleport to " + (targetClient.userName == "" ? targetClient.netUser.displayName : targetClient.userName) + " has timed out.");
+                }
             }
         }
 
@@ -2518,9 +2589,9 @@ namespace RustEssentials.Util
 
                         if (warps.ContainsKey(warpNameToLower))
                         {
-                            if (warpsForRanks.ContainsKey(findRank(senderClient.userID.ToString())))
+                            if (warpsForRanks.ContainsKey(findRank(senderClient.userID)))
                             {
-                                if (warpsForRanks[findRank(senderClient.userID.ToString())].Contains(warpNameToLower))
+                                if (warpsForRanks[findRank(senderClient.userID)].Contains(warpNameToLower))
                                 {
                                     if (!enableInHouse && Checks.inHouse(senderClient))
                                     {
@@ -2529,15 +2600,15 @@ namespace RustEssentials.Util
                                     else
                                     {
                                         bool onCooldown = false;
-                                        if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID.ToString()))
+                                        if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID))
                                         {
-                                            if (Vars.activeWarpCooldowns[senderClient.userID.ToString()].ContainsValue(warpNameToLower))
+                                            if (Vars.activeWarpCooldowns[senderClient.userID].ContainsValue(warpNameToLower))
                                             {
-                                                foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID.ToString()])
+                                                foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID])
                                                 {
                                                     if (kv.Value == warpNameToLower)
                                                     {
-                                                        if (Math.Round((kv.Key.TimeLeft / 1000)) > 0)
+                                                        if (Math.Round((kv.Key.timeLeft / 1000)) > 0)
                                                             onCooldown = true;
                                                     }
                                                 }
@@ -2552,28 +2623,24 @@ namespace RustEssentials.Util
 
                                             if (Vars.warpCooldowns.ContainsKey(warpNameToLower)) // If a cooldown is set for this kit, set my cool down
                                             {
-                                                TimerPlus tp = new TimerPlus();
-                                                tp.AutoReset = false;
-                                                tp.Interval = Vars.warpCooldowns[warpNameToLower];
-                                                tp.timerCallback = new TimerCallback((senderObj) => Vars.restoreWarp(warpNameToLower, senderClient.userID.ToString()));
-                                                tp.Start();
+                                                TimerPlus tp = TimerPlus.Create(Vars.warpCooldowns[warpNameToLower], false, Vars.restoreWarp, warpNameToLower, senderClient.userID);
 
-                                                if (!Vars.activeWarpCooldowns.ContainsKey(senderClient.userID.ToString()))
-                                                    Vars.activeWarpCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { tp, warpNameToLower } });
+                                                if (!Vars.activeWarpCooldowns.ContainsKey(senderClient.userID))
+                                                    Vars.activeWarpCooldowns.Add(senderClient.userID, new Dictionary<TimerPlus, string>() { { tp, warpNameToLower } });
                                                 else
-                                                    Vars.activeWarpCooldowns[senderClient.userID.ToString()].Add(tp, warpNameToLower);
+                                                    Vars.activeWarpCooldowns[senderClient.userID].Add(tp, warpNameToLower);
                                             }
                                         }
                                         else
                                         {
-                                            if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID.ToString()))
+                                            if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID))
                                             {
-                                                foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID.ToString()])
+                                                foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID])
                                                 {
                                                     if (kv.Value == warpNameToLower)
                                                     {
-                                                        double timeLeft = Math.Round((kv.Key.TimeLeft / 1000));
-                                                        TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.TimeLeft);
+                                                        double timeLeft = Math.Round((kv.Key.timeLeft / 1000));
+                                                        TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.timeLeft);
 
                                                         string timeString = "";
 
@@ -2589,9 +2656,9 @@ namespace RustEssentials.Util
                                 }
                                 else
                                 {
-                                    if (warpsForUIDs.ContainsKey(senderClient.userID.ToString()))
+                                    if (warpsForUIDs.ContainsKey(senderClient.userID))
                                     {
-                                        if (warpsForUIDs[senderClient.userID.ToString()].Contains(warpNameToLower))
+                                        if (warpsForUIDs[senderClient.userID].Contains(warpNameToLower))
                                         {
                                             if (!enableInHouse && Checks.inHouse(senderClient))
                                             {
@@ -2600,15 +2667,15 @@ namespace RustEssentials.Util
                                             else
                                             {
                                                 bool onCooldown = false;
-                                                if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID.ToString()))
+                                                if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID))
                                                 {
-                                                    if (Vars.activeWarpCooldowns[senderClient.userID.ToString()].ContainsValue(warpNameToLower))
+                                                    if (Vars.activeWarpCooldowns[senderClient.userID].ContainsValue(warpNameToLower))
                                                     {
-                                                        foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID.ToString()])
+                                                        foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID])
                                                         {
                                                             if (kv.Value == warpNameToLower)
                                                             {
-                                                                if (Math.Round((kv.Key.TimeLeft / 1000)) > 0)
+                                                                if (Math.Round((kv.Key.timeLeft / 1000)) > 0)
                                                                     onCooldown = true;
                                                             }
                                                         }
@@ -2625,36 +2692,32 @@ namespace RustEssentials.Util
                                                     {
                                                         if (Vars.kitCooldowns[warpNameToLower] > -1)
                                                         {
-                                                            TimerPlus tp = new TimerPlus();
-                                                            tp.AutoReset = false;
-                                                            tp.Interval = Vars.kitCooldowns[warpNameToLower];
-                                                            tp.timerCallback = new TimerCallback((senderObj) => Vars.restoreWarp(warpNameToLower, senderClient.userID.ToString()));
-                                                            tp.Start();
+                                                            TimerPlus tp = TimerPlus.Create(Vars.warpCooldowns[warpNameToLower], false, Vars.restoreWarp, warpNameToLower, senderClient.userID);
 
-                                                            if (!Vars.activeWarpCooldowns.ContainsKey(senderClient.userID.ToString()))
-                                                                Vars.activeWarpCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { tp, warpNameToLower } });
+                                                            if (!Vars.activeWarpCooldowns.ContainsKey(senderClient.userID))
+                                                                Vars.activeWarpCooldowns.Add(senderClient.userID, new Dictionary<TimerPlus, string>() { { tp, warpNameToLower } });
                                                             else
-                                                                Vars.activeWarpCooldowns[senderClient.userID.ToString()].Add(tp, warpNameToLower);
+                                                                Vars.activeWarpCooldowns[senderClient.userID].Add(tp, warpNameToLower);
                                                         }
                                                         else
                                                         {
-                                                            if (!Vars.activeWarpCooldowns.ContainsKey(senderClient.userID.ToString()))
-                                                                Vars.activeWarpCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { null, warpNameToLower } });
+                                                            if (!Vars.activeWarpCooldowns.ContainsKey(senderClient.userID))
+                                                                Vars.activeWarpCooldowns.Add(senderClient.userID, new Dictionary<TimerPlus, string>() { { null, warpNameToLower } });
                                                             else
-                                                                Vars.activeWarpCooldowns[senderClient.userID.ToString()].Add(null, warpNameToLower);
+                                                                Vars.activeWarpCooldowns[senderClient.userID].Add(null, warpNameToLower);
                                                         }
                                                     }
                                                 }
                                                 else
                                                 {
-                                                    if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID.ToString()))
+                                                    if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID))
                                                     {
-                                                        foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID.ToString()])
+                                                        foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID])
                                                         {
                                                             if (kv.Value == warpNameToLower)
                                                             {
-                                                                double timeLeft = Math.Round((kv.Key.TimeLeft / 1000));
-                                                                TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.TimeLeft);
+                                                                double timeLeft = Math.Round((kv.Key.timeLeft / 1000));
+                                                                TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.timeLeft);
 
                                                                 string timeString = "";
 
@@ -2690,15 +2753,15 @@ namespace RustEssentials.Util
                                     else
                                     {
                                         bool onCooldown = false;
-                                        if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID.ToString()))
+                                        if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID))
                                         {
-                                            if (Vars.activeWarpCooldowns[senderClient.userID.ToString()].ContainsValue(warpNameToLower))
+                                            if (Vars.activeWarpCooldowns[senderClient.userID].ContainsValue(warpNameToLower))
                                             {
-                                                foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID.ToString()])
+                                                foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID])
                                                 {
                                                     if (kv.Value == warpNameToLower)
                                                     {
-                                                        if (Math.Round((kv.Key.TimeLeft / 1000)) > 0)
+                                                        if (Math.Round((kv.Key.timeLeft / 1000)) > 0)
                                                             onCooldown = true;
                                                     }
                                                 }
@@ -2713,28 +2776,24 @@ namespace RustEssentials.Util
 
                                             if (Vars.warpCooldowns.ContainsKey(warpNameToLower)) // If a cooldown is set for this kit, set my cool down
                                             {
-                                                TimerPlus tp = new TimerPlus();
-                                                tp.AutoReset = false;
-                                                tp.Interval = Vars.warpCooldowns[warpNameToLower];
-                                                tp.timerCallback = new TimerCallback((senderObj) => Vars.restoreWarp(warpNameToLower, senderClient.userID.ToString()));
-                                                tp.Start();
+                                                TimerPlus tp = TimerPlus.Create(Vars.warpCooldowns[warpNameToLower], false, Vars.restoreWarp, warpNameToLower, senderClient.userID);
 
-                                                if (!Vars.activeWarpCooldowns.ContainsKey(senderClient.userID.ToString()))
-                                                    Vars.activeWarpCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { tp, warpNameToLower } });
+                                                if (!Vars.activeWarpCooldowns.ContainsKey(senderClient.userID))
+                                                    Vars.activeWarpCooldowns.Add(senderClient.userID, new Dictionary<TimerPlus, string>() { { tp, warpNameToLower } });
                                                 else
-                                                    Vars.activeWarpCooldowns[senderClient.userID.ToString()].Add(tp, warpNameToLower);
+                                                    Vars.activeWarpCooldowns[senderClient.userID].Add(tp, warpNameToLower);
                                             }
                                         }
                                         else
                                         {
-                                            if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID.ToString()))
+                                            if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID))
                                             {
-                                                foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID.ToString()])
+                                                foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID])
                                                 {
                                                     if (kv.Value == warpNameToLower)
                                                     {
-                                                        double timeLeft = Math.Round((kv.Key.TimeLeft / 1000));
-                                                        TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.TimeLeft);
+                                                        double timeLeft = Math.Round((kv.Key.timeLeft / 1000));
+                                                        TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.timeLeft);
 
                                                         string timeString = "";
 
@@ -2750,9 +2809,9 @@ namespace RustEssentials.Util
                                 }
                                 else
                                 {
-                                    if (warpsForUIDs.ContainsKey(senderClient.userID.ToString()))
+                                    if (warpsForUIDs.ContainsKey(senderClient.userID))
                                     {
-                                        if (warpsForUIDs[senderClient.userID.ToString()].Contains(warpNameToLower))
+                                        if (warpsForUIDs[senderClient.userID].Contains(warpNameToLower))
                                         {
                                             if (!enableInHouse && Checks.inHouse(senderClient))
                                             {
@@ -2761,15 +2820,15 @@ namespace RustEssentials.Util
                                             else
                                             {
                                                 bool onCooldown = false;
-                                                if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID.ToString()))
+                                                if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID))
                                                 {
-                                                    if (Vars.activeWarpCooldowns[senderClient.userID.ToString()].ContainsValue(warpNameToLower))
+                                                    if (Vars.activeWarpCooldowns[senderClient.userID].ContainsValue(warpNameToLower))
                                                     {
-                                                        foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID.ToString()])
+                                                        foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID])
                                                         {
                                                             if (kv.Value == warpNameToLower)
                                                             {
-                                                                if (Math.Round((kv.Key.TimeLeft / 1000)) > 0)
+                                                                if (Math.Round((kv.Key.timeLeft / 1000)) > 0)
                                                                     onCooldown = true;
                                                             }
                                                         }
@@ -2784,28 +2843,24 @@ namespace RustEssentials.Util
 
                                                     if (Vars.warpCooldowns.ContainsKey(warpNameToLower)) // If a cooldown is set for this kit, set my cool down
                                                     {
-                                                        TimerPlus tp = new TimerPlus();
-                                                        tp.AutoReset = false;
-                                                        tp.Interval = Vars.warpCooldowns[warpNameToLower];
-                                                        tp.timerCallback = new TimerCallback((senderObj) => Vars.restoreWarp(warpNameToLower, senderClient.userID.ToString()));
-                                                        tp.Start();
+                                                        TimerPlus tp = TimerPlus.Create(Vars.warpCooldowns[warpNameToLower], false, Vars.restoreWarp, warpNameToLower, senderClient.userID);
 
-                                                        if (!Vars.activeWarpCooldowns.ContainsKey(senderClient.userID.ToString()))
-                                                            Vars.activeWarpCooldowns.Add(senderClient.userID.ToString(), new Dictionary<TimerPlus, string>() { { tp, warpNameToLower } });
+                                                        if (!Vars.activeWarpCooldowns.ContainsKey(senderClient.userID))
+                                                            Vars.activeWarpCooldowns.Add(senderClient.userID, new Dictionary<TimerPlus, string>() { { tp, warpNameToLower } });
                                                         else
-                                                            Vars.activeWarpCooldowns[senderClient.userID.ToString()].Add(tp, warpNameToLower);
+                                                            Vars.activeWarpCooldowns[senderClient.userID].Add(tp, warpNameToLower);
                                                     }
                                                 }
                                                 else
                                                 {
-                                                    if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID.ToString()))
+                                                    if (Vars.activeWarpCooldowns.ContainsKey(senderClient.userID))
                                                     {
-                                                        foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID.ToString()])
+                                                        foreach (KeyValuePair<TimerPlus, string> kv in Vars.activeWarpCooldowns[senderClient.userID])
                                                         {
                                                             if (kv.Value == warpNameToLower)
                                                             {
-                                                                double timeLeft = Math.Round((kv.Key.TimeLeft / 1000));
-                                                                TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.TimeLeft);
+                                                                double timeLeft = Math.Round((kv.Key.timeLeft / 1000));
+                                                                TimeSpan timeSpan = TimeSpan.FromMilliseconds(kv.Key.timeLeft);
 
                                                                 string timeString = "";
 
@@ -2906,7 +2961,7 @@ namespace RustEssentials.Util
 
                             simulateTeleport(senderClient, destination);
 
-                            if (Vars.ghostList.ContainsKey(targetClient.userID.ToString()))
+                            if (Vars.ghostList.ContainsKey(targetClient.userID))
                                 Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting to " + (isVanished ? targetClient.netUser.displayName : targetClient.userName) + "'s ghost...");
                             else
                                 Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting to " + (isVanished ? targetClient.netUser.displayName : targetClient.userName) + "'s body...");
@@ -2928,11 +2983,10 @@ namespace RustEssentials.Util
                         {
                             PlayerClient targetClient = possibleTargets[0];
                             Vector3 destination = getPosition(targetClient);
-                            destination.y += 100;
 
                             simulateTeleport(senderClient, destination);
 
-                            if (Vars.ghostList.ContainsKey(targetClient.userID.ToString()))
+                            if (Vars.ghostList.ContainsKey(targetClient.userID))
                                 Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting to " + (isVanished ? targetClient.netUser.displayName : targetClient.userName) + "'s ghost...");
                             else
                                 Broadcast.broadcastTo(senderClient.netPlayer, "Teleporting to " + (isVanished ? targetClient.netUser.displayName : targetClient.userName) + "'s body...");
@@ -2981,7 +3035,6 @@ namespace RustEssentials.Util
                         {
                             PlayerClient targetClient2 = otherTargets[0];
                             Vector3 destination = getPosition(targetClient2);
-                            destination.y += 100;
 
                             simulateTeleport(targetClient, destination);
 
@@ -3276,8 +3329,8 @@ namespace RustEssentials.Util
         {
             if (args.Count() > 1)
             {
-                int time;
-                if (mode && int.TryParse(args.Last().Remove(args.Last().Length - 1), out time) && (args.Last().EndsWith("s") || args.Last().EndsWith("m") || args.Last().EndsWith("h")))
+                long time;
+                if (mode && long.TryParse(args.Last().Remove(args.Last().Length - 1), out time) && (args.Last().EndsWith("s") || args.Last().EndsWith("m") || args.Last().EndsWith("h")))
                 {
                     string timeString = args.Last().Remove(args.Last().Length - 1);
                     string timeMode = args.Last().Substring(args.Last().Length - 1, 1);
@@ -3317,20 +3370,24 @@ namespace RustEssentials.Util
                         else
                         {
                             PlayerClient targetClient = possibleTargets[0];
-                            if (!mutedUsers.Contains(targetClient.userID.ToString()))
+                            if (!mutedUsers.Contains(targetClient.userID))
                             {
-                                Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been muted on global chat for " + timeString + timeMode);
-                                mutedUsers.Add(targetClient.userID.ToString());
-                                TimerPlus tp = new TimerPlus();
-                                tp.AutoReset = false;
-                                tp.Interval = time;
-                                tp.timerCallback = new TimerCallback((senderObj) => unmuteElapsed(targetClient.userID.ToString()));
-                                tp.Start();
-                                muteTimes.Add(targetClient.userID.ToString(), tp);
+                                if (enableMuteMessageToAll)
+                                    Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been muted on global chat for " + timeString + timeMode);
+                                else
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Player \"" + targetClient.userName + "\" has been muted on global chat for " + timeString + timeMode);
+                                mutedUsers.Add(targetClient.userID);
+                                TimerPlus tp = TimerPlus.Create(time, false, unmuteElapsed, targetClient.userID);
+
+                                muteTimes.Add(targetClient.userID, tp);
                             }
                             else
                             {
-                                Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " is already muted for " + Math.Round(muteTimes[targetClient.userID.ToString()].TimeLeft / 1000) + " seconds.");
+                                TimeSpan timeSpan = TimeSpan.FromMilliseconds(Vars.muteTimes[senderClient.userID].timeLeft);
+
+                                timeString = timeSpan.Minutes + " minutes, and " + timeSpan.Seconds + " seconds.";
+
+                                Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " is already muted for " + timeString);
                             }
                         }
                     }
@@ -3344,20 +3401,24 @@ namespace RustEssentials.Util
                         else
                         {
                             PlayerClient targetClient = possibleTargets[0];
-                            if (!mutedUsers.Contains(targetClient.userID.ToString()))
+                            if (!mutedUsers.Contains(targetClient.userID))
                             {
-                                Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been muted on global chat for " + timeString + timeMode);
-                                mutedUsers.Add(targetClient.userID.ToString());
-                                TimerPlus tp = new TimerPlus();
-                                tp.AutoReset = false;
-                                tp.Interval = time;
-                                tp.timerCallback = new TimerCallback((senderObj) => unmuteElapsed(targetClient.userID.ToString()));
-                                tp.Start();
-                                muteTimes.Add(targetClient.userID.ToString(), tp);
+                                if (enableMuteMessageToAll)
+                                    Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been muted on global chat for " + timeString + timeMode);
+                                else
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Player \"" + targetClient.userName + "\" has been muted on global chat for " + timeString + timeMode);
+                                mutedUsers.Add(targetClient.userID);
+                                TimerPlus tp = TimerPlus.Create(time, false, unmuteElapsed, targetClient.userID);
+
+                                muteTimes.Add(targetClient.userID, tp);
                             }
                             else
                             {
-                                Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " is already muted for " + Math.Round(muteTimes[targetClient.userID.ToString()].TimeLeft / 1000) + " seconds.");
+                                TimeSpan timeSpan = TimeSpan.FromMilliseconds(Vars.muteTimes[senderClient.userID].timeLeft);
+
+                                timeString = timeSpan.Minutes + " minutes, and " + timeSpan.Seconds + " seconds.";
+
+                                Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " is already muted for " + timeString);
                             }
                         }
                     }
@@ -3389,10 +3450,13 @@ namespace RustEssentials.Util
                             PlayerClient targetClient = possibleTargets[0];
                             if (mode)
                             {
-                                if (!mutedUsers.Contains(targetClient.userID.ToString()))
+                                if (!mutedUsers.Contains(targetClient.userID))
                                 {
-                                    Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been muted on global chat.");
-                                    mutedUsers.Add(targetClient.userID.ToString());
+                                    if (enableMuteMessageToAll)
+                                        Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been muted on global chat.");
+                                    else
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Player \"" + targetClient.userName + "\" has been muted on global chat.");
+                                    mutedUsers.Add(targetClient.userID);
                                 }
                                 else
                                 {
@@ -3401,10 +3465,13 @@ namespace RustEssentials.Util
                             }
                             else
                             {
-                                if (mutedUsers.Contains(targetClient.userID.ToString()))
+                                if (mutedUsers.Contains(targetClient.userID))
                                 {
-                                    Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been unmuted on global chat.");
-                                    mutedUsers.Remove(targetClient.userID.ToString());
+                                    if (enableMuteMessageToAll)
+                                        Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been unmuted on global chat.");
+                                    else
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Player \"" + targetClient.userName + "\" has been unmuted on global chat.");
+                                    mutedUsers.Remove(targetClient.userID);
                                 }
                                 else
                                 {
@@ -3425,10 +3492,13 @@ namespace RustEssentials.Util
                             PlayerClient targetClient = possibleTargets[0];
                             if (mode)
                             {
-                                if (!mutedUsers.Contains(targetClient.userID.ToString()))
+                                if (!mutedUsers.Contains(targetClient.userID))
                                 {
-                                    Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been muted on global chat.");
-                                    mutedUsers.Add(targetClient.userID.ToString());
+                                    if (enableMuteMessageToAll)
+                                        Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been muted on global chat.");
+                                    else
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Player \"" + targetClient.userName + "\" has been muted on global chat.");
+                                    mutedUsers.Add(targetClient.userID);
                                 }
                                 else
                                 {
@@ -3437,10 +3507,13 @@ namespace RustEssentials.Util
                             }
                             else
                             {
-                                if (mutedUsers.Contains(targetClient.userID.ToString()))
+                                if (mutedUsers.Contains(targetClient.userID))
                                 {
-                                    Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been unmuted on global chat.");
-                                    mutedUsers.Remove(targetClient.userID.ToString());
+                                    if (enableMuteMessageToAll)
+                                        Broadcast.broadcastAll("Player \"" + targetClient.userName + "\" has been unmuted on global chat.");
+                                    else
+                                        Broadcast.broadcastTo(senderClient.netPlayer, "Player \"" + targetClient.userName + "\" has been unmuted on global chat.");
+                                    mutedUsers.Remove(targetClient.userID);
                                 }
                                 else
                                 {
@@ -3453,15 +3526,23 @@ namespace RustEssentials.Util
             }
         }
 
-        static void unmuteElapsed(string UID)
+        static void unmuteElapsed(params object[] args)
         {
-            mutedUsers.Remove(UID);
-            muteTimes.Remove(UID);
+            if (args.Count() > 0)
+            {
+                string UIDString = (string)args[0];
+                ulong UID;
+                if (ulong.TryParse(UIDString, out UID))
+                {
+                    mutedUsers.Remove(UID);
+                    muteTimes.Remove(UID);
+                }
+            }
         }
 
         public static void whitelistCheck(PlayerClient senderClient)
         {
-            string UID = senderClient.userID.ToString();
+            ulong UID = senderClient.userID;
             if (useSteamGroup)
             {
                 if (groupMembers.Contains(UID))
@@ -3483,14 +3564,19 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string action = args[1];
-                string UID = "";
+                string UIDString = "";
+                ulong UID;
 
                 if (args.Count() > 2)
+                    UIDString = args[2];
+
+                if (!ulong.TryParse(UIDString, out UID))
                 {
-                    UID = args[2];
+                    Broadcast.broadcastTo(sender, "You must enter a proper 17 digit Steam UID.");
+                    return;
                 }
 
-                PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == UID);
+                PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID == UID);
                 string targetName = "Unknown Player";
                 if (possibleTargets.Count() > 0)
                     targetName = possibleTargets[0].userName;
@@ -3500,7 +3586,7 @@ namespace RustEssentials.Util
                     case "add":
                         whitelist.Add(UID);
                         if (!rankList.ContainsKey("Member"))
-                            rankList.Add("Member", new List<string>());
+                            rankList.Add("Member", new List<ulong>());
 
                         rankList["Member"] = whitelist;
                         Broadcast.broadcastTo(sender, "UID " + UID + " added to the whitelist.");
@@ -3536,7 +3622,7 @@ namespace RustEssentials.Util
                             {
                                 using (StreamWriter sw = new StreamWriter(whiteListFile))
                                 {
-                                    foreach (string s in whitelist)
+                                    foreach (ulong s in whitelist)
                                     {
                                         sw.WriteLine(s + " # " + targetName);
                                     }
@@ -3547,7 +3633,7 @@ namespace RustEssentials.Util
                     case "rem":
                         whitelist.Remove(UID);
                         if (!rankList.ContainsKey("Member"))
-                            rankList.Add("Member", new List<string>());
+                            rankList.Add("Member", new List<ulong>());
 
                         rankList["Member"] = whitelist;
                         Broadcast.broadcastTo(sender, "UID " + UID + " removed from the whitelist.");
@@ -3582,7 +3668,7 @@ namespace RustEssentials.Util
                             {
                                 using (StreamWriter sw = new StreamWriter(whiteListFile))
                                 {
-                                    foreach (string s in whitelist)
+                                    foreach (ulong s in whitelist)
                                     {
                                         sw.WriteLine(s + " # " + targetName);
                                     }
@@ -3603,7 +3689,7 @@ namespace RustEssentials.Util
                         {
                             if (useSteamGroup)
                             {
-                                PlayerClient[] targetUsers = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => !groupMembers.Contains(pc.userID.ToString()));
+                                PlayerClient[] targetUsers = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => !groupMembers.Contains(pc.userID));
                                 foreach (PlayerClient targetClient in targetUsers)
                                 {
                                     whitelistKick(targetClient.netUser, whitelistKickCMD);
@@ -3611,7 +3697,7 @@ namespace RustEssentials.Util
                             }
                             else
                             {
-                                PlayerClient[] targetUsers = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => !whitelist.Contains(pc.userID.ToString()));
+                                PlayerClient[] targetUsers = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => !whitelist.Contains(pc.userID));
                                 foreach (PlayerClient targetClient in targetUsers)
                                 {
                                     whitelistKick(targetClient.netUser, whitelistKickCMD);
@@ -3633,7 +3719,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string action = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
                 bool hasPermission = false;
                 switch (action)
                 {
@@ -3708,8 +3794,8 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string action = args[1];
-                string UID = senderClient.userID.ToString();
-                KeyValuePair<string, Dictionary<string, string>>[] possibleFactions = Array.FindAll(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(UID));
+                ulong UID = senderClient.userID;
+                Faction faction = Vars.factions.GetByMember(UID);
 
                 switch (action)
                 {
@@ -3774,7 +3860,7 @@ namespace RustEssentials.Util
                         }
                         break;
                     case "f":
-                        if (possibleFactions.Count() > 0)
+                        if (faction != null)
                         {
                             if (!inFaction.Contains(UID))
                             {
@@ -3783,18 +3869,18 @@ namespace RustEssentials.Util
                                     inGlobal.Remove(UID);
                                 if (inDirect.Contains(UID))
                                     inDirect.Remove(UID);
-                                Broadcast.broadcastTo(senderClient.netPlayer, "You are now talking in the faction chat of [" + possibleFactions[0].Key + "].");
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You are now talking in the faction chat of [" + faction.name + "].");
                             }
                             else
                             {
-                                Broadcast.broadcastTo(senderClient.netPlayer, "You are already talking in the faction chat of [" + possibleFactions[0].Key + "].");
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You are already talking in the faction chat of [" + faction.name + "].");
                             }
                         }
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You are not in a faction.");
                         break;
                     case "faction":
-                        if (possibleFactions.Count() > 0)
+                        if (faction != null)
                         {
                             if (!inFaction.Contains(UID))
                             {
@@ -3803,11 +3889,11 @@ namespace RustEssentials.Util
                                     inGlobal.Remove(UID);
                                 if (inDirect.Contains(UID))
                                     inDirect.Remove(UID);
-                                Broadcast.broadcastTo(senderClient.netPlayer, "You are now talking in the faction chat of " + possibleFactions[0].Key + ".");
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You are now talking in the faction chat of " + faction.name + ".");
                             }
                             else
                             {
-                                Broadcast.broadcastTo(senderClient.netPlayer, "You are already talking in the faction chat of " + possibleFactions[0].Key + ".");
+                                Broadcast.broadcastTo(senderClient.netPlayer, "You are already talking in the faction chat of " + faction.name + ".");
                             }
                         }
                         else
@@ -3828,11 +3914,11 @@ namespace RustEssentials.Util
             return playerName;
         }
 
-        public static string filterFullNames(string playerName, string uid)
+        public static string filterFullNames(string playerName, ulong uid)
         {
             if (!emptyPrefixes.Contains(uid))
             {
-                foreach (KeyValuePair<string, List<string>> kv in rankList)
+                foreach (KeyValuePair<string, List<ulong>> kv in rankList)
                 {
                     if (kv.Value.Contains(uid))
                     {
@@ -3881,7 +3967,7 @@ namespace RustEssentials.Util
                 string rank = "";
 
                 if (possibleClients.Count() == 1 && !removePrefix)
-                    rank = "[" + findRank(possibleClients[0].userID.ToString()) + "] ";
+                    rank = "[" + findRank(possibleClients[0].userID) + "] ";
 
                 string joinMessage = Vars.joinMessage.Replace("$USER$", rank + fakeName);
                 Broadcast.broadcastAll(joinMessage);
@@ -3924,14 +4010,14 @@ namespace RustEssentials.Util
                 string rank = "";
 
                 if (possibleClients.Count() == 1 && !removePrefix)
-                    rank = "[" + findRank(possibleClients[0].userID.ToString()) + "] ";
+                    rank = "[" + findRank(possibleClients[0].userID) + "] ";
 
                 string joinMessage = Vars.joinMessage.Replace("$USER$", rank + fakeName);
                 Broadcast.broadcastAll(joinMessage);
             }
             else
             {
-                string rank = "[" + findRank(senderClient.userID.ToString()) + "] ";
+                string rank = "[" + findRank(senderClient.userID) + "] ";
 
                 string joinMessage = Vars.joinMessage.Replace("$USER$", (!removePrefix ? rank : "") + senderClient.userName);
                 Broadcast.broadcastAll(joinMessage);
@@ -3940,20 +4026,17 @@ namespace RustEssentials.Util
 
         public static IEnumerator sendToFaction(PlayerClient senderClient, string playerName, List<string> messages, string consoleMessage)
         {
-            string factionName = Array.Find(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(senderClient.userID.ToString())).Key;
-            string[] factionMembers = Array.Find(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(senderClient.userID.ToString())).Value.Keys.ToArray();
-            PlayerClient[] factionClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => factionMembers.Contains(pc.userID.ToString()));
+            Faction faction = Vars.factions.GetByMember(senderClient.userID);
             List<uLink.NetworkPlayer> targets = new List<uLink.NetworkPlayer>();
-            foreach (PlayerClient targetClient in factionClients)
+            foreach (var m in faction.members)
             {
-                if (targetClient.netPlayer != null)
-                {
-                    targets.Add(targetClient.netPlayer);
-                }
+                PlayerClient playerClient;
+                if (getPlayerClient(m.userID, out playerClient))
+                    targets.Add(playerClient.netPlayer);
             }
 
             if (Vars.sendChatToConsoles)
-                Broadcast.broadcastToConsoles(targets, "[color #FFA154]<F [" + factionName + "]> [color #66CCFF]" + playerName + ": [color white]" + consoleMessage);
+                Broadcast.broadcastToConsoles(targets, "[color #FFA154]<F [" + faction.name + "]> [color #66CCFF]" + playerName + ": [color white]" + consoleMessage);
             foreach (string s in messages)
             {
                 Broadcast.broadcastCustomTo(targets, "<F> " + playerName, s.Trim());
@@ -3964,20 +4047,17 @@ namespace RustEssentials.Util
 
         public static IEnumerator sendToFaction(PlayerClient senderClient, string playerName, string message, string consoleMessage)
         {
-            string factionName = Array.Find(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(senderClient.userID.ToString())).Key;
-            string[] factionMembers = Array.Find(factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(senderClient.userID.ToString())).Value.Keys.ToArray();
-            PlayerClient[] factionClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => factionMembers.Contains(pc.userID.ToString()));
+            Faction faction = Vars.factions.GetByMember(senderClient.userID);
             List<uLink.NetworkPlayer> targets = new List<uLink.NetworkPlayer>();
-            foreach (PlayerClient targetClient in factionClients)
+            foreach (var m in faction.members)
             {
-                if (targetClient.netPlayer != null)
-                {
-                    targets.Add(targetClient.netPlayer);
-                }
+                PlayerClient playerClient;
+                if (getPlayerClient(m.userID, out playerClient))
+                    targets.Add(playerClient.netPlayer);
             }
 
             if (Vars.sendChatToConsoles)
-                Broadcast.broadcastToConsoles(targets, "[color #FFA154]<F [" + factionName + "]> [color #66CCFF]" + playerName + ": [color white]" + consoleMessage);
+                Broadcast.broadcastToConsoles(targets, "[color #FFA154]<F [" + faction.name + "]> [color #66CCFF]" + playerName + ": [color white]" + consoleMessage);
             Broadcast.broadcastCustomTo(targets, "<F> " + playerName, message);
 
             yield return null;
@@ -3990,10 +4070,11 @@ namespace RustEssentials.Util
 
             Vector3 senderPos = senderChar.eyesOrigin;
 
-            List<Character> targetChars = Array.FindAll(AllCharacters.Values.ToArray(), (Character character) => character.alive && Vector3.Distance(senderPos, character.eyesOrigin) < directDistance).ToList();
+            KeyValuePair<PlayerClient, Character>[] targetChars = Array.FindAll(AllCharacters.ToArray(), (KeyValuePair<PlayerClient, Character> kv) => kv.Value.alive && Vector3.Distance(senderPos, kv.Value.eyesOrigin) < directDistance);
             List<uLink.NetworkPlayer> targets = new List<uLink.NetworkPlayer>();
-            foreach (Character targetChar in targetChars)
+            foreach (var target in targetChars)
             {
+                var targetChar = target.Value;
                 if (targetChar.playerClient != null && targetChar.playerClient.netPlayer != null)
                 {
                     targets.Add(targetChar.playerClient.netPlayer);
@@ -4017,10 +4098,11 @@ namespace RustEssentials.Util
 
             Vector3 senderPos = senderChar.eyesOrigin;
 
-            Character[] targetChars = Array.FindAll(AllCharacters.Values.ToArray(), (Character character) => character.alive && Vector3.Distance(senderPos, character.eyesOrigin) < directDistance);
+            KeyValuePair<PlayerClient, Character>[] targetChars = Array.FindAll(AllCharacters.ToArray(), (KeyValuePair<PlayerClient, Character> kv) => kv.Value.alive && Vector3.Distance(senderPos, kv.Value.eyesOrigin) < directDistance);
             List<uLink.NetworkPlayer> targets = new List<uLink.NetworkPlayer>();
-            foreach (Character targetChar in targetChars)
+            foreach (var target in targetChars)
             {
+                var targetChar = target.Value;
                 if (targetChar.playerClient != null && targetChar.playerClient.netPlayer != null)
                 {
                     targets.Add(targetChar.playerClient.netPlayer);
@@ -4036,16 +4118,12 @@ namespace RustEssentials.Util
 
         public static void startTimer()
         {
-            TimerPlus timer = new TimerPlus();
-            timer.AutoReset = true;
-            timer.Interval = refreshInterval;
-            timer.timerCallback = new TimerCallback((senderObj) => grabGroupMembers());
-            timer.Start();
+            TimerPlus.Create(refreshInterval, true, grabGroupMembers);
         }
 
-        public static bool grabNameByUID(string UID, out string playerName)
+        public static bool grabNameByUID(ulong UID, out string playerName)
         {
-            PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == UID);
+            PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID == UID);
 
             if (possibleClients.Count() > 0) // If the player is online, grab his name through the game
             {
@@ -4090,9 +4168,9 @@ namespace RustEssentials.Util
             }
         }
 
-        public static string grabNameByUID(string UID)
+        public static string grabNameByUID(ulong UID)
         {
-            PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == UID);
+            PlayerClient[] possibleClients = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID == UID);
 
             if (possibleClients.Count() > 0) // If the player is online, grab his name through the game
             {
@@ -4154,7 +4232,9 @@ namespace RustEssentials.Util
                             if (reader.NodeType == XmlNodeType.Text && currentElement == "steamID64")
                             {
                                 currentElement = "";
-                                groupMembers.Add(reader.Value);
+                                ulong UID;
+                                if (ulong.TryParse(reader.Value, out UID))
+                                    groupMembers.Add(UID);
                             }
                         }
                     }
@@ -4572,8 +4652,9 @@ namespace RustEssentials.Util
                         }
                         List<string> names = new List<string>();
                         List<string> names2 = new List<string>();
-                        foreach (ulong UID in frozenPlayers.Keys)
+                        foreach (var player in frozenPlayers)
                         {
+                            ulong UID = player.Key;
                             uLink.NetworkPlayer np = getNetPlayer(UID);
                             PlayerClient playerClient = getPlayerClient(np);
                             if (playerClient != null)
@@ -4633,7 +4714,7 @@ namespace RustEssentials.Util
                             {
                                 if (playerClient.controllable.GetComponent<Inventory>() != null)
                                 {
-                                    if (!craftList.Contains(playerClient.userID.ToString()))
+                                    if (!craftList.Contains(playerClient.userID))
                                     {
                                         foreach (string itemName in restrictItems)
                                         {
@@ -4668,6 +4749,10 @@ namespace RustEssentials.Util
                 string file = args[1];
                 switch (file)
                 {
+                    case "offenses":
+                        playerOffenses.Clear();
+                        Data.readOffenseData();
+                        break;
                     case "config":
                         RustEssentialsBootstrap._load.loadConfig();
                         break;
@@ -4723,7 +4808,15 @@ namespace RustEssentials.Util
                         try { RustEssentialsBootstrap._load.loadRemoverBlacklist(); }
                         catch (Exception ex) { Vars.conLog.Error("Error when loading remover blacklist: " + ex.ToString()); }
                         break;
+                    case "factions":
+                        Data.readFactions();
+                        break;
+                    case "homes":
+                        Data.readHomes();
+                        break;
                     case "all":
+                        playerOffenses.Clear();
+                        Data.readOffenseData();
                         RustEssentialsBootstrap._load.loadConfig();
                         try { Whitelist.readWhitelist(); }
                         catch (Exception ex) { Vars.conLog.Error("Error when loading whitelist: " + ex.ToString()); }
@@ -4751,6 +4844,8 @@ namespace RustEssentials.Util
                         catch (Exception ex) { Vars.conLog.Error("Error when loading decay: " + ex.ToString()); }
                         try { RustEssentialsBootstrap._load.loadRemoverBlacklist(); }
                         catch (Exception ex) { Vars.conLog.Error("Error when loading remover blacklist: " + ex.ToString()); }
+                        Data.readFactions();
+                        Data.readHomes();
                         break;
                 }
             }
@@ -4763,6 +4858,10 @@ namespace RustEssentials.Util
                 string file = args[1].ToLower();
                 switch (file)
                 {
+                    case "offenses":
+                        playerOffenses.Clear();
+                        Data.readOffenseData();
+                        break;
                     case "config":
                         if (RustEssentialsBootstrap._load.loadConfig())
                             Broadcast.broadcastTo(sender, "Config reloaded.");
@@ -4834,7 +4933,17 @@ namespace RustEssentials.Util
                         catch (Exception ex) { Vars.conLog.Error("Error when loading remover blacklist: " + ex.ToString()); }
                         Broadcast.broadcastTo(sender, "Remover blacklist reloaded.");
                         break;
+                    case "factions":
+                        Data.readFactions();
+                        Broadcast.broadcastTo(sender, "Factions reloaded.");
+                        break;
+                    case "homes":
+                        Data.readHomes();
+                        Broadcast.broadcastTo(sender, "Homes reloaded.");
+                        break;
                     case "all":
+                        playerOffenses.Clear();
+                        Data.readOffenseData();
                         RustEssentialsBootstrap._load.loadConfig();
                         try { Whitelist.readWhitelist(); }
                         catch (Exception ex) { Vars.conLog.Error("Error when loading whitelist: " + ex.ToString()); }
@@ -4862,6 +4971,8 @@ namespace RustEssentials.Util
                         catch (Exception ex) { Vars.conLog.Error("Error when loading decay: " + ex.ToString()); }
                         try { RustEssentialsBootstrap._load.loadRemoverBlacklist(); }
                         catch (Exception ex) { Vars.conLog.Error("Error when loading remover blacklist: " + ex.ToString()); }
+                        Data.readFactions();
+                        Data.readHomes();
                         Broadcast.broadcastTo(sender, "All files reloaded.");
                         break;
                     default:
@@ -4912,7 +5023,7 @@ namespace RustEssentials.Util
                 string rank = "";
 
                 if (possibleClients.Count() == 1 && !removePrefix)
-                    rank = "[" + findRank(possibleClients[0].userID.ToString()) + "] ";
+                    rank = "[" + findRank(possibleClients[0].userID) + "] ";
 
                 string leaveMessage = Vars.leaveMessage.Replace("$USER$", rank + fakeName);
                 Broadcast.broadcastAll(leaveMessage);
@@ -4955,14 +5066,14 @@ namespace RustEssentials.Util
                 string rank = "";
 
                 if (possibleClients.Count() == 1 && !removePrefix)
-                    rank = "[" + findRank(possibleClients[0].userID.ToString()) + "] ";
+                    rank = "[" + findRank(possibleClients[0].userID) + "] ";
 
                 string leaveMessage = Vars.leaveMessage.Replace("$USER$", rank + fakeName);
                 Broadcast.broadcastAll(leaveMessage);
             }
             else
             {
-                string rank = "[" + findRank(senderClient.userID.ToString()) + "] ";
+                string rank = "[" + findRank(senderClient.userID) + "] ";
 
                 string leaveMessage = Vars.leaveMessage.Replace("$USER$", (!removePrefix ? rank : "") + senderClient.userName);
                 Broadcast.broadcastAll(leaveMessage);
@@ -5152,11 +5263,8 @@ namespace RustEssentials.Util
             {
                 if (motd != null)
                 {
-                    TimerPlus t = new TimerPlus();
-                    t.AutoReset = true;
-                    t.Interval = Convert.ToInt64(motd.interval);
-                    t.timerCallback = new TimerCallback((senderObj) => cycleMOTDElapsed(motd.name));
-                    t.Start();
+                    TimerPlus t = TimerPlus.Create(Convert.ToInt64(motd.interval), true, cycleMOTDElapsed, motd.name);
+
                     if (!cycleMOTDTimers.ContainsKey(motd.name))
                         cycleMOTDTimers.Add(motd.name, t);
                 }
@@ -5169,11 +5277,8 @@ namespace RustEssentials.Util
             {
                 if (motd != null)
                 {
-                    TimerPlus t = new TimerPlus();
-                    t.AutoReset = false;
-                    t.Interval = Convert.ToInt64(motd.interval);
-                    t.timerCallback = new TimerCallback((senderObj) => onceMOTDElapsed(motd.name));
-                    t.Start();
+                    TimerPlus t = TimerPlus.Create(Convert.ToInt64(motd.interval), false, onceMOTDElapsed, motd.name);
+
                     if (!onceMOTDTimers.ContainsKey(motd.name))
                         onceMOTDTimers.Add(motd.name, t);
                 }
@@ -5186,11 +5291,8 @@ namespace RustEssentials.Util
             {
                 if (motd != null)
                 {
-                    TimerPlus t = new TimerPlus();
-                    t.AutoReset = true;
-                    t.Interval = Convert.ToInt64(motd.interval);
-                    t.timerCallback = new TimerCallback((senderObj) => listMOTDElapsed(motd.name));
-                    t.Start();
+                    TimerPlus t = TimerPlus.Create(Convert.ToInt64(motd.interval), true, listMOTDElapsed, motd.name);
+
                     if (!listMOTDTimers.ContainsKey(motd.name))
                         listMOTDTimers.Add(motd.name, t);
                 }
@@ -5198,20 +5300,45 @@ namespace RustEssentials.Util
         }
 
         private static Dictionary<string, int> timeCycled = new Dictionary<string, int>();
-        private static void cycleMOTDElapsed(string motdName)
+        private static void cycleMOTDElapsed(params object[] args)
         {
-            if (!timeCycled.ContainsKey(motdName))
-                timeCycled.Add(motdName, 0);
-
-            if (timeCycled[motdName] > 50)
-                timeCycled[motdName] = 2;
-
-            timeCycled[motdName]++;
-            if (timeCycled[motdName] > 1)
+            if (args.Count() > 0)
             {
-                if (cycleMOTDList.ContainsMOTD(motdName))
+                string motdName = (string)args[0];
+                if (!timeCycled.ContainsKey(motdName))
+                    timeCycled.Add(motdName, 0);
+
+                if (timeCycled[motdName] > 50)
+                    timeCycled[motdName] = 2;
+
+                timeCycled[motdName]++;
+                if (timeCycled[motdName] > 1)
                 {
-                    foreach (string s in cycleMOTDList.GetMOTD(motdName).messages)
+                    if (cycleMOTDList.ContainsMOTD(motdName))
+                    {
+                        foreach (string s in cycleMOTDList.GetMOTD(motdName).messages)
+                        {
+                            if (s.StartsWith("{/") && s.EndsWith("}"))
+                            {
+                                string command = s.Substring(1, s.Length - 2);
+                                Commands.executeCMDServer(command);
+                            }
+                            else
+                                Broadcast.broadcastAll(s);
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void onceMOTDElapsed(params object[] args)
+        {
+            if (args.Count() > 0)
+            {
+                string motdName = (string)args[0];
+                if (onceMOTDList.ContainsMOTD(motdName))
+                {
+                    foreach (string s in onceMOTDList.GetMOTD(motdName).messages)
                     {
                         if (s.StartsWith("{/") && s.EndsWith("}"))
                         {
@@ -5221,67 +5348,54 @@ namespace RustEssentials.Util
                         else
                             Broadcast.broadcastAll(s);
                     }
+                    onceMOTDTimers.Remove(motdName);
                 }
-            }
-        }
-
-        private static void onceMOTDElapsed(string motdName)
-        {
-            if (onceMOTDList.ContainsMOTD(motdName))
-            {
-                foreach (string s in onceMOTDList.GetMOTD(motdName).messages)
-                {
-                    if (s.StartsWith("{/") && s.EndsWith("}"))
-                    {
-                        string command = s.Substring(1, s.Length - 2);
-                        Commands.executeCMDServer(command);
-                    }
-                    else
-                        Broadcast.broadcastAll(s);
-                }
-                onceMOTDTimers.Remove(motdName);
             }
         }
 
         private static Dictionary<string, int> currentMessage = new Dictionary<string, int>();
-        private static void listMOTDElapsed(string motdName)
+        private static void listMOTDElapsed(params object[] args)
         {
-            if (!currentMessage.ContainsKey(motdName))
-                currentMessage.Add(motdName, 0);
-
-            if (!timeCycled.ContainsKey(motdName))
-                timeCycled.Add(motdName, 0);
-
-            if (timeCycled[motdName] > 50)
-                timeCycled[motdName] = 2;
-
-            timeCycled[motdName]++;
-            if (timeCycled[motdName] > 1)
+            if (args.Count() > 0)
             {
-                if (listMOTDList.ContainsMOTD(motdName))
+                string motdName = (string)args[0];
+                if (!currentMessage.ContainsKey(motdName))
+                    currentMessage.Add(motdName, 0);
+
+                if (!timeCycled.ContainsKey(motdName))
+                    timeCycled.Add(motdName, 0);
+
+                if (timeCycled[motdName] > 50)
+                    timeCycled[motdName] = 2;
+
+                timeCycled[motdName]++;
+                if (timeCycled[motdName] > 1)
                 {
-                    string message = listMOTDList.GetMOTD(motdName).messages[currentMessage[motdName]];
-
-                    if (message.StartsWith("{/") && message.EndsWith("}"))
+                    if (listMOTDList.ContainsMOTD(motdName))
                     {
-                        string command = message.Substring(1, message.Length - 2);
-                        Commands.executeCMDServer(command);
+                        string message = listMOTDList.GetMOTD(motdName).messages[currentMessage[motdName]];
+
+                        if (message.StartsWith("{/") && message.EndsWith("}"))
+                        {
+                            string command = message.Substring(1, message.Length - 2);
+                            Commands.executeCMDServer(command);
+                        }
+                        else
+                            Broadcast.broadcastAll(message);
+
+                        currentMessage[motdName]++;
+
+                        if (currentMessage[motdName] > listMOTDList.GetMOTD(motdName).messages.Count - 1)
+                            currentMessage[motdName] = 0;
                     }
-                    else
-                        Broadcast.broadcastAll(message);
-
-                    currentMessage[motdName]++;
-
-                    if (currentMessage[motdName] > listMOTDList.GetMOTD(motdName).messages.Count - 1)
-                        currentMessage[motdName] = 0;
                 }
             }
         }
 
-        public static string findRank(string UID)
+        public static string findRank(ulong UID)
         {
             string rank = defaultRank;
-            foreach (KeyValuePair<string, List<string>> kv in rankList)
+            foreach (KeyValuePair<string, List<ulong>> kv in rankList)
             {
                 if (kv.Value.Contains(UID))
                 {
@@ -5332,13 +5446,13 @@ namespace RustEssentials.Util
 
                         if (b)
                         {
-                            if (!godList.Contains(targetClient.userID.ToString()))
-                                godList.Add(targetClient.userID.ToString());
+                            if (!godList.Contains(targetClient.userID))
+                                godList.Add(targetClient.userID);
                         }
                         else
                         {
-                            if (godList.Contains(targetClient.userID.ToString()))
-                                godList.Remove(targetClient.userID.ToString());
+                            if (godList.Contains(targetClient.userID))
+                                godList.Remove(targetClient.userID);
                         }
 
                         if (targetClient.netPlayer != sender)
@@ -5367,13 +5481,13 @@ namespace RustEssentials.Util
 
                         if (b)
                         {
-                            if (!godList.Contains(targetClient.userID.ToString()))
-                                godList.Add(targetClient.userID.ToString());
+                            if (!godList.Contains(targetClient.userID))
+                                godList.Add(targetClient.userID);
                         }
                         else
                         {
-                            if (godList.Contains(targetClient.userID.ToString()))
-                                godList.Remove(targetClient.userID.ToString());
+                            if (godList.Contains(targetClient.userID))
+                                godList.Remove(targetClient.userID);
                         }
 
                         if (targetClient.netPlayer != sender)
@@ -5395,47 +5509,18 @@ namespace RustEssentials.Util
 
                 if (b)
                 {
-                    if (!godList.Contains(senderClient.userID.ToString()))
-                        godList.Add(senderClient.userID.ToString());
+                    if (!godList.Contains(senderClient.userID))
+                        godList.Add(senderClient.userID);
                 }
                 else
                 {
-                    if (godList.Contains(senderClient.userID.ToString()))
-                        godList.Remove(senderClient.userID.ToString());
+                    if (godList.Contains(senderClient.userID))
+                        godList.Remove(senderClient.userID);
                 }
 
                 Broadcast.noticeTo(sender, "♫", (b ? "God mode activated." : "God mode deactivated."), 2, true);
             }
         }
-
-        //public static void OverheadPlayerName_Open(RPOS.InfoLabel label, HumanController HC)
-        //{
-        //    PlayerClient instantiatedPlayerClient = HC.instantiatedPlayerClient;
-        //    if (instantiatedPlayerClient != null)
-        //    {
-        //        if (vanishedList.Contains(instantiatedPlayerClient.userID.ToString()))
-        //            label.text = "";
-        //        else
-        //            label.text = instantiatedPlayerClient.userName;
-        //    }
-        //    label.transform = HC.headBone;
-        //    label.color = Color.yellow;
-        //}
-
-        //public static bool OverheadPlayerName_Update(RPOS.InfoLabel label, HumanController HC)
-        //{
-        //    PlayerClient instantiatedPlayerClient = HC.instantiatedPlayerClient;
-        //    if (instantiatedPlayerClient != null)
-        //    {
-        //        if (vanishedList.Contains(instantiatedPlayerClient.userID.ToString()))
-        //            label.text = "";
-        //        else
-        //            label.text = instantiatedPlayerClient.userName;
-        //        label.offset = (Vector3)(label.transform.InverseTransformDirection(HC.transform.up) * 0.3f);
-        //        return true;
-        //    }
-        //    return false;
-        //}
 
         public static void clearPlayer(PlayerClient senderClient, string[] args)
         {
@@ -5697,11 +5782,11 @@ namespace RustEssentials.Util
                 switch (mode)
                 {
                     case "on":
-                        Broadcast.broadcastAll("Fall damage has been enabled for everyone.");
+                        Broadcast.broadcastTo(sender, "Fall damage has been enabled for everyone.");
                         fallDamage = true;
                         break;
                     case "off":
-                        Broadcast.broadcastAll("Fall damage has been disabled for everyone.");
+                        Broadcast.broadcastTo(sender, "Fall damage has been disabled for everyone.");
                         fallDamage = false;
                         break;
                 }
@@ -5743,7 +5828,7 @@ namespace RustEssentials.Util
                             Character targetChar;
                             Character.FindByUser(targetClient.userID, out targetChar);
 
-                            if (Checks.ofLowerRank(targetClient.userID.ToString(), true, senderClient.userID.ToString(), true) || sender == targetClient.netPlayer)
+                            if (Checks.ofLowerRank(targetClient.userID, senderClient.userID) || sender == targetClient.netPlayer)
                             {
                                 IDBase idBase = (IDBase)targetChar;
                                 Broadcast.noticeTo(senderClient.netPlayer, "№", targetClient.userName + " fell victim to /kill.");
@@ -5751,8 +5836,8 @@ namespace RustEssentials.Util
 
                                 TakeDamage component = targetClient.controllable.GetComponent<TakeDamage>();
                                 component.SetGodMode(false);
-                                if (godList.Contains(targetClient.userID.ToString()))
-                                    godList.Remove(targetClient.userID.ToString());
+                                if (godList.Contains(targetClient.userID))
+                                    godList.Remove(targetClient.userID);
                                 int result = (int)TakeDamage.Kill(idBase, idBase);
                             }
                             else if (sender != targetClient.netPlayer)
@@ -5780,7 +5865,7 @@ namespace RustEssentials.Util
                             Character targetChar;
                             Character.FindByUser(targetClient.userID, out targetChar);
 
-                            if (Checks.ofLowerRank(targetClient.userID.ToString(), true, senderClient.userID.ToString(), true) || sender == targetClient.netPlayer)
+                            if (Checks.ofLowerRank(targetClient.userID, senderClient.userID) || sender == targetClient.netPlayer)
                             {
                                 IDBase idBase = (IDBase)targetChar;
                                 Broadcast.noticeTo(senderClient.netPlayer, "№", targetClient.userName + " fell victim to /kill.");
@@ -5788,8 +5873,8 @@ namespace RustEssentials.Util
 
                                 TakeDamage component = targetClient.controllable.GetComponent<TakeDamage>();
                                 component.SetGodMode(false);
-                                if (godList.Contains(targetClient.userID.ToString()))
-                                    godList.Remove(targetClient.userID.ToString());
+                                if (godList.Contains(targetClient.userID))
+                                    godList.Remove(targetClient.userID);
                                 int result = (int)TakeDamage.Kill(idBase, idBase);
                             }
                             else if (sender != targetClient.netPlayer)
@@ -5853,7 +5938,7 @@ namespace RustEssentials.Util
                     else
                     {
                         PlayerClient targetClient = possibleTargets[0];
-                        Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + "'s UID is " + targetClient.userID.ToString() + ".");
+                        Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + "'s UID is " + targetClient.userID + ".");
                     }
                 }
                 else
@@ -5866,13 +5951,13 @@ namespace RustEssentials.Util
                     else
                     {
                         PlayerClient targetClient = possibleTargets[0];
-                        Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + "'s UID is " + targetClient.userID.ToString() + ".");
+                        Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + "'s UID is " + targetClient.userID + ".");
                     }
                 }
             }
             else
             {
-                Broadcast.broadcastTo(senderClient.netPlayer, "Your UID is " + senderClient.userID.ToString() + ".");
+                Broadcast.broadcastTo(senderClient.netPlayer, "Your UID is " + senderClient.userID + ".");
             }
         }
 
@@ -5989,12 +6074,13 @@ namespace RustEssentials.Util
                     }
                     else
                     {
-                        reason = "Kicked by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                        reason = "Kicked by a(n) " + findRank(senderClient.userID) + ".";
                     }
 
                     if (possibleTargets.Count() > 0)
                     {
-                        Broadcast.broadcastAll("IP " + targetIP + " was kicked.");
+                        if (Vars.enableKickBanMessages)
+                            Broadcast.broadcastAll("IP " + targetIP + " was kicked.");
                         Vars.conLog.Error("IP " + targetIP + " was kicked.");
 
                         try
@@ -6004,7 +6090,7 @@ namespace RustEssentials.Util
                                 NetUser target = kv.Key.netUser;
                                 if (target != null)
                                 {
-                                    if (Checks.ofLowerRank(target.userID.ToString(), true, senderClient.userID.ToString(), true))
+                                    if (Checks.ofLowerRank(target.userID, senderClient.userID))
                                     {
                                         kickPlayer(target, reason, false);
                                     }
@@ -6057,10 +6143,11 @@ namespace RustEssentials.Util
                     }
                     else
                     {
-                        reason = "Banned by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                        reason = "Banned by a(n) " + findRank(senderClient.userID) + ".";
                     }
 
-                    Broadcast.broadcastAll("IP " + targetIP + " was banned.");
+                    if (Vars.enableKickBanMessages)
+                        Broadcast.broadcastAll("IP " + targetIP + " was banned.");
                     Vars.conLog.Error("IP " + targetIP + " was banned.");
 
                     if (possibleTargets.Count() > 0)
@@ -6075,17 +6162,20 @@ namespace RustEssentials.Util
                                     NetUser target = kv.Key.netUser;
                                     if (target != null)
                                     {
-                                        if (Checks.ofLowerRank(target.userID.ToString(), true, senderClient.userID.ToString(), true))
+                                        if (Checks.ofLowerRank(target.userID, senderClient.userID))
                                         {
                                             Broadcast.broadcastTo(target.networkPlayer, "You were banned! Reason:");
                                             Broadcast.broadcastTo(target.networkPlayer, reason);
                                             Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]banned[color white]! Reason:");
                                             Broadcast.broadcastToConsole(target.networkPlayer, "[color white]" + reason);
-                                            if (!kickQueue.Contains(target.userID.ToString()))
-                                                kickQueue.Add(target.userID.ToString());
+                                            if (!kickQueue.Contains(target.userID))
+                                                kickQueue.Add(target.userID);
                                             target.Kick(NetError.NoError, false);
-                                            Broadcast.broadcastAll("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
-                                            Broadcast.broadcastAll(reason);
+                                            if (Vars.enableKickBanMessages)
+                                            {
+                                                Broadcast.broadcastAll("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
+                                                Broadcast.broadcastAll(reason);
+                                            }
                                             Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
                                             Vars.conLog.Error(reason);
                                         }
@@ -6180,8 +6270,8 @@ namespace RustEssentials.Util
 
                 try
                 {
-                    string UID = Convert.ToInt64(targetName).ToString();
-                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == UID);
+                    ulong UID = Convert.ToUInt64(targetName);
+                    PlayerClient[] possibleTargets = Array.FindAll(AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID == UID);
                     PlayerClient possibleTarget = null;
                     if (possibleTargets.Count() > 0)
                     {
@@ -6210,10 +6300,10 @@ namespace RustEssentials.Util
                                 }
                                 else
                                 {
-                                    reason = "Banned by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                                    reason = "Banned by a(n) " + findRank(senderClient.userID) + ".";
                                 }
 
-                                if (Checks.ofLowerRank(target.userID.ToString(), true, senderClient.userID.ToString(), true))
+                                if (Checks.ofLowerRank(target.userID, senderClient.userID))
                                 {
                                     RustEssentialsBootstrap._load.loadBans();
                                     if (!currentBans.ContainsKey(target.userID.ToString()))
@@ -6223,8 +6313,11 @@ namespace RustEssentials.Util
                                         Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]banned[color white]! Reason:");
                                         Broadcast.broadcastToConsole(target.networkPlayer, "[color white]" + reason);
                                         target.Kick(NetError.NoError, false);
-                                        Broadcast.broadcastAll("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
-                                        Broadcast.broadcastAll(reason);
+                                        if (Vars.enableKickBanMessages)
+                                        {
+                                            Broadcast.broadcastAll("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
+                                            Broadcast.broadcastAll(reason);
+                                        }
                                         Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
                                         Vars.conLog.Error(reason);
                                         currentBans.Add(target.userID.ToString(), target.displayName);
@@ -6270,30 +6363,36 @@ namespace RustEssentials.Util
                         }
                         else
                         {
-                            reason = "Banned by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                            reason = "Banned by a(n) " + findRank(senderClient.userID) + ".";
                         }
 
-                        if (Checks.ofLowerRank(UID.ToString(), true, senderClient.userID.ToString(), true))
+                        if (Checks.ofLowerRank(UID, senderClient.userID))
                         {
                             RustEssentialsBootstrap._load.loadBans();
-                            if (!currentBans.ContainsKey(UID))
+                            if (!currentBans.ContainsKey(UID.ToString()))
                             {
                                 Thread t = new Thread(() =>
                                 {
                                     string userName;
                                     if (grabNameByUID(UID, out userName))
                                     {
-                                        Broadcast.broadcastAll("UID " + UID + " (" + userName + ") was banned. Reason:");
-                                        Broadcast.broadcastAll(reason);
-                                        currentBans.Add(UID, userName);
+                                        if (Vars.enableKickBanMessages)
+                                        {
+                                            Broadcast.broadcastAll("UID " + UID + " (" + userName + ") was banned. Reason:");
+                                            Broadcast.broadcastAll(reason);
+                                        }
+                                        currentBans.Add(UID.ToString(), userName);
                                     }
                                     else
                                     {
-                                        Broadcast.broadcastAll("UID " + UID + " was banned. Reason:");
-                                        Broadcast.broadcastAll(reason);
-                                        currentBans.Add(UID, "Unknown Player");
+                                        if (Vars.enableKickBanMessages)
+                                        {
+                                            Broadcast.broadcastAll("UID " + UID + " was banned. Reason:");
+                                            Broadcast.broadcastAll(reason);
+                                        }
+                                        currentBans.Add(UID.ToString(), "Unknown Player");
                                     }
-                                    currentBanReasons.Add(UID, reason);
+                                    currentBanReasons.Add(UID.ToString(), reason);
                                     saveBans();
                                 });
                                 t.IsBackground = true;
@@ -6351,10 +6450,10 @@ namespace RustEssentials.Util
                                     }
                                     else
                                     {
-                                        reason = "Banned by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                                        reason = "Banned by a(n) " + findRank(senderClient.userID) + ".";
                                     }
 
-                                    if (Checks.ofLowerRank(target.userID.ToString(), true, senderClient.userID.ToString(), true))
+                                    if (Checks.ofLowerRank(target.userID, senderClient.userID))
                                     {
                                         RustEssentialsBootstrap._load.loadBans();
                                         if (!currentBans.ContainsKey(target.userID.ToString()))
@@ -6364,8 +6463,11 @@ namespace RustEssentials.Util
                                             Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]banned[color white]! Reason:");
                                             Broadcast.broadcastToConsole(target.networkPlayer, "[color white]" + reason);
                                             target.Kick(NetError.NoError, false);
-                                            Broadcast.broadcastAll("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
-                                            Broadcast.broadcastAll(reason);
+                                            if (Vars.enableKickBanMessages)
+                                            {
+                                                Broadcast.broadcastAll("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
+                                                Broadcast.broadcastAll(reason);
+                                            }
                                             Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
                                             Vars.conLog.Error(reason);
                                             currentBans.Add(target.userID.ToString(), target.displayName);
@@ -6424,10 +6526,10 @@ namespace RustEssentials.Util
                                     }
                                     else
                                     {
-                                        reason = "Banned by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                                        reason = "Banned by a(n) " + findRank(senderClient.userID) + ".";
                                     }
 
-                                    if (Checks.ofLowerRank(target.userID.ToString(), true, senderClient.userID.ToString(), true))
+                                    if (Checks.ofLowerRank(target.userID, senderClient.userID))
                                     {
                                         RustEssentialsBootstrap._load.loadBans();
                                         if (!currentBans.ContainsKey(target.userID.ToString()))
@@ -6437,8 +6539,11 @@ namespace RustEssentials.Util
                                             Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]banned[color white]! Reason:");
                                             Broadcast.broadcastToConsole(target.networkPlayer, "[color white]" + reason);
                                             target.Kick(NetError.NoError, false);
-                                            Broadcast.broadcastAll("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
-                                            Broadcast.broadcastAll(reason);
+                                            if (Vars.enableKickBanMessages)
+                                            {
+                                                Broadcast.broadcastAll("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
+                                                Broadcast.broadcastAll(reason);
+                                            }
                                             Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was banned. Reason:");
                                             Vars.conLog.Error(reason);
                                             currentBans.Add(target.userID.ToString(), target.displayName);
@@ -6553,10 +6658,10 @@ namespace RustEssentials.Util
                                 }
                                 else
                                 {
-                                    reason = "Kicked by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                                    reason = "Kicked by a(n) " + findRank(senderClient.userID) + ".";
                                 }
 
-                                if (Checks.ofLowerRank(target.userID.ToString(), true, senderClient.userID.ToString(), true))
+                                if (Checks.ofLowerRank(target.userID, senderClient.userID))
                                 {
                                     kickPlayer(target, reason, false);
                                 }
@@ -6609,10 +6714,10 @@ namespace RustEssentials.Util
                                         }
                                         else
                                         {
-                                            reason = "Kicked by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                                            reason = "Kicked by a(n) " + findRank(senderClient.userID) + ".";
                                         }
 
-                                        if (Checks.ofLowerRank(target.userID.ToString(), true, senderClient.userID.ToString(), true))
+                                        if (Checks.ofLowerRank(target.userID, senderClient.userID))
                                         {
                                             kickPlayer(target, reason, false);
                                         }
@@ -6665,10 +6770,10 @@ namespace RustEssentials.Util
                                 }
                                 else
                                 {
-                                    reason = "Kicked by a(n) " + findRank(senderClient.userID.ToString()) + ".";
+                                    reason = "Kicked by a(n) " + findRank(senderClient.userID) + ".";
                                 }
 
-                                if (Checks.ofLowerRank(target.userID.ToString(), true, senderClient.userID.ToString(), true))
+                                if (Checks.ofLowerRank(target.userID, senderClient.userID))
                                 {
                                     kickPlayer(target, reason, false);
                                 }
@@ -6696,8 +6801,8 @@ namespace RustEssentials.Util
             {
                 Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was kicked for:", isThreaded);
                 Vars.conLog.Error(reason, isThreaded);
-                if (!kickQueue.Contains(target.userID.ToString()))
-                    kickQueue.Add(target.userID.ToString());
+                if (!kickQueue.Contains(target.userID))
+                    kickQueue.Add(target.userID);
                 Broadcast.broadcastTo(target.networkPlayer, "You were kicked! Reason:");
                 Broadcast.broadcastTo(target.networkPlayer, reason);
                 Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]kicked[color white]! Reason:");
@@ -6711,8 +6816,8 @@ namespace RustEssentials.Util
             if (target != null)
             {
                 Vars.conLog.Error("Nonwhitelisted player " + target.displayName + " (" + target.userID + ") attempted to join.");
-                if (!kickQueue.Contains(target.userID.ToString()))
-                    kickQueue.Add(target.userID.ToString());
+                if (!kickQueue.Contains(target.userID))
+                    kickQueue.Add(target.userID);
                 Broadcast.broadcastTo(target.networkPlayer, "You were kicked! Reason:");
                 Broadcast.broadcastTo(target.networkPlayer, reason);
                 Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]kicked[color white]! Reason:");
@@ -6730,8 +6835,8 @@ namespace RustEssentials.Util
                     Vars.conLog.Error("Player " + target.displayName + " (" + target.userID + ") was kicked. Reason:");
                     Vars.conLog.Error(reason);
                 }
-                if (!kickQueue.Contains(target.userID.ToString()))
-                    kickQueue.Add(target.userID.ToString());
+                if (!kickQueue.Contains(target.userID))
+                    kickQueue.Add(target.userID);
                 Broadcast.broadcastTo(target.networkPlayer, (isBan ? "You were banned! Reason:" : "You were kicked! Reason:"));
                 Broadcast.broadcastTo(target.networkPlayer, reason);
                 Broadcast.broadcastToConsole(target.networkPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]" + (isBan ? "banned" : "kicked") + "[color white]! Reason:");
@@ -6741,8 +6846,11 @@ namespace RustEssentials.Util
                 target.Kick(NetError.NoError, false);
                 if (!isBan)
                 {
-                    Broadcast.broadcastAll("Player " + target.displayName + " was kicked. Reason:");
-                    Broadcast.broadcastAll(reason);
+                    if (Vars.enableKickBanMessages)
+                    {
+                        Broadcast.broadcastAll("Player " + target.displayName + " was kicked. Reason:");
+                        Broadcast.broadcastAll(reason);
+                    }
                 }
             }
         }
@@ -6774,18 +6882,18 @@ namespace RustEssentials.Util
                     PlayerClient targetClient = possibleTargets[0];
                     string combineOutput = getPosition(targetClient).ToString();
 
-                    Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + "'s " + (Vars.ghostList.ContainsKey(targetClient.userID.ToString()) ? "body's " : "") + "position: " + combineOutput);
-                    if (Vars.ghostList.ContainsKey(targetClient.userID.ToString()))
-                        Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + "'s ghost's position: " + Vars.ghostPositions[targetClient.userID.ToString()]);
+                    Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + "'s " + (Vars.ghostList.ContainsKey(targetClient.userID) ? "body's " : "") + "position: " + combineOutput);
+                    if (Vars.ghostList.ContainsKey(targetClient.userID))
+                        Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + "'s ghost's position: " + Vars.ghostPositions[targetClient.userID]);
                 }
             }
             else
             {
                 string combineOutput = getPosition(senderClient).ToString();
 
-                Broadcast.broadcastTo(senderClient.netPlayer, "Your " + (Vars.ghostList.ContainsKey(senderClient.userID.ToString()) ? "body's " : "") + "position: " + combineOutput);
-                if (Vars.ghostList.ContainsKey(senderClient.userID.ToString()))
-                    Broadcast.broadcastTo(senderClient.netPlayer, senderClient.userName + "'s ghost's position: " + Vars.ghostPositions[senderClient.userID.ToString()]);
+                Broadcast.broadcastTo(senderClient.netPlayer, "Your " + (Vars.ghostList.ContainsKey(senderClient.userID) ? "body's " : "") + "position: " + combineOutput);
+                if (Vars.ghostList.ContainsKey(senderClient.userID))
+                    Broadcast.broadcastTo(senderClient.netPlayer, "Your ghost's position: " + Vars.ghostPositions[senderClient.userID]);
             }
         }
 
@@ -6860,41 +6968,64 @@ namespace RustEssentials.Util
             }
         }
 
-        public static void restoreKit(string kitName, string UID)
+        public static void restoreKit(params object[] args)
         {
-            if (activeKitCooldowns.ContainsKey(UID))
+            if (args.Count() > 0)
             {
-                if (activeKitCooldowns[UID].Count() > 1)
+                string kitName = (string)args[0];
+                string UIDString = (string)args[1];
+                ulong UID;
+                if (ulong.TryParse(UIDString, out UID))
                 {
-                    TimerPlus tp = Array.Find(activeKitCooldowns[UID].ToArray(), (KeyValuePair<TimerPlus, string> kv) => kv.Value == kitName).Key;
-                    activeKitCooldowns[UID].Remove(tp);
+                    if (activeKitCooldowns.ContainsKey(UID))
+                    {
+                        if (activeKitCooldowns[UID].Count() > 1)
+                        {
+                            TimerPlus tp = Array.Find(activeKitCooldowns[UID].ToArray(), (KeyValuePair<TimerPlus, string> kv) => kv.Value == kitName).Key;
+                            activeKitCooldowns[UID].Remove(tp);
+                        }
+                        else if (activeKitCooldowns[UID].Count() == 1)
+                            activeKitCooldowns.Remove(UID);
+                    }
                 }
-                else if (activeKitCooldowns[UID].Count() == 1)
-                    activeKitCooldowns.Remove(UID);
             }
         }
 
-        public static void restoreWarp(string warpName, string UID)
+        public static void restoreWarp(params object[] args)
         {
-            if (activeWarpCooldowns.ContainsKey(UID))
+            if (args.Count() > 0)
             {
-                if (activeWarpCooldowns[UID].Count() > 1)
+                string warpName = (string)args[0];
+                string UIDString = (string)args[1];
+                ulong UID;
+                if (ulong.TryParse(UIDString, out UID))
                 {
-                    TimerPlus tp = Array.Find(activeWarpCooldowns[UID].ToArray(), (KeyValuePair<TimerPlus, string> kv) => kv.Value == warpName).Key;
-                    activeWarpCooldowns[UID].Remove(tp);
+                    if (activeWarpCooldowns.ContainsKey(UID))
+                    {
+                        if (activeWarpCooldowns[UID].Count() > 1)
+                        {
+                            TimerPlus tp = Array.Find(activeWarpCooldowns[UID].ToArray(), (KeyValuePair<TimerPlus, string> kv) => kv.Value == warpName).Key;
+                            activeWarpCooldowns[UID].Remove(tp);
+                        }
+                        else if (activeWarpCooldowns[UID].Count() == 1)
+                            activeWarpCooldowns.Remove(UID);
+                    }
                 }
-                else if (activeWarpCooldowns[UID].Count() == 1)
-                    activeWarpCooldowns.Remove(UID);
             }
         }
 
-        public static void sleeperTimerElapsed(NetUser user, ulong userID)
+        public static void sleeperTimerElapsed(params object[] args)
         {
-            if (user.userID == userID)
+            if (args.Count() > 0)
             {
-                if (SleepingAvatar.IsOpen(user))
+                NetUser user = (NetUser)args[0];
+                ulong userID = user.userID;
+                if (user.userID == userID)
                 {
-                    SleepingAvatar.Close(user);
+                    if (SleepingAvatar.IsOpen(user))
+                    {
+                        SleepingAvatar.Close(user);
+                    }
                 }
             }
         }
@@ -7085,6 +7216,20 @@ namespace RustEssentials.Util
 
                 default:
                     return null;
+            }
+        }
+
+        public static void checkPings()
+        {
+            List<PlayerClient> playerClients = new List<PlayerClient>();
+            foreach (PlayerClient pc in Vars.AllPlayerClients) { playerClients.Add(pc); }
+
+            foreach (PlayerClient pc in playerClients)
+            {
+                if (pc.netPlayer.averagePing >= pingLimit && pingLimit > 0)
+                {
+                    otherKick(pc.netUser, "Your ping exceeds the limit of " + pingLimit + " ms.");
+                }
             }
         }
 

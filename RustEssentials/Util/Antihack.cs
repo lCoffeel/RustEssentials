@@ -42,7 +42,7 @@ namespace RustEssentials.Util
                                 double jumpspeed = 0;
                                 double time = (Vars.currentTime - Vars.lastSpeedTime);
 
-                                if (time > (Vars.calculateInterval * 0.5) && !Vars.currentlyTeleporting.Contains(pc) && !Vars.wandList.ContainsKey(pc.userID.ToString()) && !Vars.portalList.Contains(pc.userID.ToString()) && !Vars.bypassList.Contains(pc.userID.ToString()) && !Vars.ghostList.ContainsKey(pc.userID.ToString()))
+                                if (time > (Vars.calculateInterval * 0.5) && !Vars.currentlyTeleporting.Contains(pc) && !Vars.wandList.ContainsKey(pc.userID) && !Vars.portalList.Contains(pc.userID) && !Vars.bypassList.Contains(pc.userID) && !Vars.ghostList.ContainsKey(pc.userID))
                                 {
                                     if (lastPosition2D != currentPosition2D && Vars.enableAntiSpeed)
                                     {
@@ -74,7 +74,38 @@ namespace RustEssentials.Util
                                                 else
                                                 {
                                                     if (Vars.violationCount[pc] >= Vars.violationLimit && pc.netUser != null)
-                                                        Vars.kickPlayer(pc.netUser, "[AH] Moving too fast! (Speed)", false);
+                                                    {
+                                                        if (!Vars.playerOffenses.ContainsKey(pc.userID))
+                                                            Vars.playerOffenses.Add(pc.userID, 1);
+                                                        else
+                                                            Vars.playerOffenses[pc.userID]++;
+                                                        Data.setOffenseData(pc.userID, Vars.playerOffenses[pc.userID]);
+                                                        if (Vars.playerOffenses[pc.userID] >= Vars.offenseLimit)
+                                                        {
+                                                            RustEssentialsBootstrap._load.loadBans();
+                                                            if (!Vars.currentBans.ContainsKey(pc.userID.ToString()))
+                                                            {
+                                                                string reason = "[AH] Moving too fast! (Speed)";
+                                                                Broadcast.broadcastTo(pc.netPlayer, "You were banned! Reason:");
+                                                                Broadcast.broadcastTo(pc.netPlayer, reason);
+                                                                Broadcast.broadcastToConsole(pc.netPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]banned[color white]! Reason:");
+                                                                Broadcast.broadcastToConsole(pc.netPlayer, "[color white]" + reason);
+                                                                pc.netUser.Kick(NetError.NoError, false);
+                                                                if (Vars.enableKickBanMessages)
+                                                                {
+                                                                    Broadcast.broadcastAll("Player " + pc.userName + " (" + pc.userID + ") was banned. Reason:");
+                                                                    Broadcast.broadcastAll(reason);
+                                                                }
+                                                                Vars.conLog.Error("Player " + pc.userName + " (" + pc.userID + ") was banned. Reason:");
+                                                                Vars.conLog.Error(reason);
+                                                                Vars.currentBans.Add(pc.userID.ToString(), pc.userName);
+                                                                Vars.currentBanReasons.Add(pc.userID.ToString(), reason);
+                                                                Vars.saveBans();
+                                                            }
+                                                        }
+                                                        else
+                                                            Vars.kickPlayer(pc.netUser, "[AH] Moving too fast! (Speed)", false);
+                                                    }
                                                     else
                                                         Vars.violationCount[pc]++;
                                                 }
@@ -115,11 +146,36 @@ namespace RustEssentials.Util
                                                     {
                                                         if (Vars.violationCount[pc] >= Vars.violationLimit && pc.netUser != null)
                                                         {
-                                                            Vars.kickPlayer(pc.netUser, "[AH] Moving too fast! (Jump)", false);
                                                             if (!Vars.playerOffenses.ContainsKey(pc.userID))
                                                                 Vars.playerOffenses.Add(pc.userID, 1);
                                                             else
                                                                 Vars.playerOffenses[pc.userID]++;
+                                                            Data.setOffenseData(pc.userID, Vars.playerOffenses[pc.userID]);
+                                                            if (Vars.playerOffenses[pc.userID] >= Vars.offenseLimit)
+                                                            {
+                                                                RustEssentialsBootstrap._load.loadBans();
+                                                                if (!Vars.currentBans.ContainsKey(pc.userID.ToString()))
+                                                                {
+                                                                    string reason = "[AH] Moving too fast! (Jump)";
+                                                                    Broadcast.broadcastTo(pc.netPlayer, "You were banned! Reason:");
+                                                                    Broadcast.broadcastTo(pc.netPlayer, reason);
+                                                                    Broadcast.broadcastToConsole(pc.netPlayer, "[color #FFA154][RustEssentials] [color white]You were [color #FB5A36]banned[color white]! Reason:");
+                                                                    Broadcast.broadcastToConsole(pc.netPlayer, "[color white]" + reason);
+                                                                    pc.netUser.Kick(NetError.NoError, false);
+                                                                    if (Vars.enableKickBanMessages)
+                                                                    {
+                                                                        Broadcast.broadcastAll("Player " + pc.userName + " (" + pc.userID + ") was banned. Reason:");
+                                                                        Broadcast.broadcastAll(reason);
+                                                                    }
+                                                                    Vars.conLog.Error("Player " + pc.userName + " (" + pc.userID + ") was banned. Reason:");
+                                                                    Vars.conLog.Error(reason);
+                                                                    Vars.currentBans.Add(pc.userID.ToString(), pc.userName);
+                                                                    Vars.currentBanReasons.Add(pc.userID.ToString(), reason);
+                                                                    Vars.saveBans();
+                                                                }
+                                                            }
+                                                            else
+                                                                Vars.kickPlayer(pc.netUser, "[AH] Moving too fast! (Jump)", false);
                                                         }
                                                         else
                                                             Vars.violationCount[pc]++;
@@ -191,7 +247,7 @@ namespace RustEssentials.Util
                                 double jumpspeed = 0;
                                 double time = (Vars.currentTime - mc.previousTime);
 
-                                if (time > (Vars.calculateInterval * 0.5) && !Vars.currentlyTeleporting.Contains(playerClient) && !Vars.wandList.ContainsKey(playerClient.userID.ToString()) && !Vars.portalList.Contains(playerClient.userID.ToString()) && !Vars.bypassList.Contains(playerClient.userID.ToString()) && !Vars.ghostList.ContainsKey(playerClient.userID.ToString()))
+                                if (time > (Vars.calculateInterval * 0.5) && !Vars.currentlyTeleporting.Contains(playerClient) && !Vars.wandList.ContainsKey(playerClient.userID) && !Vars.portalList.Contains(playerClient.userID) && !Vars.bypassList.Contains(playerClient.userID) && !Vars.ghostList.ContainsKey(playerClient.userID))
                                 {
                                     if (lastPosition2D != currentPosition2D && Vars.enableAntiSpeed)
                                     {

@@ -195,14 +195,14 @@ namespace RustEssentials.Util
                                         if (!Vars.rankPrefixes.ContainsKey(currentRank) && !Vars.rankList.ContainsKey(currentRank))
                                         {
                                             Vars.rankPrefixes.Add(currentRank, "[" + currentPrefix + "]");
-                                            Vars.rankList.Add(currentRank, new List<string>());
+                                            Vars.rankList.Add(currentRank, new List<ulong>());
                                         }
                                     }
                                     else
                                     {
                                         currentRank = line.Substring(1, line.Length - 2);
                                         if (!Vars.rankList.ContainsKey(currentRank))
-                                            Vars.rankList.Add(currentRank, new List<string>());
+                                            Vars.rankList.Add(currentRank, new List<ulong>());
                                     }
                                     Vars.conLog.Info("Creating rank [" + currentRank + "].");
                                 }
@@ -216,8 +216,9 @@ namespace RustEssentials.Util
                                     {
                                         if (currentRank != "Member" && currentRank != Vars.defaultRank)
                                         {
-                                            if (Vars.rankList.ContainsKey(currentRank))
-                                                Vars.rankList[currentRank].Add(line);
+                                            ulong UID;
+                                            if (Vars.rankList.ContainsKey(currentRank) && ulong.TryParse(line, out UID))
+                                                Vars.rankList[currentRank].Add(UID);
                                             Vars.conLog.Info("Adding " + line + " as " + currentRank + ".");
                                         }
                                     }
@@ -264,7 +265,7 @@ namespace RustEssentials.Util
                                 {
                                     if (line.Length > 0)
                                     {
-                                        if (!Vars.itemIDs.Values.Contains(line))
+                                        if (!Vars.itemIDs.ContainsValue(line))
                                             Vars.conLog.Error("No such item named \"" + line + "\" in section " + currentRestriction + ".");
                                         else
                                         {
@@ -731,7 +732,6 @@ namespace RustEssentials.Util
 
         public void loadPrefixes()
         {
-            
             try
             {
                 if (File.Exists(Vars.prefixFile))
@@ -753,18 +753,25 @@ namespace RustEssentials.Util
 
                                 if (line.Contains(":"))
                                 {
-                                    string UID = line.Split(':')[0];
+                                    string UIDString = line.Split(':')[0];
                                     string prefix = line.Split(':')[1];
-
-                                    if (!Vars.playerPrefixes.ContainsKey(UID))
-                                        Vars.playerPrefixes.Add(UID, prefix);
+                                    ulong UID;
+                                    if (ulong.TryParse(UIDString, out UID))
+                                    {
+                                        if (!Vars.playerPrefixes.ContainsKey(UID))
+                                            Vars.playerPrefixes.Add(UID, prefix);
+                                    }
                                 }
                                 else
                                 {
-                                    string UID = line.Trim();
-
-                                    if (!Vars.emptyPrefixes.Contains(UID))
-                                        Vars.emptyPrefixes.Add(UID);
+                                    string UIDString = line.Trim();
+                                    
+                                    ulong UID;
+                                    if (ulong.TryParse(UIDString, out UID))
+                                    {
+                                        if (!Vars.emptyPrefixes.Contains(UID))
+                                            Vars.emptyPrefixes.Add(UID);
+                                    }
                                 }
                             }
                         }
@@ -1020,7 +1027,7 @@ namespace RustEssentials.Util
                                 if (line.StartsWith("[") && line.EndsWith("]"))
                                 {
                                     currentRank = line.Substring(1, line.Length - 2);
-                                    if (!Vars.enabledCommands.Keys.Contains(currentRank))
+                                    if (!Vars.enabledCommands.ContainsKey(currentRank))
                                     {
                                         Vars.enabledCommands.Add(currentRank, new List<string>());
                                         Vars.conLog.Info("Adding commands for [" + currentRank + "]...");
@@ -1067,7 +1074,8 @@ namespace RustEssentials.Util
                         {
                             foreach (string s in nkv.Value)
                             {
-                                Vars.enabledCommands[kv.Key].Add(s);
+                                if (!Vars.enabledCommands[kv.Key].Contains(s))
+                                    Vars.enabledCommands[kv.Key].Add(s);
                             }
                         }
                     }
@@ -1124,7 +1132,7 @@ namespace RustEssentials.Util
                                                 rank = kv.Key;
                                             }
                                         }
-                                        if (Vars.rankPrefixes.Keys.Contains(rank))
+                                        if (Vars.rankPrefixes.ContainsKey(rank))
                                         {
                                             if (lastChar == "*")
                                                 Vars.noninheritedKits.Add(currentKit.ToLower());
@@ -1135,19 +1143,19 @@ namespace RustEssentials.Util
                                         }
                                         else
                                         {
-                                            long UID;
-                                            if (prefix.Length == 17 && long.TryParse(prefix, out UID))
+                                            ulong UID;
+                                            if (prefix.Length == 17 && ulong.TryParse(prefix, out UID))
                                             {
-                                                if (!Vars.kitsForUIDs.ContainsKey(UID.ToString()))
-                                                    Vars.kitsForUIDs.Add(UID.ToString(), new List<string>() { { currentKit.ToLower() } });
+                                                if (!Vars.kitsForUIDs.ContainsKey(UID))
+                                                    Vars.kitsForUIDs.Add(UID, new List<string>() { { currentKit.ToLower() } });
                                                 else
-                                                    Vars.kitsForUIDs[UID.ToString()].Add(currentKit.ToLower());
+                                                    Vars.kitsForUIDs[UID].Add(currentKit.ToLower());
 
                                                 if (!Vars.kits.ContainsKey(currentKit.ToLower()))
                                                     Vars.kits.Add(currentKit.ToLower(), new List<Items.Item>());
 
                                                 isSkipping = false;
-                                                Vars.conLog.Info("Loading items for kit [" + currentKit + "] for user [" + UID.ToString() + "]...");
+                                                Vars.conLog.Info("Loading items for kit [" + currentKit + "] for user [" + UID + "]...");
                                             }
                                             else
                                             {
@@ -1303,7 +1311,7 @@ namespace RustEssentials.Util
             {
                 foreach (KeyValuePair<string, List<string>> nkv in Vars.kitsForRanks)
                 {
-                    if (Checks.ofLowerRank(nkv.Key, false, kv.Key, false))
+                    if (Checks.ofLowerRank(nkv.Key, kv.Key))
                     {
                         foreach (string s in nkv.Value)
                         {
@@ -1386,18 +1394,18 @@ namespace RustEssentials.Util
                                         }
                                         else
                                         {
-                                            long UID;
-                                            if (prefix.Length == 17 && long.TryParse(prefix, out UID))
+                                            ulong UID;
+                                            if (prefix.Length == 17 && ulong.TryParse(prefix, out UID))
                                             {
-                                                if (!Vars.warpsForUIDs.ContainsKey(UID.ToString()))
-                                                    Vars.warpsForUIDs.Add(UID.ToString(), new List<string>() { { currentWarp.ToLower() } });
+                                                if (!Vars.warpsForUIDs.ContainsKey(UID))
+                                                    Vars.warpsForUIDs.Add(UID, new List<string>() { { currentWarp.ToLower() } });
                                                 else
-                                                    Vars.warpsForUIDs[UID.ToString()].Add(currentWarp.ToLower());
+                                                    Vars.warpsForUIDs[UID].Add(currentWarp.ToLower());
 
                                                 if (!Vars.warps.ContainsKey(currentWarp.ToLower()))
                                                     Vars.warps.Add(currentWarp.ToLower(), new Vector3());
                                                 isSkippingWarp = false;
-                                                Vars.conLog.Info("Loading location for warp [" + currentWarp + "] for user [" + UID.ToString() + "]...");
+                                                Vars.conLog.Info("Loading location for warp [" + currentWarp + "] for user [" + UID + "]...");
                                             }
                                             else
                                             {
@@ -1488,7 +1496,7 @@ namespace RustEssentials.Util
             {
                 foreach (KeyValuePair<string, List<string>> nkv in Vars.warpsForRanks)
                 {
-                    if (Checks.ofLowerRank(nkv.Key, false, kv.Key, false))
+                    if (Checks.ofLowerRank(nkv.Key, kv.Key))
                     {
                         foreach (string s in nkv.Value)
                         {
@@ -1546,19 +1554,19 @@ namespace RustEssentials.Util
                     foreach (var kv in Vars.cycleMOTDTimers)
                     {
                         TimerPlus t = kv.Value;
-                        t.Stop();
+                        t.dispose();
                     }
                     Vars.cycleMOTDTimers.Clear();
                     foreach (var kv in Vars.onceMOTDTimers)
                     {
                         TimerPlus t = kv.Value;
-                        t.Stop();
+                        t.dispose();
                     }
                     Vars.onceMOTDTimers.Clear();
                     foreach (var kv in Vars.listMOTDTimers)
                     {
                         TimerPlus t = kv.Value;
-                        t.Stop();
+                        t.dispose();
                     }
                     Vars.listMOTDTimers.Clear();
                     using (StreamReader sr = new StreamReader(Vars.motdFile))
@@ -1934,6 +1942,8 @@ namespace RustEssentials.Util
                         Vars.conLog.Error("lowerAuthority could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
                     }
                     Vars.illegalWords = Config.illegalWords.Replace("\n", "").Split(',').ToList();
+                    if (Vars.illegalWords.Count == 1 && string.IsNullOrEmpty(Vars.illegalWords[0]))
+                        Vars.illegalWords.Clear();
                     try { Vars.censorship = Convert.ToBoolean(Config.censorship); }
                     catch (Exception ex)
                     {
@@ -1947,6 +1957,22 @@ namespace RustEssentials.Util
                     catch (Exception ex)
                     {
                         Vars.conLog.Error("versionOnJoin could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    Vars.commandsToChat = Config.commandsToChat.Replace("\n", "").Split(',').ToList();
+                    if (Vars.commandsToChat.Count == 1 && string.IsNullOrEmpty(Vars.commandsToChat[0]))
+                        Vars.commandsToChat.Clear();
+                    Vars.modMessageRanks = Config.modMessageRanks.Replace("\n", "").Split(',').ToList();
+                    if (Vars.modMessageRanks.Count == 1 && string.IsNullOrEmpty(Vars.modMessageRanks[0]))
+                        Vars.modMessageRanks.Clear();
+                    try { Vars.enableKickBanMessages = Convert.ToBoolean(Config.enableKickBanMessages); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("enableKickBanMessages could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.enableMuteMessageToAll = Convert.ToBoolean(Config.enableMuteMessageToAll); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("enableMuteMessageToAll could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
                     }
                     Vars.joinMessage = Vars.replaceQuotes(Config.joinMessage).Replace("\n", "");
                     try { Vars.enableJoin = Convert.ToBoolean(Config.enableJoin); }
@@ -2322,6 +2348,31 @@ namespace RustEssentials.Util
                     {
                         Vars.conLog.Error("disregardFoundationWeight could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
                     }
+                    try { Vars.enableWithGuns = Convert.ToBoolean(Config.enableWithGuns); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("enableWithGuns could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.enableOneHit = Convert.ToBoolean(Config.enableOneHit); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("enableOneHit could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.confirmOneHit = Convert.ToBoolean(Config.confirmOneHit); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("confirmOneHit could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
+                    try { Vars.removerDeactivateInterval = Convert.ToInt64(Config.removerDeactivateInterval); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("removerDeactivateInterval could not be parsed as a number!");
+                    }
+                    try { Vars.enableTimedRemover = Convert.ToBoolean(Config.enableTimedRemover); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("enableTimedRemover could not be parsed as a boolean! Make sure it is equal to ONLY true or false.");
+                    }
 
                     try { Vars.enableTRSVoting = Convert.ToBoolean(Config.enableTRSVoting); }
                     catch (Exception ex)
@@ -2364,6 +2415,8 @@ namespace RustEssentials.Util
                         Vars.conLog.Error("sleeperElapseInterval could not be parsed as a number!");
                     }
                     Vars.excludeFromSleepers = Config.excludeFromSleepers.Replace("\n", "").Split(',').ToList();
+                    if (Vars.excludeFromSleepers.Count == 1 && string.IsNullOrEmpty(Vars.excludeFromSleepers[0]))
+                        Vars.excludeFromSleepers.Clear();
 
                     try 
                     {
@@ -2411,6 +2464,11 @@ namespace RustEssentials.Util
                     catch (Exception ex)
                     {
                         Vars.conLog.Error("violationLimit could not be parsed as a number!");
+                    }
+                    try { Vars.offenseLimit = Convert.ToInt32(Config.offenseLimit); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("offenseLimit could not be parsed as a number!");
                     }
                     try { Vars.maximumSpeed = Convert.ToSingle(Config.maximumSpeed); }
                     catch (Exception ex)
@@ -2724,6 +2782,8 @@ namespace RustEssentials.Util
                     }
                     Vars.steamAPIKey = Config.steamAPIKey;
                     Vars.excludeFromFamilyCheck = Config.excludeFromFamilyCheck.Replace("\n", "").Split(',').ToList();
+                    if (Vars.excludeFromFamilyCheck.Count == 1 && string.IsNullOrEmpty(Vars.excludeFromFamilyCheck[0]))
+                        Vars.excludeFromFamilyCheck.Clear();
 
                     try { Vars.defaultLightsRange = Convert.ToSingle(Config.defaultLightsRange); }
                     catch (Exception ex)
@@ -2735,15 +2795,61 @@ namespace RustEssentials.Util
                     {
                         Vars.conLog.Error("maxLightsRange could not be parsed as a number!");
                     }
-                    try { Vars.maxLightsPerHouse = Convert.ToInt16(Config.maxLightsPerHouse); }
+                    try { Vars.maxLightsPerHouse = Convert.ToInt32(Config.maxLightsPerHouse); }
                     catch (Exception ex)
                     {
                         Vars.conLog.Error("maxLightsPerHouse could not be parsed as a number!");
                     }
-                    try { Vars.maxLightsPerPerson = Convert.ToInt16(Config.maxLightsPerPerson); }
+                    try { Vars.maxLightsPerPerson = Convert.ToInt32(Config.maxLightsPerPerson); }
                     catch (Exception ex)
                     {
                         Vars.conLog.Error("maxLightsPerPerson could not be parsed as a number!");
+                    }
+
+                    try { Vars.homeLimit = Convert.ToInt32(Config.homeLimit); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("homeLimit could not be parsed as a number!");
+                    }
+                    try { Vars.homeDelay = Convert.ToInt64(Config.homeDelay); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("homeDelay could not be parsed as a number!");
+                    }
+                    try
+                    {
+                        long number = Convert.ToInt64(Config.homeCooldown.Substring(0, Config.homeCooldown.Length - 1));
+                        int multiplier = 1000;
+                        if (Config.homeCooldown.EndsWith("m"))
+                            multiplier *= 60;
+                        Vars.homeCooldown = number * multiplier;
+                    }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("homeCooldown could not be parsed as a number!");
+                    }
+
+                    try { Vars.memberLimit = Convert.ToInt32(Config.memberLimit); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("memberLimit could not be parsed as a number!");
+                    }
+                    try { Vars.factionHomeDelay = Convert.ToInt64(Config.factionHomeDelay); }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("factionHomeDelay could not be parsed as a number!");
+                    }
+                    try
+                    {
+                        long number = Convert.ToInt64(Config.factionHomeCooldown.Substring(0, Config.factionHomeCooldown.Length - 1));
+                        int multiplier = 1000;
+                        if (Config.factionHomeCooldown.EndsWith("m"))
+                            multiplier *= 60;
+                        Vars.factionHomeCooldown = number * multiplier;
+                    }
+                    catch (Exception ex)
+                    {
+                        Vars.conLog.Error("factionHomeCooldown could not be parsed as a number!");
                     }
 
                     Vars.conLog.Info("Config loaded.");

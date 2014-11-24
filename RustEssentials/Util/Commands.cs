@@ -10,7 +10,7 @@ namespace RustEssentials.Util
 {
     public class Commands : ConsoleSystem
     {
-        public static void CMD(Arg arg)
+        public static bool CMD(Arg arg)
         {
             string playerName = arg.argUser.user.Displayname;
             string message = arg.GetString(0, "text").Trim();
@@ -34,35 +34,39 @@ namespace RustEssentials.Util
                     {
                         if (Vars.totalCommands.Contains(command))
                         {
-                            string rankToUse = Vars.findRank(playerClient.userID.ToString());
+                            string rankToUse = Vars.findRank(playerClient.userID);
                             if (!Vars.enabledCommands.ContainsKey(rankToUse))
                                 rankToUse = Vars.defaultRank;
                             if (Vars.enabledCommands[rankToUse].Contains(command))
                             {
                                 Execute.Invoke(null, new object[] { new object[] { command, playerName, message, networkPlayer, playerClient, playerChar } });
+                                return true;
                             }
                             else
                             {
                                 if (Vars.unknownCommand)
                                     Broadcast.broadcastTo(networkPlayer, "Unknown command \"" + command + "\"!");
+                                return false;
                             }
                         }
                         else
                         {
                             if (Vars.unknownCommand)
                                 Broadcast.broadcastTo(networkPlayer, "Unknown command \"" + command + "\"!");
+                            return false;
                         }
                     }
                     else
-                        executeCMD(playerName, message, networkPlayer, playerClient, playerChar);
+                        return executeCMD(playerName, message, networkPlayer, playerClient, playerChar);
                 }
                 catch (Exception ex)
                 {
                     Vars.conLog.Error("CMD: " + ex.ToString());
+                    return false;
                 }
             }
             else
-                executeCMD(playerName, message, networkPlayer, playerClient, playerChar);
+                return executeCMD(playerName, message, networkPlayer, playerClient, playerChar);
         }
 
         public static void executeCMDServer(string message)
@@ -84,7 +88,7 @@ namespace RustEssentials.Util
                 case "/kickall":
                     Vars.kickAllServer();
                     break;
-                case "/reload":
+                case "5":
                     Vars.reloadFileServer(commandArgs);
                     break;
                 case "/daylength":
@@ -114,14 +118,14 @@ namespace RustEssentials.Util
             }
         }
 
-        public static void executeCMD(string playerName, string message, uLink.NetworkPlayer player, PlayerClient playerClient, Character playerChar)
+        public static bool executeCMD(string playerName, string message, uLink.NetworkPlayer player, PlayerClient playerClient, Character playerChar)
         {
             string[] commandArgs = message.Split(' ');
             string command = commandArgs[0].ToLower();
 
             if (Vars.totalCommands.Contains(command) || (playerChar.netUser != null && playerChar.netUser.CanAdmin() && commandArgs[0] == "/reload"))
             {
-                string rankToUse = Vars.findRank(playerClient.userID.ToString());
+                string rankToUse = Vars.findRank(playerClient.userID);
                 if (!Vars.enabledCommands.ContainsKey(rankToUse))
                     rankToUse = Vars.defaultRank;
 
@@ -133,12 +137,21 @@ namespace RustEssentials.Util
                         Factions.manageZones(playerClient, commandArgs, true);
                     else if (Vars.enabledCommands[rankToUse].Contains("/f warzone") && message.StartsWith("/f warzone"))
                         Factions.manageZones(playerClient, commandArgs, false);
-                    //else if (Vars.enabledCommands[Vars.findRank(playerClient.userID.ToString())].Contains("/f build") && message.StartsWith("/f build"))
+                    //else if (Vars.enabledCommands[Vars.findRank(playerClient.userID)].Contains("/f build") && message.StartsWith("/f build"))
                     //    Factions.handleFactions(playerClient, commandArgs);
                     else
                     {
                         switch (command)
                         {
+                            case "/sethome":
+                                Homes.setHome(playerClient, commandArgs);
+                                break;
+                            case "/home":
+                                Homes.teleportHome(playerClient, commandArgs);
+                                break;
+                            case "/homes":
+                                Homes.listHomes(playerClient, commandArgs);
+                                break;
                             case "/build":
                                 Share.handleBuild(playerClient, commandArgs);
                                 break;
@@ -484,6 +497,8 @@ namespace RustEssentials.Util
                                 break;
                         }
                     }
+
+                    return true;
                 }
                 else
                 {
@@ -495,6 +510,7 @@ namespace RustEssentials.Util
                 if (Vars.unknownCommand)
                     Broadcast.broadcastTo(player, "Unknown command \"" + command + "\"!");
             }
+            return false;
         }
     }
 }

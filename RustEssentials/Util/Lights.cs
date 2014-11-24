@@ -58,7 +58,7 @@ namespace RustEssentials.Util
                         turnOff(playerUID, playerChar);
                         break;
                     case "serveroff":
-                        string rankToUse = Vars.findRank(playerChar.netUser.userID.ToString());
+                        string rankToUse = Vars.findRank(playerChar.netUser.userID);
                         if (!Vars.enabledCommands.ContainsKey(rankToUse))
                             rankToUse = Vars.defaultRank;
 

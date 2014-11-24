@@ -128,6 +128,14 @@ namespace RustEssentials.Util
             sb.AppendLine("serverIP=");
             sb.AppendLine("# If true, the server will send the current RustEssential's version to players when they connect.");
             sb.AppendLine("versionOnJoin=true");
+            sb.AppendLine("# The ranks that, if a command is unsuccessful, will have commands they send sent to chat. Ranks should be separated by commas. Leave blank to not have any commands sent to chat.");
+            sb.AppendLine("commandsToChat=");
+            sb.AppendLine("# The ranks that will receive mod messages. Ranks should be separated by commas. Leave blank to have all players receive mod messages.");
+            sb.AppendLine("modMessageRanks=");
+            sb.AppendLine("# If true, kicking or banning a player through RustEssentials will message all players about the kick/ban and the reason.");
+            sb.AppendLine("enableKickBanMessages=true");
+            sb.AppendLine("# If true, muting a player will announce to all players that they have been muted. If false, only the one who used /mute or /unmute will be notified.");
+            sb.AppendLine("enableMuteMessageToAll=true");
             sb.AppendLine("# Join message that is displayed to all when a user joins (Default \"Player $USER$ has joined.\").");
             sb.AppendLine("joinMessage=Player $USER$ has joined.");
             sb.AppendLine("# Enables or disables the display of join messages.");
@@ -230,7 +238,7 @@ namespace RustEssentials.Util
             sb.AppendLine("requestCooldown=15m");
             sb.AppendLine("# If true, players will not be able to warp or use tpa.");
             sb.AppendLine("denyRequestWarzone=true");
-            sb.AppendLine("# If true, players will be able to warp and use tpa while on top of a foundation, ceiling, or within a shelter.");
+            sb.AppendLine("# If true, players will be able to /warp, /tpa, and /f home while on top of a foundation, ceiling, or within a shelter.");
             sb.AppendLine("enableInHouse=true");
             sb.AppendLine("# The default distance /wand will teleport at if not changed by the user.");
             sb.AppendLine("wandDistance=50");
@@ -293,7 +301,7 @@ namespace RustEssentials.Util
             sb.AppendLine("");
             sb.AppendLine("[Remover]");
             sb.AppendLine("# Enables /remover. CAUTION: Users can abuse this in a multitude of ways!");
-            sb.AppendLine("enableRemover=false");
+            sb.AppendLine("enableRemover=true");
             sb.AppendLine("# If true, a player with /remover on will receive the item of the object they destroy.");
             sb.AppendLine("returnItems=true");
             sb.AppendLine("# If above 0, objects that take explosive damage cannot be /remover'd within removerAttackDelay of being hurt.");
@@ -304,6 +312,16 @@ namespace RustEssentials.Util
             sb.AppendLine("disregardPillarWeight=true");
             sb.AppendLine("# If true, foundations can be removed even if objects are on top of them (only if onlyOnIndestructibles is true).");
             sb.AppendLine("disregardFoundationWeight=true");
+            sb.AppendLine("# If true, /remover can be used with guns.");
+            sb.AppendLine("enableWithGuns=false");
+            sb.AppendLine("# If true, /remover will remove objects in one hit.");
+            sb.AppendLine("enableOneHit=false");
+            sb.AppendLine("# If enableOneHit and this are true, /remover will ask for you to confirm removal of an object on the first hit by hitting it again.");
+            sb.AppendLine("confirmOneHit=true");
+            sb.AppendLine("# If true, /remover will turn off automatically after removerDeactivateInterval milliseconds.");
+            sb.AppendLine("enableTimedRemover=false");
+            sb.AppendLine("# If enableTimedRemover is true, /remover will automatically disable after removerDeactivateInterval milliseconds after activation.");
+            sb.AppendLine("removerDeactivateInterval=60000");
             sb.AppendLine("");
             sb.AppendLine("[Top Rust Servers]");
             sb.AppendLine("# Enables the giving of the [TRS] kit in kits.ini. Note: In order for a player that has voted to get their kit, they must type /voted.");
@@ -313,7 +331,7 @@ namespace RustEssentials.Util
             sb.AppendLine("# URL to your toprustservers voting page (displays upon /vote).");
             sb.AppendLine("TRSvoteLink=http://nothingtoseehere.donotvisit/");
             sb.AppendLine("# Sets the message that is sent to all players when a player votes for the server.");
-            sb.AppendLine("TRSvotingMessage=$PLAYER$ was rewarded for voting for the server! Type /vote for more information.");
+            sb.AppendLine("TRSvotingMessage=$PLAYER$ was rewarded for voting on toprustservers! Type /vote for more information.");
             sb.AppendLine("");
             sb.AppendLine("[Rust-Servers]");
             sb.AppendLine("# Enables the giving of the [RS] kit in kits.ini. Note: In order for a player that has voted to get their kit, they must type /voted.");
@@ -323,7 +341,7 @@ namespace RustEssentials.Util
             sb.AppendLine("# URL to your toprustservers voting page (displays upon /vote).");
             sb.AppendLine("RSvoteLink=http://nothingtoseehere.donotvisit/");
             sb.AppendLine("# Sets the message that is sent to all players when a player votes for the server.");
-            sb.AppendLine("RSvotingMessage=$PLAYER$ was rewarded for voting for the server! Type /vote for more information.");
+            sb.AppendLine("RSvotingMessage=$PLAYER$ was rewarded for voting on rust-servers! Type /vote for more information.");
             sb.AppendLine("");
             sb.AppendLine("[Whois]");
             sb.AppendLine("# If true, /whois will show the user's rank.");
@@ -358,8 +376,10 @@ namespace RustEssentials.Util
             sb.AppendLine("enableAntiRange=true");
             sb.AppendLine("# Sets the flexibility of which enableAntiRange will take affect. If a kill is made at 126m and the max is 120m, the system will prevent the kill because the flexibility makes the max range 125m but is still over the max.");
             sb.AppendLine("rangeFlexibility=5");
-            sb.AppendLine("# The number of violations a player can have before being kicked. Note: Violations increase as the player gets moved back (Default 15).");
+            sb.AppendLine("# The number of violations a player can have before being kicked. Note: Violations increase when the player gets moved back (Default 15).");
             sb.AppendLine("violationLimit=15");
+            sb.AppendLine("# The number of offenses a player can have before being banned. Note: Offenses increase when the player gets kicked for exceeding the violation limit (Default 3).");
+            sb.AppendLine("offenseLimit=3");
             sb.AppendLine("# Sets the maximum speed (m/ms) a player can travel without violation. Raise this to have a less strict anti-speedhack or to compensate for lag. Note: This will CANNOT account for lag (Default 0.0156).");
             sb.AppendLine("maximumSpeed=0.0156");
             sb.AppendLine("# Sets the maximum speed (m/ms) a player can travel upwards without violation. Raise this to have a less strict anti-jumphack (Default 0.0065).");
@@ -378,6 +398,8 @@ namespace RustEssentials.Util
             sb.AppendLine("bedAndBagDistance=0");
             sb.AppendLine("# If above 0, players cannot place gateways within gatewayDistance meters of another player's house. This is to prevent players from blocking the doors of other players. Players can whitelist other players using /build.");
             sb.AppendLine("gatewayDistance=4.5");
+            sb.AppendLine("# If above 0, players will be kicked if their pings exceed this pingLimit.");
+            sb.AppendLine("pingLimit=0");
             sb.AppendLine("");
             sb.AppendLine("[Resources]");
             sb.AppendLine("# Sets the multiplier for every player's resource gather rate when using a Rock.");
@@ -485,6 +507,22 @@ namespace RustEssentials.Util
             sb.AppendLine("maxLightsPerHouse=30");
             sb.AppendLine("# Maximum amount of lights owned by a single person that can be lit at once.");
             sb.AppendLine("maxLightsPerPerson=20");
+            sb.AppendLine("");
+            sb.AppendLine("[Homes]");
+            sb.AppendLine("# Number of homes one player can have. 0 for no limit.");
+            sb.AppendLine("homeLimit=1");
+            sb.AppendLine("# Sets the delay (seconds) after /home until teleportation actually occurs.");
+            sb.AppendLine("homeDelay=30");
+            sb.AppendLine("# Sets the cooldown (in (m)inutes or (s)econds) for home teleporting.");
+            sb.AppendLine("homeCooldown=15m");
+            sb.AppendLine("");
+            sb.AppendLine("[Factions]");
+            sb.AppendLine("# Amount of faction members that can exist in one faction. 0 for no limit.");
+            sb.AppendLine("memberLimit=15");
+            sb.AppendLine("# Sets the delay (seconds) after /f home until teleportation actually occurs.");
+            sb.AppendLine("factionHomeDelay=30");
+            sb.AppendLine("# Sets the cooldown (in (m)inutes or (s)econds) for faction home teleporting.");
+            sb.AppendLine("factionHomeCooldown=30m");
 
             return sb;
         }
@@ -703,7 +741,7 @@ namespace RustEssentials.Util
             sb.AppendLine("#   Kevlar Pants:1 <---- This will be spawned into the pants slot");
             sb.AppendLine("#   Cloth Pants:1 <---- This will be spawned into the general inventory.");
             sb.AppendLine("# ");
-            sb.AppendLine("# When adding guns to either [Hotbar] or [Inventory], you have the ability to specify the ammo in the clip, attachment slots, and attachments.");
+            sb.AppendLine("# When adding guns to either [Hotbar] or [Inventory], you have the ability to specify the ammo in the magazine, attachment slots, and attachments.");
             sb.AppendLine("# Format: <Gun>(<Slots>):<Amount>(<Ammo>):<Attachment 1>;<Attachment 2>;<etc...>");
             sb.AppendLine("# Example:");
             sb.AppendLine("#   [Inventory]");
@@ -777,7 +815,7 @@ namespace RustEssentials.Util
             sb.AppendLine("#   [Magic.M]*");
             sb.AppendLine("#   Stone Hatchet:1");
             sb.AppendLine("# ");
-            sb.AppendLine("# When adding guns to a kit, you have the ability to specify the ammo in the clip, attachment slots, and attachments.");
+            sb.AppendLine("# When adding guns to a kit, you have the ability to specify the ammo in the magazine, attachment slots, and attachments.");
             sb.AppendLine("# Format: <Gun>(<Slots>):<Amount>(<Ammo>):<Attachment 1>;<Attachment 2>;<etc...>");
             sb.AppendLine("# Example:");
             sb.AppendLine("#   [Guns]");
@@ -957,6 +995,7 @@ namespace RustEssentials.Util
             sb.AppendLine("/ban");
             sb.AppendLine("/bane");
             sb.AppendLine("/banip");
+            sb.AppendLine("/kickip");
             sb.AppendLine("/unban");
             sb.AppendLine("/kickall");
             sb.AppendLine("/pos");
@@ -989,10 +1028,11 @@ namespace RustEssentials.Util
             sb.AppendLine("/opos");
             sb.AppendLine("/ghost");
             sb.AppendLine("/followghost");
+            sb.AppendLine("/f homea");
+            sb.AppendLine("/f sethomea");
             sb.AppendLine("");
             sb.AppendLine("[Moderator]");
             sb.AppendLine("/kick");
-            sb.AppendLine("/kickip");
             sb.AppendLine("/kicke");
             sb.AppendLine("/join");
             sb.AppendLine("/leave");
@@ -1047,6 +1087,11 @@ namespace RustEssentials.Util
             sb.AppendLine("/build");
             sb.AppendLine("/lights");
             sb.AppendLine("/betty");
+            sb.AppendLine("/f home");
+            sb.AppendLine("/f sethome");
+            sb.AppendLine("/sethome");
+            sb.AppendLine("/home");
+            sb.AppendLine("/homes");
 
             return sb;
         }
@@ -1130,6 +1175,8 @@ namespace RustEssentials.Util
             sb.AppendLine("/f {create} *name* (Creates and joins a faction with specified name)");
             sb.AppendLine("/f {deadmin} *player name* (Revokes faction admin from the specified faction member)");
             sb.AppendLine("/f {disband} (Disbands the current faction if user is the owner of said faction)");
+            sb.AppendLine("/f {home} (Teleports to the faction home)");
+            sb.AppendLine("/f {homea} [faction] (Teleports to any faction's home)");
             sb.AppendLine("/f {info} (Shows the sender's faction information)");
             sb.AppendLine("/f {info} *faction name* (Shows the faction information of a user or a faction)");
             sb.AppendLine("/f {invite} *name* (Invites the player with the specified name to your faction)");
@@ -1149,6 +1196,8 @@ namespace RustEssentials.Util
             sb.AppendLine("/f {safezone} {set} (Establishes the safezone)");
             sb.AppendLine("/f {safezone} {clear} (Deletes the current safezone)");
             sb.AppendLine("/f {safezone} {clearall} (Deletes all safezones)");
+            sb.AppendLine("/f {sethome} (Sets the faction home)");
+            sb.AppendLine("/f {sethomea} [faction] (Sets any faction's home)");
             sb.AppendLine("/f {unally} *faction name* (Unallies the specified allied faction)");
             sb.AppendLine("/f {warzone} {1} (Sets the first warzone point)");
             sb.AppendLine("/f {warzone} {2} (Sets the second warzone point)");
@@ -1190,6 +1239,9 @@ namespace RustEssentials.Util
             sb.AppendLine("/history {1-50} (Returns the the last # lines of global chat history)");
             sb.AppendLine("/history {g} {1-50} (Returns the the last # lines of global chat history)");
             sb.AppendLine("/history {f} {1-50} (Returns the the last # lines of your faction chat history)");
+            sb.AppendLine("/home (Teleports to your first home)");
+            sb.AppendLine("/home [name] (Teleports to the specified home)");
+            sb.AppendLine("/homes (Lists all of your set homes)");
             sb.AppendLine("/i <item name> (Gives the item to you)");
             sb.AppendLine("/i <item name> [amount] (Gives the amount of the item to you)");
             sb.AppendLine("/i [item id] (Gives 1 of the item with the corresponding id to you)");
@@ -1248,7 +1300,22 @@ namespace RustEssentials.Util
             sb.AppendLine("/random [item id] (Gives 1 of the specified item to 1 random player)");
             sb.AppendLine("/random [item id] [amount] (Gives an amount of the specified item to 1 random player)");
             sb.AppendLine("/random [item id] [amount] [amount of winners] (Gives an amount of the specified item to random players)");
-            sb.AppendLine("/reload {config/whitelist/ranks/commands/kits/motd/bans/prefix/warps/controller/tables/decay/remover/loadout/all} (Reloads the specified file)");
+            sb.AppendLine("/reload {all} (Reload all reloadable files)");
+            sb.AppendLine("/reload {bans} (Reload bans.ini)");
+            sb.AppendLine("/reload {commands} (Reload commands.ini)");
+            sb.AppendLine("/reload {config} (Reload config.ini)");
+            sb.AppendLine("/reload {controller} (Reload controller.ini)");
+            sb.AppendLine("/reload {decay} (Reload decay.ini)");
+            sb.AppendLine("/reload {kits} (Reload kits.ini)");
+            sb.AppendLine("/reload {loadout} (Reload default_loadout.ini)");
+            sb.AppendLine("/reload {motd} (Reload motd.ini)");
+            sb.AppendLine("/reload {offenses} (Reload offenses.dat)");
+            sb.AppendLine("/reload {prefix} (Reload prefix.ini)");
+            sb.AppendLine("/reload {ranks} (Reload ranks.ini)");
+            sb.AppendLine("/reload {remover} (Reload remover_blacklist.ini)");
+            sb.AppendLine("/reload {tables} (Reload all .ini files in the Tables directory)");
+            sb.AppendLine("/reload {warps} (Reload warps.ini)");
+            sb.AppendLine("/reload {whitelist} (Reload whitelist.dat)");
             sb.AppendLine("/remove {off} (Revokes access to delete entities (structures and AI entities) upon hit)");
             sb.AppendLine("/remove {on} (Gives access to delete entities (structures and AI entities) upon hit)");
             sb.AppendLine("/remover {off} (Revokes the ability to damage and destroy structures)");
@@ -1265,6 +1332,8 @@ namespace RustEssentials.Util
             sb.AppendLine("/saypop *message* (Says a (!) dropdown message to all clients if the first word is more than 2 characters)");
             sb.AppendLine("/saypop [icon] *message* (Says a dropdown message to all clients with designated icon)");
             sb.AppendLine("/saypop [icon] *message* [#s] (Says a dropdown message to all clients with designated icon with a duration of # seconds (1-7 range))");
+            sb.AppendLine("/sethome (Sets a home at your position. Name is set numerically based on the number of homes you have)");
+            sb.AppendLine("/sethome [name] (Sets a home at your position with the specified name)");
             sb.AppendLine("/share *player name* (Shares ownership of your doors with the designated user)");
             sb.AppendLine("/build {share} *player name* (Allows the designated user to place beds, sleeping bags, and gateways near your houses)");
             sb.AppendLine("/build {unshare} *player name* (Revokes access for the designated user to place beds, sleeping bags, and gateways near your houses)");

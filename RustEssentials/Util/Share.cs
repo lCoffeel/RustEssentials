@@ -50,20 +50,19 @@ namespace RustEssentials.Util
                 else
                 {
                     PlayerClient targetClient = possibleTargets[0];
-                    string senderUID = senderClient.userID.ToString();
-                    string targetUID = targetClient.userID.ToString();
+                    ulong senderUID = senderClient.userID;
+                    ulong targetUID = targetClient.userID;
 
-                    if (senderUID != null && targetUID != null && senderUID.Length == 17 && targetUID.Length == 17 && senderUID != targetUID)
+                    if (senderUID.ToString().Length == 17 && targetUID.ToString().Length == 17 && senderUID != targetUID)
                     {
                         if (Vars.buildSharingData.ContainsKey(senderUID))
                         {
                             if (!Vars.buildSharingData[senderUID].Contains(targetUID))
                             {
-                                string oldVal = Vars.buildSharingData[senderUID];
-                                Vars.buildSharingData[senderUID] = oldVal + ":" + targetUID;
+                                Vars.buildSharingData[senderUID].Add(targetUID);
                                 Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " can now place beds, sleeping bags, and gateways near your houses.");
                                 Broadcast.broadcastTo(targetClient.netPlayer, "You can now place beds, sleeping bags, and gateways near " + senderClient.userName + "'s houses.");
-                                Data.addBuildData(senderUID, targetUID);
+                                Data.addBuildData(senderUID.ToString(), targetUID.ToString());
                             }
                             else
                             {
@@ -72,10 +71,10 @@ namespace RustEssentials.Util
                         }
                         else
                         {
-                            Vars.buildSharingData.Add(senderUID, targetUID);
+                            Vars.buildSharingData.Add(senderUID, new List<ulong>(){targetUID});
                             Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " can now place beds & sleeping bags near your houses.");
                             Broadcast.broadcastTo(targetClient.netPlayer, "You can now place beds, sleeping bags, and gateways near " + senderClient.userName + "'s houses.");
-                            Data.addBuildData(senderUID, targetUID);
+                            Data.addBuildData(senderUID.ToString(), targetUID.ToString());
                         }
                     }
                 }
@@ -84,14 +83,14 @@ namespace RustEssentials.Util
 
         public static void unshareBuildWithAll(PlayerClient senderClient)
         {
-            string senderUID = senderClient.userID.ToString();
+            ulong senderUID = senderClient.userID;
 
             if (Vars.buildSharingData.ContainsKey(senderUID))
             {
                 Broadcast.broadcastTo(senderClient.netPlayer, "Other players can no longer place beds, sleeping bags, and gateways near your houses.");
-                Data.remBuildData(senderUID, "all");
-                List<string> shareData = Vars.buildSharingData[senderUID].Split(':').ToList();
-                PlayerClient[] possibleTargets = Array.FindAll(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => shareData.Contains(pc.userID.ToString()));
+                Data.remBuildData(senderUID.ToString(), "all");
+                List<ulong> shareData = Vars.buildSharingData[senderUID];
+                PlayerClient[] possibleTargets = Array.FindAll(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => shareData.Contains(pc.userID));
                 foreach (var target in possibleTargets)
                 {
                     Broadcast.broadcastTo(target.netPlayer, "You can no longer place beds, sleeping bags, and gateways near " + senderClient.userName + "'s objects.");
@@ -116,34 +115,19 @@ namespace RustEssentials.Util
                 else
                 {
                     PlayerClient targetClient = possibleTargets[0];
-                    string senderUID = senderClient.userID.ToString();
-                    string targetUID = targetClient.userID.ToString();
+                    ulong senderUID = senderClient.userID;
+                    ulong targetUID = targetClient.userID;
 
-                    if (senderUID != null && targetUID != null && senderUID.Length == 17 && targetUID.Length == 17 && senderUID != targetUID)
+                    if (senderUID.ToString().Length == 17 && targetUID.ToString().Length == 17 && senderUID != targetUID)
                     {
                         if (Vars.buildSharingData.ContainsKey(senderUID))
                         {
                             if (Vars.buildSharingData[senderUID].Contains(targetUID))
                             {
-                                List<string> shareData = Vars.buildSharingData[senderUID].Split(':').ToList();
-                                if (shareData.Contains(targetUID))
-                                {
-                                    shareData.Remove(targetUID);
-                                    string newData = "";
-                                    int curIndex = 0;
-                                    foreach (string s in shareData)
-                                    {
-                                        curIndex++;
-                                        if (curIndex > 1)
-                                            newData += ":" + s;
-                                        else
-                                            newData += s;
-                                    }
-                                    Vars.buildSharingData[senderUID] = newData;
-                                }
+                                Vars.buildSharingData[senderUID].Remove(targetUID);
                                 Broadcast.broadcastTo(senderClient.netPlayer, targetClient.userName + " can no longer place beds, sleeping bags, and gateways near your houses.");
                                 Broadcast.broadcastTo(targetClient.netPlayer, "You can no longer place beds, sleeping bags, and gateways near " + senderClient.userName + "'s houses.");
-                                Data.remBuildData(senderUID, targetUID);
+                                Data.remBuildData(senderUID.ToString(), targetUID.ToString());
                             }
                             else
                             {
@@ -171,20 +155,19 @@ namespace RustEssentials.Util
                 else
                 {
                     PlayerClient targetClient = possibleTargets[0];
-                    string senderUID = senderClient.userID.ToString();
-                    string targetUID = targetClient.userID.ToString();
+                    ulong senderUID = senderClient.userID;
+                    ulong targetUID = targetClient.userID;
 
-                    if (senderUID != null && targetUID != null && senderUID.Length == 17 && targetUID.Length == 17 && senderUID != targetUID)
+                    if (senderUID.ToString().Length == 17 && targetUID.ToString().Length == 17 && senderUID != targetUID)
                     {
                         if (Vars.sharingData.ContainsKey(senderUID))
                         {
                             if (!Vars.sharingData[senderUID].Contains(targetUID))
                             {
-                                string oldVal = Vars.sharingData[senderUID];
-                                Vars.sharingData[senderUID] = oldVal + ":" + targetUID;
+                                Vars.sharingData[senderUID].Add(targetUID);
                                 Broadcast.noticeTo(senderClient.netPlayer, ":D", "Doors shared with " + targetClient.userName + ".", 5);
                                 Broadcast.noticeTo(targetClient.netPlayer, ":D", "You can now open " + senderClient.userName + "'s doors.", 5);
-                                Data.addDoorData(senderUID, targetUID);
+                                Data.addDoorData(senderUID.ToString(), targetUID.ToString());
                             }
                             else
                             {
@@ -193,10 +176,10 @@ namespace RustEssentials.Util
                         }
                         else
                         {
-                            Vars.sharingData.Add(senderUID, targetUID);
+                            Vars.sharingData.Add(senderUID, new List<ulong>(){targetUID});
                             Broadcast.noticeTo(senderClient.netPlayer, ":D", "Doors shared with " + targetClient.userName + ".", 5);
                             Broadcast.noticeTo(targetClient.netPlayer, ":D", "You can now open " + senderClient.userName + "'s doors.", 5);
-                            Data.addDoorData(senderUID, targetUID);
+                            Data.addDoorData(senderUID.ToString(), targetUID.ToString());
                         }
                     }
                 }
@@ -205,14 +188,14 @@ namespace RustEssentials.Util
 
         public static void unshareWithAll(PlayerClient senderClient)
         {
-            string senderUID = senderClient.userID.ToString();
+            ulong senderUID = senderClient.userID;
 
             if (Vars.sharingData.ContainsKey(senderUID))
             {
                 Broadcast.noticeTo(senderClient.netPlayer, ":(", "Doors unshared with everyone.", 5);
-                Data.remDoorData(senderUID, "all");
-                List<string> shareData = Vars.sharingData[senderUID].Split(':').ToList();
-                PlayerClient[] possibleTargets = Array.FindAll(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => shareData.Contains(pc.userID.ToString()));
+                Data.remDoorData(senderUID.ToString(), "all");
+                List<ulong> shareData = Vars.sharingData[senderUID];
+                PlayerClient[] possibleTargets = Array.FindAll(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => shareData.Contains(pc.userID));
                 foreach (var target in possibleTargets)
                 {
                     Broadcast.noticeTo(target.netPlayer, ":D", "You can no longer open " + senderClient.userName + "'s doors.", 5);
@@ -237,34 +220,19 @@ namespace RustEssentials.Util
                 else
                 {
                     PlayerClient targetClient = possibleTargets[0];
-                    string senderUID = senderClient.userID.ToString();
-                    string targetUID = targetClient.userID.ToString();
+                    ulong senderUID = senderClient.userID;
+                    ulong targetUID = targetClient.userID;
 
-                    if (senderUID != null && targetUID != null && senderUID.Length == 17 && targetUID.Length == 17 && senderUID != targetUID)
+                    if (senderUID.ToString().Length == 17 && targetUID.ToString().Length == 17 && senderUID != targetUID)
                     {
                         if (Vars.sharingData.ContainsKey(senderUID))
                         {
                             if (Vars.sharingData[senderUID].Contains(targetUID))
                             {
-                                List<string> shareData = Vars.sharingData[senderUID].Split(':').ToList();
-                                if (shareData.Contains(targetUID))
-                                {
-                                    shareData.Remove(targetUID);
-                                    string newData = "";
-                                    int curIndex = 0;
-                                    foreach (string s in shareData)
-                                    {
-                                        curIndex++;
-                                        if (curIndex > 1)
-                                            newData += ":" + s;
-                                        else
-                                            newData += s;
-                                    }
-                                    Vars.sharingData[senderUID] = newData;
-                                }
+                                Vars.sharingData[senderUID].Remove(targetUID);
                                 Broadcast.noticeTo(senderClient.netPlayer, ":(", "Doors unshared with " + targetClient.userName + ".", 5);
                                 Broadcast.noticeTo(targetClient.netPlayer, ":D", "You can no longer open " + senderClient.userName + "'s doors.", 5);
-                                Data.remDoorData(senderUID, targetUID);
+                                Data.remDoorData(senderUID.ToString(), targetUID.ToString());
                             }
                             else
                             {
@@ -292,20 +260,18 @@ namespace RustEssentials.Util
                 else
                 {
                     PlayerClient targetClient = possibleTargets[0];
-                    string senderUID = senderClient.userID.ToString();
-                    string targetUID = targetClient.userID.ToString();
-
-                    if (senderUID != null && targetUID != null && senderUID.Length == 17 && targetUID.Length == 17 && senderUID != targetUID)
+                    ulong senderUID = senderClient.userID;
+                    ulong targetUID = targetClient.userID;
+                    if (senderUID.ToString().Length == 17 && targetUID.ToString().Length == 17 && senderUID != targetUID)
                     {
                         if (Vars.removerSharingData.ContainsKey(senderUID))
                         {
                             if (!Vars.removerSharingData[senderUID].Contains(targetUID))
                             {
-                                string oldVal = Vars.removerSharingData[senderUID];
-                                Vars.removerSharingData[senderUID] = oldVal + ":" + targetUID;
+                                Vars.removerSharingData[senderUID].Add(targetUID);
                                 Broadcast.noticeTo(senderClient.netPlayer, ":D", "Remover shared with " + targetClient.userName + ".", 5);
                                 Broadcast.noticeTo(targetClient.netPlayer, ":D", "You can now remove " + senderClient.userName + "'s objects.", 5);
-                                Data.addRemoverData(senderUID, targetUID);
+                                Data.addRemoverData(senderUID.ToString(), targetUID.ToString());
                             }
                             else
                             {
@@ -314,10 +280,10 @@ namespace RustEssentials.Util
                         }
                         else
                         {
-                            Vars.removerSharingData.Add(senderUID, targetUID);
+                            Vars.removerSharingData.Add(senderUID, new List<ulong>(){targetUID});
                             Broadcast.noticeTo(senderClient.netPlayer, ":D", "Remover shared with " + targetClient.userName + ".", 5);
                             Broadcast.noticeTo(targetClient.netPlayer, ":D", "You can now remove " + senderClient.userName + "'s objects.", 5);
-                            Data.addRemoverData(senderUID, targetUID);
+                            Data.addRemoverData(senderUID.ToString(), targetUID.ToString());
                         }
                     }
                 }
@@ -326,14 +292,13 @@ namespace RustEssentials.Util
 
         public static void unshareRemoverWithAll(PlayerClient senderClient)
         {
-            string senderUID = senderClient.userID.ToString();
+            ulong senderUID = senderClient.userID;
 
             if (Vars.removerSharingData.ContainsKey(senderUID))
             {
                 Broadcast.noticeTo(senderClient.netPlayer, ":(", "Remover unshared with everyone.", 5);
-                Data.remRemoverData(senderUID, "all");
-                List<string> shareData = Vars.removerSharingData[senderUID].Split(':').ToList();
-                PlayerClient[] possibleTargets = Array.FindAll(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => shareData.Contains(pc.userID.ToString()));
+                Data.remRemoverData(senderUID.ToString(), "all");
+                PlayerClient[] possibleTargets = Array.FindAll(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => Vars.removerSharingData[senderUID].Contains(pc.userID));
                 foreach (var target in possibleTargets)
                 {
                     Broadcast.noticeTo(target.netPlayer, ":D", "You can no longer remove " + senderClient.userName + "'s objects.", 5);
@@ -358,34 +323,19 @@ namespace RustEssentials.Util
                 else
                 {
                     PlayerClient targetClient = possibleTargets[0];
-                    string senderUID = senderClient.userID.ToString();
-                    string targetUID = targetClient.userID.ToString();
+                    ulong senderUID = senderClient.userID;
+                    ulong targetUID = targetClient.userID;
 
-                    if (senderUID != null && targetUID != null && senderUID.Length == 17 && targetUID.Length == 17 && senderUID != targetUID)
+                    if (senderUID.ToString().Length == 17 && targetUID.ToString().Length == 17 && senderUID != targetUID)
                     {
                         if (Vars.removerSharingData.ContainsKey(senderUID))
                         {
                             if (Vars.removerSharingData[senderUID].Contains(targetUID))
                             {
-                                List<string> shareData = Vars.removerSharingData[senderUID].Split(':').ToList();
-                                if (shareData.Contains(targetUID))
-                                {
-                                    shareData.Remove(targetUID);
-                                    string newData = "";
-                                    int curIndex = 0;
-                                    foreach (string s in shareData)
-                                    {
-                                        curIndex++;
-                                        if (curIndex > 1)
-                                            newData += ":" + s;
-                                        else
-                                            newData += s;
-                                    }
-                                    Vars.removerSharingData[senderUID] = newData;
-                                }
+                                Vars.removerSharingData[senderUID].Remove(targetUID);
                                 Broadcast.noticeTo(senderClient.netPlayer, ":(", "Remover unshared with " + targetClient.userName + ".", 5);
                                 Broadcast.noticeTo(targetClient.netPlayer, ":D", "You can no longer remover " + senderClient.userName + "'s objects.", 5);
-                                Data.remRemoverData(senderUID, targetUID);
+                                Data.remRemoverData(senderUID.ToString(), targetUID.ToString());
                             }
                             else
                             {

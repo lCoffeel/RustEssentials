@@ -11,7 +11,7 @@ namespace RustEssentials.Util
     {
         public static void turnOffHitTools(PlayerClient senderClient, int type = 0)
         {
-            string UID = senderClient.userID.ToString();
+            ulong UID = senderClient.userID;
             if (Vars.destroyerList.Contains(UID))
             {
                 Broadcast.broadcastTo(senderClient.netPlayer, "Remover tool deactivated.");
@@ -64,7 +64,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -101,7 +101,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
                 Inventory senderInv = senderClient.controllable.GetComponent<Inventory>();
 
                 switch (mode)
@@ -138,7 +138,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -188,7 +188,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -226,7 +226,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -262,7 +262,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -299,10 +299,10 @@ namespace RustEssentials.Util
 
         public static IEnumerator ghostPositionUpdate(PlayerClient senderClient, Character senderChar)
         {
-            string uid = senderClient.userID.ToString();
+            ulong uid = senderClient.userID;
             while (senderChar != null && senderChar.alive && Vars.ghostList.ContainsKey(uid))
             {
-                if (Vars.vanishedList.Contains(uid) && !Vars.ghostTeleporting.Contains(senderClient) && Vars.ghostList.ContainsKey(uid) && Vars.followGhostList.Contains(uid))
+                if (Vars.vanishedList.Contains(uid) && !Vars.ghostTeleporting.Contains(senderClient) && Vars.followGhostList.Contains(uid))
                     Vars.ghostTeleporting.Add(senderClient);
                 yield return new WaitForSeconds(2);
             }
@@ -313,7 +313,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -349,14 +349,14 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
                     case "on":
                         if (!Vars.bypassList.Contains(UID))
                         {
-                            Broadcast.broadcastTo(senderClient.netPlayer, "You are now under the antihack's radar.");
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are no longer under the antihack's radar.");
                             Vars.bypassList.Add(UID);
                         }
                         else
@@ -365,7 +365,7 @@ namespace RustEssentials.Util
                     case "off":
                         if (Vars.bypassList.Contains(UID))
                         {
-                            Broadcast.broadcastTo(senderClient.netPlayer, "You are no longer under the antihack's radar.");
+                            Broadcast.broadcastTo(senderClient.netPlayer, "You are now under the antihack's radar.");
                             Vars.bypassList.Remove(UID);
                         }
                         else
@@ -385,7 +385,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -421,7 +421,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -457,7 +457,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -495,7 +495,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -551,7 +551,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -585,7 +585,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
                 switch (mode)
                 {
                     case "on":
@@ -618,7 +618,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
                 switch (mode)
                 {
                     case "on":
@@ -653,7 +653,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -666,6 +666,11 @@ namespace RustEssentials.Util
 
                                 Broadcast.broadcastTo(senderClient.netPlayer, "Minor remover tool activated. Hit indestructible structures that you own to begin removing them.");
                                 Vars.removerList.Add(UID);
+                                if (!Vars.removerTimers.ContainsKey(UID) && Vars.enableTimedRemover)
+                                {
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Your minor remover tool will automatically deactivate in " + (Vars.removerDeactivateInterval / (float)1000) + " seconds.");
+                                    Vars.removerTimers.Add(UID, TimerPlus.Create(Vars.removerDeactivateInterval, false, turnOffRemover, UID));
+                                }
                             }
                             else
                                 Broadcast.broadcastTo(senderClient.netPlayer, "The minor remover tool is not enabled on this server!");
@@ -678,6 +683,8 @@ namespace RustEssentials.Util
                         {
                             Broadcast.broadcastTo(senderClient.netPlayer, "Minor remover tool deactivated.");
                             Vars.removerList.Remove(UID);
+                            if (Vars.removerTimers.ContainsKey(UID))
+                                Vars.removerTimers[UID].dispose();
                         }
                         else
                             Broadcast.broadcastTo(senderClient.netPlayer, "You do not have the minor remover tool activated.");
@@ -700,12 +707,29 @@ namespace RustEssentials.Util
                 Broadcast.broadcastTo(senderClient.netPlayer, "You must specify on, off, share, unshare, or unshareall.");
         }
 
+        public static void turnOffRemover(params object[] args)
+        {
+            if (args.Count() > 0)
+            {
+                ulong UID = (ulong)args[0];
+                PlayerClient playerClient;
+                if (Vars.getPlayerClient(Convert.ToUInt64(UID), out playerClient))
+                {
+                    Broadcast.broadcastTo(playerClient.netPlayer, "Minor remover tool deactivated.");
+                }
+                if (Vars.removerList.Contains(UID))
+                {
+                    Vars.removerList.Remove(UID);
+                }
+            }
+        }
+
         public static void elevatorTool(PlayerClient senderClient, string[] args)
         {
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -743,7 +767,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -781,7 +805,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {
@@ -819,7 +843,7 @@ namespace RustEssentials.Util
             if (args.Count() > 1)
             {
                 string mode = args[1];
-                string UID = senderClient.userID.ToString();
+                ulong UID = senderClient.userID;
 
                 switch (mode)
                 {

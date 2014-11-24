@@ -72,6 +72,10 @@ namespace RustEssentials.Util
         private static Match MatchDefaultColor;
         private static Match MatchServerIP;
         private static Match MatchVersionOnJoin;
+        private static Match MatchCommandsToChat;
+        private static Match MatchModMessageRanks;
+        private static Match MatchEnableKickBanMessages;
+        private static Match MatchEnableMuteMessageToAll;
         private static Match MatchJoinMessage;
         private static Match MatchEnableJoin;
         private static Match MatchLeaveMessage;
@@ -161,6 +165,11 @@ namespace RustEssentials.Util
         private static Match MatchDisregardCeilingWeight;
         private static Match MatchDisregardPillarWeight;
         private static Match MatchDisregardFoundationWeight;
+        private static Match MatchEnableWithGuns;
+        private static Match MatchEnableOneHit;
+        private static Match MatchConfirmOneHit;
+        private static Match MatchRemoverDeactivateInterval;
+        private static Match MatchEnableTimedRemover;
         // Top Rust Servers
         private static Match MatchEnableTRSVoting;
         private static Match MatchTRSAPIKey;
@@ -188,6 +197,7 @@ namespace RustEssentials.Util
         private static Match MatchEnableAntiRange;
         private static Match MatchRangeFlexibility;
         private static Match MatchViolationLimit;
+        private static Match MatchOffenseLimit;
         private static Match MatchMaximumSpeed;
         private static Match MatchMaximumJumpSpeed;
         private static Match MatchCalculateInterval;
@@ -197,6 +207,7 @@ namespace RustEssentials.Util
         private static Match MatchSendAHToConsole;
         private static Match MatchBedAndBagDistance;
         private static Match MatchGatewayDistance;
+        private static Match MatchPingLimit;
         // Resources
         private static Match MatchRockMultiplier;
         private static Match MatchSHatchetMultiplier;
@@ -245,6 +256,14 @@ namespace RustEssentials.Util
         private static Match MatchMaxLightsRange;
         private static Match MatchMaxLightsPerHouse;
         private static Match MatchMaxLightsPerPerson;
+        // Homes
+        private static Match MatchHomeLimit;
+        private static Match MatchHomeDelay;
+        private static Match MatchHomeCooldown;
+        // Factions
+        private static Match MatchMemberLimit;
+        private static Match MatchFactionHomeDelay;
+        private static Match MatchFactionHomeCooldown;
 
         // Whitelist
         public static string enabledWhitelist;
@@ -305,6 +324,10 @@ namespace RustEssentials.Util
         public static string defaultColor;
         public static string serverIP;
         public static string versionOnJoin;
+        public static string commandsToChat;
+        public static string modMessageRanks;
+        public static string enableKickBanMessages;
+        public static string enableMuteMessageToAll;
         public static string joinMessage;
         public static string enableJoin;
         public static string leaveMessage;
@@ -394,6 +417,11 @@ namespace RustEssentials.Util
         public static string disregardCeilingWeight;
         public static string disregardPillarWeight;
         public static string disregardFoundationWeight;
+        public static string enableWithGuns;
+        public static string enableOneHit;
+        public static string confirmOneHit;
+        public static string removerDeactivateInterval;
+        public static string enableTimedRemover;
         // Top Rust Servers
         public static string enableTRSVoting;
         public static string TRSAPIKey;
@@ -421,6 +449,7 @@ namespace RustEssentials.Util
         public static string enableAntiRange;
         public static string rangeFlexibility;
         public static string violationLimit;
+        public static string offenseLimit;
         public static string maximumSpeed;
         public static string maximumJumpSpeed;
         public static string calculateInterval;
@@ -430,6 +459,7 @@ namespace RustEssentials.Util
         public static string sendAHToConsole;
         public static string bedAndBagDistance;
         public static string gatewayDistance;
+        public static string pingLimit;
         // Resources
         public static string rockMultiplier;
         public static string sHatchetMultiplier;
@@ -478,6 +508,14 @@ namespace RustEssentials.Util
         public static string maxLightsRange;
         public static string maxLightsPerHouse;
         public static string maxLightsPerPerson;
+        // Homes
+        public static string homeLimit;
+        public static string homeDelay;
+        public static string homeCooldown;
+        // Factions
+        public static string memberLimit;
+        public static string factionHomeDelay;
+        public static string factionHomeCooldown;
 
 
         public static bool setVariables()
@@ -603,6 +641,14 @@ namespace RustEssentials.Util
                 MatchServerIP = Regex.Match(configInput, @"serverIP=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing versionOnJoin";
                 MatchVersionOnJoin = Regex.Match(configInput, @"versionOnJoin=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing commandsToChat";
+                MatchCommandsToChat = Regex.Match(configInput, @"commandsToChat=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing modMessageRanks";
+                MatchModMessageRanks = Regex.Match(configInput, @"modMessageRanks=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing enableKickBanMessages";
+                MatchEnableKickBanMessages = Regex.Match(configInput, @"enableKickBanMessages=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing enableMuteMessageToAll";
+                MatchEnableMuteMessageToAll = Regex.Match(configInput, @"enableMuteMessageToAll=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing joinMessage";
                 MatchJoinMessage = Regex.Match(configInput, @"joinMessage=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing enableJoin";
@@ -748,6 +794,16 @@ namespace RustEssentials.Util
                 MatchEnableDropItem = Regex.Match(configInput, @"enableDropItem=\w+", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing enableRemover";
                 MatchEnableRemover = Regex.Match(configInput, @"enableRemover=\w+", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing enableWithGuns";
+                MatchEnableWithGuns = Regex.Match(configInput, @"enableWithGuns=\w+", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing enableOneHit";
+                MatchEnableOneHit = Regex.Match(configInput, @"enableOneHit=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing confirmOneHit";
+                MatchConfirmOneHit = Regex.Match(configInput, @"confirmOneHit=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing removerDeactivateInterval";
+                MatchRemoverDeactivateInterval = Regex.Match(configInput, @"removerDeactivateInterval=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing enableTimedRemover";
+                MatchEnableTimedRemover = Regex.Match(configInput, @"enableTimedRemover=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing returnItems";
                 MatchReturnItems = Regex.Match(configInput, @"returnItems=\w+", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing removerAttackDelay";
@@ -800,6 +856,8 @@ namespace RustEssentials.Util
                 MatchRangeFlexibility = Regex.Match(configInput, @"rangeFlexibility=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing violationLimit";
                 MatchViolationLimit = Regex.Match(configInput, @"violationLimit=\w+", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing offenseLimit";
+                MatchOffenseLimit = Regex.Match(configInput, @"offenseLimit=\w+", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing maximumSpeed";
                 MatchMaximumSpeed = Regex.Match(configInput, @"maximumSpeed=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing maximumJumpSpeed";
@@ -818,6 +876,8 @@ namespace RustEssentials.Util
                 MatchBedAndBagDistance = Regex.Match(configInput, @"bedAndBagDistance=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing gatewayDistance";
                 MatchGatewayDistance = Regex.Match(configInput, @"gatewayDistance=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing pingLimit";
+                MatchPingLimit = Regex.Match(configInput, @"pingLimit=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing rockMultiplier";
                 MatchRockMultiplier = Regex.Match(configInput, @"rockMultiplier=\w+", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing sHatchetMultiplier";
@@ -904,6 +964,18 @@ namespace RustEssentials.Util
                 MatchMaxLightsPerHouse = Regex.Match(configInput, @"maxLightsPerHouse=[^\n]*", RegexOptions.IgnoreCase);
                 currentItem = "Grabbing maxLightsPerPerson";
                 MatchMaxLightsPerPerson = Regex.Match(configInput, @"maxLightsPerPerson=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing homeLimit";
+                MatchHomeLimit = Regex.Match(configInput, @"homeLimit=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing homeDelay";
+                MatchHomeDelay = Regex.Match(configInput, @"homeDelay=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing homeCooldown";
+                MatchHomeCooldown = Regex.Match(configInput, @"homeCooldown=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing memberLimit";
+                MatchMemberLimit = Regex.Match(configInput, @"memberLimit=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing factionHomeDelay";
+                MatchFactionHomeDelay = Regex.Match(configInput, @"factionHomeDelay=[^\n]*", RegexOptions.IgnoreCase);
+                currentItem = "Grabbing factionHomeCooldown";
+                MatchFactionHomeCooldown = Regex.Match(configInput, @"factionHomeCooldown=[^\n]*", RegexOptions.IgnoreCase);
 
                 currentItem = "Setting enabledWhitelist";
                 enabledWhitelist = MatchEnabledWhitelist.ToString().Split('=')[1];
@@ -1010,6 +1082,14 @@ namespace RustEssentials.Util
                 serverIP = MatchServerIP.ToString().Split('=')[1].Replace("\r", "");
                 currentItem = "Setting versionOnJoin";
                 versionOnJoin = MatchVersionOnJoin.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting commandsToChat";
+                commandsToChat = MatchCommandsToChat.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting modMessageRanks";
+                modMessageRanks = MatchModMessageRanks.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting enableKickBanMessages";
+                enableKickBanMessages = MatchEnableKickBanMessages.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting enableMuteMessageToAll";
+                enableMuteMessageToAll = MatchEnableMuteMessageToAll.ToString().Split('=')[1].Replace("\r", "");
                 currentItem = "Setting joinMessage";
                 joinMessage = MatchJoinMessage.ToString().Split('=')[1].Replace("\r", "");
                 currentItem = "Setting enableJoin";
@@ -1155,6 +1235,16 @@ namespace RustEssentials.Util
                 enableDropItem = MatchEnableDropItem.ToString().Split('=')[1];
                 currentItem = "Setting enableRemover";
                 enableRemover = MatchEnableRemover.ToString().Split('=')[1];
+                currentItem = "Setting enableWithGuns";
+                enableWithGuns = MatchEnableWithGuns.ToString().Split('=')[1];
+                currentItem = "Setting enableOneHit";
+                enableOneHit = MatchEnableWithGuns.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting confirmOneHit";
+                confirmOneHit = MatchConfirmOneHit.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting removerDeactivateInterval";
+                removerDeactivateInterval = MatchRemoverDeactivateInterval.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting enableTimedRemover";
+                enableTimedRemover = MatchEnableTimedRemover.ToString().Split('=')[1].Replace("\r", "");
                 currentItem = "Setting returnItems";
                 returnItems = MatchReturnItems.ToString().Split('=')[1];
                 currentItem = "Setting removerAttackDelay";
@@ -1233,6 +1323,8 @@ namespace RustEssentials.Util
                 rangeFlexibility = MatchRangeFlexibility.ToString().Split('=')[1];
                 currentItem = "Setting violationLimit";
                 violationLimit = MatchViolationLimit.ToString().Split('=')[1];
+                currentItem = "Setting offenseLimit";
+                offenseLimit = MatchOffenseLimit.ToString().Split('=')[1];
                 currentItem = "Setting maximumSpeed";
                 maximumSpeed = MatchMaximumSpeed.ToString().Split('=')[1].Replace("\r", "");
                 currentItem = "Setting maximumJumpSpeed";
@@ -1251,6 +1343,8 @@ namespace RustEssentials.Util
                 bedAndBagDistance = MatchBedAndBagDistance.ToString().Split('=')[1].Replace("\r", "");
                 currentItem = "Setting gatewayDistance";
                 gatewayDistance = MatchGatewayDistance.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting pingLimit";
+                pingLimit = MatchPingLimit.ToString().Split('=')[1].Replace("\r", "");
                 currentItem = "Setting rockMultiplier";
                 rockMultiplier = MatchRockMultiplier.ToString().Split('=')[1];
                 currentItem = "Setting sHatchetMultiplier";
@@ -1337,6 +1431,18 @@ namespace RustEssentials.Util
                 maxLightsPerHouse = MatchMaxLightsPerHouse.ToString().Split('=')[1].Replace("\r", "");
                 currentItem = "Setting maxLightsPerPerson";
                 maxLightsPerPerson = MatchMaxLightsPerPerson.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting homeLimit";
+                homeLimit = MatchHomeLimit.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting homeDelay";
+                homeDelay = MatchHomeDelay.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting homeCooldown";
+                homeCooldown = MatchHomeCooldown.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting memberLimit";
+                memberLimit = MatchMemberLimit.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting factionHomeDelay";
+                factionHomeDelay = MatchFactionHomeDelay.ToString().Split('=')[1].Replace("\r", "");
+                currentItem = "Setting factionHomeCooldown";
+                factionHomeCooldown = MatchFactionHomeCooldown.ToString().Split('=')[1].Replace("\r", "");
                 return true;
             }
             catch (Exception ex)

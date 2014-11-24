@@ -60,9 +60,9 @@ namespace RustEssentials.Util
                         {
                             try
                             {
-                                KeyValuePair<string, int>[] aboveZero = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerKills).ToArray(), (KeyValuePair<string, int> kv) => kv.Value > 0);
+                                KeyValuePair<ulong, int>[] aboveZero = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerKills).ToArray(), (KeyValuePair<ulong, int> kv) => kv.Value > 0);
 
-                                Dictionary<string, string> namesAndUIDs = new Dictionary<string, string>();
+                                Dictionary<ulong, string> namesAndUIDs = new Dictionary<ulong, string>();
 
                                 int curIndex = 0;
                                 foreach (var data in aboveZero)
@@ -75,7 +75,7 @@ namespace RustEssentials.Util
                                             break;
                                         namesAndUIDs.Add(data.Key, "");
 
-                                        PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == data.Key);
+                                        PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID == data.Key);
                                         string playerName;
                                         if (playerClient != null) // If player is online
                                             namesAndUIDs[data.Key] = playerClient.netUser.displayName; // Use the unhidden name of that online user (in case he/she is vanished)
@@ -101,7 +101,7 @@ namespace RustEssentials.Util
                                             break;
 
                                         string playerName = namesAndUIDs[data.Key];
-                                        string UID = data.Key;
+                                        ulong UID = data.Key;
                                         string kills = data.Value.ToString();
                                         string fullString = curIndex + ". " + playerName + " (" + UID + "): " + kills;
                                         Broadcast.broadcastTo(senderClient.netPlayer, fullString);
@@ -111,8 +111,8 @@ namespace RustEssentials.Util
                                         Broadcast.broadcastTo(senderClient.netPlayer, curIndex + ".");
                                     }
                                     string senderName = senderClient.userName;
-                                    string senderUID = senderClient.userID.ToString();
-                                    int rankNum = Array.FindIndex(aboveZero.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == senderUID) + 1;
+                                    ulong senderUID = senderClient.userID;
+                                    int rankNum = Array.FindIndex(aboveZero.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == senderUID) + 1;
                                     int senderKills = 0;
                                     if (rankNum > 0)
                                         senderKills = aboveZero[rankNum - 1].Value;
@@ -135,9 +135,9 @@ namespace RustEssentials.Util
                         {
                             try
                             {
-                                KeyValuePair<string, int>[] aboveZero = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerDeaths).ToArray(), (KeyValuePair<string, int> kv) => kv.Value > 0);
+                                KeyValuePair<ulong, int>[] aboveZero = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerDeaths).ToArray(), (KeyValuePair<ulong, int> kv) => kv.Value > 0);
 
-                                Dictionary<string, string> namesAndUIDs = new Dictionary<string, string>();
+                                Dictionary<ulong, string> namesAndUIDs = new Dictionary<ulong, string>();
 
                                 int curIndex = 0;
                                 foreach (var data in aboveZero)
@@ -150,7 +150,7 @@ namespace RustEssentials.Util
                                             break;
                                         namesAndUIDs.Add(data.Key, "");
 
-                                        PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == data.Key);
+                                        PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID == data.Key);
                                         string playerName;
                                         if (playerClient != null) // If player is online
                                             namesAndUIDs[data.Key] = playerClient.netUser.displayName; // Use the unhidden name of that online user (in case he/she is vanished)
@@ -176,7 +176,7 @@ namespace RustEssentials.Util
                                             break;
 
                                         string playerName = namesAndUIDs[data.Key];
-                                        string UID = data.Key;
+                                        ulong UID = data.Key;
                                         string deaths = data.Value.ToString();
                                         string fullString = curIndex + ". " + playerName + " (" + UID + "): " + deaths;
                                         Broadcast.broadcastTo(senderClient.netPlayer, fullString);
@@ -186,8 +186,8 @@ namespace RustEssentials.Util
                                         Broadcast.broadcastTo(senderClient.netPlayer, curIndex + ".");
                                     }
                                     string senderName = senderClient.userName;
-                                    string senderUID = senderClient.userID.ToString();
-                                    int rankNum = Array.FindIndex(aboveZero.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == senderUID) + 1;
+                                    ulong senderUID = senderClient.userID;
+                                    int rankNum = Array.FindIndex(aboveZero.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == senderUID) + 1;
                                     int senderDeaths = 0;
                                     if (rankNum > 0)
                                         senderDeaths = aboveZero[rankNum - 1].Value;
@@ -210,11 +210,11 @@ namespace RustEssentials.Util
                         {
                             try
                             {
-                                KeyValuePair<string, int>[] aboveZeroKills = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerKills).ToArray(), (KeyValuePair<string, int> kv) => kv.Value > 0);
-                                KeyValuePair<string, int>[] aboveZeroDeaths = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerDeaths).ToArray(), (KeyValuePair<string, int> kv) => kv.Value > 0);
-                                Dictionary<string, decimal> aboveZeroKDRs = new Dictionary<string, decimal>();
+                                KeyValuePair<ulong, int>[] aboveZeroKills = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerKills).ToArray(), (KeyValuePair<ulong, int> kv) => kv.Value > 0);
+                                KeyValuePair<ulong, int>[] aboveZeroDeaths = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerDeaths).ToArray(), (KeyValuePair<ulong, int> kv) => kv.Value > 0);
+                                Dictionary<ulong, decimal> aboveZeroKDRs = new Dictionary<ulong, decimal>();
 
-                                Dictionary<string, string> namesAndUIDs = new Dictionary<string, string>();
+                                Dictionary<ulong, string> namesAndUIDs = new Dictionary<ulong, string>();
 
                                 int curIndex = 0;
                                 foreach (var data in aboveZeroKills)
@@ -227,7 +227,7 @@ namespace RustEssentials.Util
                                             break;
                                         namesAndUIDs.Add(data.Key, "");
 
-                                        PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == data.Key);
+                                        PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID == data.Key);
                                         string playerName;
                                         if (playerClient != null) // If player is online
                                             namesAndUIDs[data.Key] = playerClient.netUser.displayName; // Use the unhidden name of that online user (in case he/she is vanished)
@@ -252,14 +252,14 @@ namespace RustEssentials.Util
                                         if (curIndex > 15)
                                             break;
 
-                                        string UID = data.Key;
+                                        ulong UID = data.Key;
                                         int kills = data.Value;
                                         if (Vars.playerDeaths.ContainsKey(UID))
                                         {
                                             int deaths = Vars.playerDeaths[UID];
                                             if (deaths > 0)
                                             {
-                                                int indexOf = Array.FindIndex(aboveZeroDeaths.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == UID);
+                                                int indexOf = Array.FindIndex(aboveZeroDeaths.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == UID);
                                                 deaths = aboveZeroDeaths[indexOf].Value;
                                                 decimal KDR = Math.Round((decimal)kills / deaths, 2);
                                                 aboveZeroKDRs.Add(UID, KDR);
@@ -285,7 +285,7 @@ namespace RustEssentials.Util
                                         curIndex++;
 
                                         string playerName = namesAndUIDs[data.Key];
-                                        string UID = data.Key;
+                                        ulong UID = data.Key;
                                         decimal KDR = data.Value;
                                         string fullString = curIndex + ". " + playerName + " (" + UID + "): " + KDR;
                                         Broadcast.broadcastTo(senderClient.netPlayer, fullString);
@@ -297,19 +297,19 @@ namespace RustEssentials.Util
                                     }
 
                                     string senderName = senderClient.netUser.displayName;
-                                    string senderUID = senderClient.userID.ToString();
+                                    ulong senderUID = senderClient.userID;
 
-                                    int senderKills = Array.Find(Vars.playerKills.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == senderUID).Value;
-                                    int senderDeaths = Array.Find(Vars.playerDeaths.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == senderUID).Value;
+                                    int senderKills = Array.Find(Vars.playerKills.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == senderUID).Value;
+                                    int senderDeaths = Array.Find(Vars.playerDeaths.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == senderUID).Value;
                                     decimal senderKDR = 0.00M;
 
                                     if (senderKills > 0 && senderDeaths > 0)
                                         senderKDR = Math.Round((decimal)senderKills / senderDeaths, 2);
 
-                                    Dictionary<string, decimal> sortedKDRs = new Dictionary<string, decimal>();
+                                    Dictionary<ulong, decimal> sortedKDRs = new Dictionary<ulong, decimal>();
                                     foreach (var data in aboveZeroKills)
                                     {
-                                        string UID = data.Key;
+                                        ulong UID = data.Key;
                                         int killData = data.Value;
                                         try
                                         {
@@ -318,7 +318,7 @@ namespace RustEssentials.Util
                                                 int deaths = Vars.playerDeaths[UID];
                                                 if (deaths > 0)
                                                 {
-                                                    int indexOf = Array.FindIndex(aboveZeroDeaths.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == UID);
+                                                    int indexOf = Array.FindIndex(aboveZeroDeaths.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == UID);
                                                     deaths = aboveZeroDeaths[indexOf].Value;
                                                     decimal KDR = Math.Round((decimal)killData / deaths, 2);
                                                     sortedKDRs.Add(UID, KDR);
@@ -342,7 +342,7 @@ namespace RustEssentials.Util
                                     }
 
                                     sortedKDRs = Vars.sortDictionaryByValue(sortedKDRs);
-                                    int kdrsRank = Array.FindIndex(sortedKDRs.ToArray(), (KeyValuePair<string, decimal> kv) => kv.Key == senderUID) + 1;
+                                    int kdrsRank = Array.FindIndex(sortedKDRs.ToArray(), (KeyValuePair<ulong, decimal> kv) => kv.Key == senderUID) + 1;
                                     Broadcast.broadcastTo(senderClient.netPlayer, "> " + kdrsRank + ". " + senderName + " (" + senderUID + "): " + senderKDR + " <");
                                 }
                                 else
@@ -361,10 +361,10 @@ namespace RustEssentials.Util
                         {
                             try
                             {
-                                KeyValuePair<string, int>[] aboveZero = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerKills).ToArray(), (KeyValuePair<string, int> kv) => kv.Value > 0);
-                                List<string> removeQueue = new List<string>();
+                                KeyValuePair<ulong, int>[] aboveZero = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerKills).ToArray(), (KeyValuePair<ulong, int> kv) => kv.Value > 0);
+                                List<ulong> removeQueue = new List<ulong>();
 
-                                Dictionary<string, string> namesAndUIDs = new Dictionary<string, string>();
+                                Dictionary<ulong, string> namesAndUIDs = new Dictionary<ulong, string>();
 
                                 int curIndex = 0;
                                 foreach (var data in aboveZero)
@@ -373,7 +373,7 @@ namespace RustEssentials.Util
                                     {
                                         namesAndUIDs.Add(data.Key, "");
 
-                                        PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == data.Key);
+                                        PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID == data.Key);
                                         if (playerClient != null) // If player is online
                                         {
                                             namesAndUIDs[data.Key] = playerClient.netUser.displayName; // Use the unhidden name of that online user (in case he/she is vanished)
@@ -382,8 +382,8 @@ namespace RustEssentials.Util
                                             removeQueue.Add(data.Key);
                                     }
                                 }
-                                
-                                Dictionary<string, int> aboveZeroDictionary = new Dictionary<string,int>();
+
+                                Dictionary<ulong, int> aboveZeroDictionary = new Dictionary<ulong, int>();
                                 foreach (var data in aboveZero)
                                 {
                                     if (!removeQueue.Contains(data.Key))
@@ -405,7 +405,7 @@ namespace RustEssentials.Util
                                             break;
 
                                         string playerName = namesAndUIDs[data.Key];
-                                        string UID = data.Key;
+                                        ulong UID = data.Key;
                                         string kills = data.Value.ToString();
                                         string fullString = curIndex + ". " + playerName + " (" + UID + "): " + kills;
                                         Broadcast.broadcastTo(senderClient.netPlayer, fullString);
@@ -415,8 +415,8 @@ namespace RustEssentials.Util
                                         Broadcast.broadcastTo(senderClient.netPlayer, curIndex + ".");
                                     }
                                     string senderName = senderClient.userName;
-                                    string senderUID = senderClient.userID.ToString();
-                                    int rankNum = Array.FindIndex(aboveZeroDictionary.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == senderUID) + 1;
+                                    ulong senderUID = senderClient.userID;
+                                    int rankNum = Array.FindIndex(aboveZeroDictionary.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == senderUID) + 1;
                                     string senderKills = aboveZeroDictionary[senderUID].ToString();
                                     Broadcast.broadcastTo(senderClient.netPlayer, "> " + rankNum + ". " + senderName + " (" + senderUID + "): " + senderKills + " <");
                                 }
@@ -436,10 +436,10 @@ namespace RustEssentials.Util
                         {
                             try
                             {
-                                KeyValuePair<string, int>[] aboveZero = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerDeaths).ToArray(), (KeyValuePair<string, int> kv) => kv.Value > 0);
-                                List<string> removeQueue = new List<string>();
+                                KeyValuePair<ulong, int>[] aboveZero = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerDeaths).ToArray(), (KeyValuePair<ulong, int> kv) => kv.Value > 0);
+                                List<ulong> removeQueue = new List<ulong>();
 
-                                Dictionary<string, string> namesAndUIDs = new Dictionary<string, string>();
+                                Dictionary<ulong, string> namesAndUIDs = new Dictionary<ulong, string>();
 
                                 int curIndex = 0;
                                 foreach (var data in aboveZero)
@@ -448,7 +448,7 @@ namespace RustEssentials.Util
                                     {
                                         namesAndUIDs.Add(data.Key, "");
 
-                                        PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == data.Key);
+                                        PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID == data.Key);
                                         string playerName;
                                         if (playerClient != null) // If player is online
                                         {
@@ -460,7 +460,7 @@ namespace RustEssentials.Util
                                     }
                                 }
 
-                                Dictionary<string, int> aboveZeroDictionary = new Dictionary<string, int>();
+                                Dictionary<ulong, int> aboveZeroDictionary = new Dictionary<ulong, int>();
                                 foreach (var data in aboveZero)
                                 {
                                     if (!removeQueue.Contains(data.Key))
@@ -482,7 +482,7 @@ namespace RustEssentials.Util
                                             break;
 
                                         string playerName = namesAndUIDs[data.Key];
-                                        string UID = data.Key;
+                                        ulong UID = data.Key;
                                         string deaths = data.Value.ToString();
                                         string fullString = curIndex + ". " + playerName + " (" + UID + "): " + deaths;
                                         Broadcast.broadcastTo(senderClient.netPlayer, fullString);
@@ -492,8 +492,8 @@ namespace RustEssentials.Util
                                         Broadcast.broadcastTo(senderClient.netPlayer, curIndex + ".");
                                     }
                                     string senderName = senderClient.userName;
-                                    string senderUID = senderClient.userID.ToString();
-                                    int rankNum = Array.FindIndex(aboveZeroDictionary.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == senderUID) + 1;
+                                    ulong senderUID = senderClient.userID;
+                                    int rankNum = Array.FindIndex(aboveZeroDictionary.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == senderUID) + 1;
                                     string senderDeaths = aboveZeroDictionary[senderUID].ToString();
                                     Broadcast.broadcastTo(senderClient.netPlayer, "> " + rankNum + ". " + senderName + " (" + senderUID + "): " + senderDeaths + " <");
                                 }
@@ -513,12 +513,12 @@ namespace RustEssentials.Util
                         {
                             try
                             {
-                                KeyValuePair<string, int>[] aboveZeroKills = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerKills).ToArray(), (KeyValuePair<string, int> kv) => kv.Value > 0);
-                                KeyValuePair<string, int>[] aboveZeroDeaths = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerDeaths).ToArray(), (KeyValuePair<string, int> kv) => kv.Value > 0);
-                                Dictionary<string, decimal> aboveZeroKDRs = new Dictionary<string, decimal>();
-                                List<string> removeQueue = new List<string>();
+                                KeyValuePair<ulong, int>[] aboveZeroKills = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerKills).ToArray(), (KeyValuePair<ulong, int> kv) => kv.Value > 0);
+                                KeyValuePair<ulong, int>[] aboveZeroDeaths = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerDeaths).ToArray(), (KeyValuePair<ulong, int> kv) => kv.Value > 0);
+                                Dictionary<ulong, decimal> aboveZeroKDRs = new Dictionary<ulong, decimal>();
+                                List<ulong> removeQueue = new List<ulong>();
 
-                                Dictionary<string, string> namesAndUIDs = new Dictionary<string, string>();
+                                Dictionary<ulong, string> namesAndUIDs = new Dictionary<ulong, string>();
 
                                 foreach (var data in aboveZeroKills)
                                 {
@@ -526,7 +526,7 @@ namespace RustEssentials.Util
                                     {
                                         namesAndUIDs.Add(data.Key, "");
 
-                                        PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID.ToString() == data.Key);
+                                        PlayerClient playerClient = Array.Find(Vars.AllPlayerClients.ToArray(), (PlayerClient pc) => pc.userID == data.Key);
                                         string playerName;
                                         if (playerClient != null) // If player is online
                                         {
@@ -537,7 +537,7 @@ namespace RustEssentials.Util
                                     }
                                 }
 
-                                Dictionary<string, int> aboveZeroKillsDictionary = new Dictionary<string, int>();
+                                Dictionary<ulong, int> aboveZeroKillsDictionary = new Dictionary<ulong, int>();
                                 foreach (var data in aboveZeroKills)
                                 {
                                     if (!removeQueue.Contains(data.Key))
@@ -558,14 +558,14 @@ namespace RustEssentials.Util
                                         if (curIndex > 15)
                                             break;
 
-                                        string UID = data.Key;
+                                        ulong UID = data.Key;
                                         int kills = data.Value;
                                         if (Vars.playerDeaths.ContainsKey(UID))
                                         {
                                             int deaths = Vars.playerDeaths[UID];
                                             if (deaths > 0)
                                             {
-                                                int indexOf = Array.FindIndex(aboveZeroDeaths.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == UID);
+                                                int indexOf = Array.FindIndex(aboveZeroDeaths.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == UID);
                                                 deaths = aboveZeroDeaths[indexOf].Value;
                                                 decimal KDR = Math.Round((decimal)kills / deaths, 2);
                                                 aboveZeroKDRs.Add(UID, KDR);
@@ -591,7 +591,7 @@ namespace RustEssentials.Util
                                         curIndex++;
 
                                         string playerName = namesAndUIDs[data.Key];
-                                        string UID = data.Key;
+                                        ulong UID = data.Key;
                                         decimal KDR = data.Value;
                                         string fullString = curIndex + ". " + playerName + " (" + UID + "): " + KDR;
                                         Broadcast.broadcastTo(senderClient.netPlayer, fullString);
@@ -603,19 +603,19 @@ namespace RustEssentials.Util
                                     }
 
                                     string senderName = senderClient.userName;
-                                    string senderUID = senderClient.userID.ToString();
+                                    ulong senderUID = senderClient.userID;
 
-                                    int senderKills = Array.Find(Vars.playerKills.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == senderUID).Value;
-                                    int senderDeaths = Array.Find(Vars.playerDeaths.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == senderUID).Value;
+                                    int senderKills = Array.Find(Vars.playerKills.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == senderUID).Value;
+                                    int senderDeaths = Array.Find(Vars.playerDeaths.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == senderUID).Value;
                                     decimal senderKDR = 0.00M;
 
                                     if (senderKills > 0 && senderDeaths > 0)
                                         senderKDR = Math.Round((decimal)senderKills / senderDeaths, 2);
 
-                                    Dictionary<string, decimal> sortedKDRs = new Dictionary<string, decimal>();
+                                    Dictionary<ulong, decimal> sortedKDRs = new Dictionary<ulong, decimal>();
                                     foreach (var data in aboveZeroKillsDictionary)
                                     {
-                                        string UID = data.Key;
+                                        ulong UID = data.Key;
                                         int killData = data.Value;
                                         try
                                         {
@@ -624,7 +624,7 @@ namespace RustEssentials.Util
                                                 int deaths = Vars.playerDeaths[UID];
                                                 if (deaths > 0)
                                                 {
-                                                    int indexOf = Array.FindIndex(aboveZeroDeaths.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == UID);
+                                                    int indexOf = Array.FindIndex(aboveZeroDeaths.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == UID);
                                                     deaths = aboveZeroDeaths[indexOf].Value;
                                                     decimal KDR = Math.Round((decimal)killData / deaths, 2);
                                                     sortedKDRs.Add(UID, KDR);
@@ -648,7 +648,7 @@ namespace RustEssentials.Util
                                     }
 
                                     sortedKDRs = Vars.sortDictionaryByValue(sortedKDRs);
-                                    int kdrsRank = Array.FindIndex(sortedKDRs.ToArray(), (KeyValuePair<string, decimal> kv) => kv.Key == senderUID) + 1;
+                                    int kdrsRank = Array.FindIndex(sortedKDRs.ToArray(), (KeyValuePair<ulong, decimal> kv) => kv.Key == senderUID) + 1;
 
                                     Broadcast.broadcastTo(senderClient.netPlayer, "> " + kdrsRank + ". " + senderName + " (" + senderUID + "): " + senderKDR + " <");
                                 }
@@ -896,20 +896,20 @@ namespace RustEssentials.Util
             else
                 Broadcast.broadcastTo(senderClient.netPlayer, "Your tools:");
 
-            Broadcast.broadcastTo(senderClient.netPlayer, "Vanished: " + Vars.vanishedList.Contains(targetClient.userID.ToString()).ToString());
-            Broadcast.broadcastTo(senderClient.netPlayer, "Hidden from AI: " + Vars.hiddenList.Contains(targetClient.userID.ToString()).ToString());
-            Broadcast.broadcastTo(senderClient.netPlayer, "Remove: " + Vars.destroyerList.Contains(targetClient.userID.ToString()).ToString());
-            Broadcast.broadcastTo(senderClient.netPlayer, "Remove all: " + Vars.destroyerAllList.Contains(targetClient.userID.ToString()).ToString());
-            Broadcast.broadcastTo(senderClient.netPlayer, "Remover: " + Vars.removerList.Contains(targetClient.userID.ToString()).ToString());
-            Broadcast.broadcastTo(senderClient.netPlayer, "Owner: " + Vars.ownershipList.Contains(targetClient.userID.ToString()).ToString());
-            Broadcast.broadcastTo(senderClient.netPlayer, "Wand: " + Vars.wandList.ContainsKey(targetClient.userID.ToString()).ToString());
-            Broadcast.broadcastTo(senderClient.netPlayer, "Portal: " + Vars.portalList.Contains(targetClient.userID.ToString()).ToString());
-            Broadcast.broadcastTo(senderClient.netPlayer, "Bypass: " + Vars.bypassList.Contains(targetClient.userID.ToString()).ToString());
-            Broadcast.broadcastTo(senderClient.netPlayer, "Ghost: " + Vars.ghostList.ContainsKey(targetClient.userID.ToString()).ToString());
-            Broadcast.broadcastTo(senderClient.netPlayer, "Godmode: " + Vars.godList.Contains(targetClient.userID.ToString()).ToString());
-            Broadcast.broadcastTo(senderClient.netPlayer, "Super Craft: " + Vars.craftList.Contains(targetClient.userID.ToString()).ToString());
-            Broadcast.broadcastTo(senderClient.netPlayer, "Unlimited Ammo: " + Vars.unlAmmoList.Contains(targetClient.userID.ToString()).ToString());
-            Broadcast.broadcastTo(senderClient.netPlayer, "Infinite Ammo: " + Vars.infAmmoList.Contains(targetClient.userID.ToString()).ToString());
+            Broadcast.broadcastTo(senderClient.netPlayer, "Vanished: " + Vars.vanishedList.Contains(targetClient.userID).ToString());
+            Broadcast.broadcastTo(senderClient.netPlayer, "Hidden from AI: " + Vars.hiddenList.Contains(targetClient.userID).ToString());
+            Broadcast.broadcastTo(senderClient.netPlayer, "Remove: " + Vars.destroyerList.Contains(targetClient.userID).ToString());
+            Broadcast.broadcastTo(senderClient.netPlayer, "Remove all: " + Vars.destroyerAllList.Contains(targetClient.userID).ToString());
+            Broadcast.broadcastTo(senderClient.netPlayer, "Remover: " + Vars.removerList.Contains(targetClient.userID).ToString());
+            Broadcast.broadcastTo(senderClient.netPlayer, "Owner: " + Vars.ownershipList.Contains(targetClient.userID).ToString());
+            Broadcast.broadcastTo(senderClient.netPlayer, "Wand: " + Vars.wandList.ContainsKey(targetClient.userID).ToString());
+            Broadcast.broadcastTo(senderClient.netPlayer, "Portal: " + Vars.portalList.Contains(targetClient.userID).ToString());
+            Broadcast.broadcastTo(senderClient.netPlayer, "Bypass: " + Vars.bypassList.Contains(targetClient.userID).ToString());
+            Broadcast.broadcastTo(senderClient.netPlayer, "Ghost: " + Vars.ghostList.ContainsKey(targetClient.userID).ToString());
+            Broadcast.broadcastTo(senderClient.netPlayer, "Godmode: " + Vars.godList.Contains(targetClient.userID).ToString());
+            Broadcast.broadcastTo(senderClient.netPlayer, "Super Craft: " + Vars.craftList.Contains(targetClient.userID).ToString());
+            Broadcast.broadcastTo(senderClient.netPlayer, "Unlimited Ammo: " + Vars.unlAmmoList.Contains(targetClient.userID).ToString());
+            Broadcast.broadcastTo(senderClient.netPlayer, "Infinite Ammo: " + Vars.infAmmoList.Contains(targetClient.userID).ToString());
         }
 
         public static void displayEntities(PlayerClient senderClient)
@@ -923,7 +923,9 @@ namespace RustEssentials.Util
 
         public static void displayPing(PlayerClient senderClient)
         {
-            Broadcast.broadcastTo(senderClient.netPlayer, "Ping: " + senderClient.netPlayer.lastPing + " ms");
+            Broadcast.broadcastTo(senderClient.netPlayer, "Ping:");
+            Broadcast.broadcastTo(senderClient.netPlayer, "- Recent: " + senderClient.netPlayer.lastPing + " ms");
+            Broadcast.broadcastTo(senderClient.netPlayer, "- Average: " + senderClient.netPlayer.averagePing + " ms");
         }
 
         public static void displayPlayerInfo(PlayerClient senderClient, string[] args, bool isAlternative)
@@ -965,24 +967,24 @@ namespace RustEssentials.Util
                             {
                                 PlayerClient targetClient = possibleTargets[0];
 
-                                if (!Vars.playerDeaths.ContainsKey(targetClient.userID.ToString()))
-                                    Vars.playerDeaths.Add(targetClient.userID.ToString(), 0);
-                                if (!Vars.playerKills.ContainsKey(targetClient.userID.ToString()))
-                                    Vars.playerKills.Add(targetClient.userID.ToString(), 0);
+                                if (!Vars.playerDeaths.ContainsKey(targetClient.userID))
+                                    Vars.playerDeaths.Add(targetClient.userID, 0);
+                                if (!Vars.playerKills.ContainsKey(targetClient.userID))
+                                    Vars.playerKills.Add(targetClient.userID, 0);
 
-                                KeyValuePair<string, int>[] sortedKills = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerKills).ToArray(), (KeyValuePair<string, int> kv) => kv.Value > 0);
-                                KeyValuePair<string, int>[] sortedDeaths = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerDeaths).ToArray(), (KeyValuePair<string, int> kv) => kv.Value > 0);
-                                int kills = Array.Find(Vars.playerKills.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == targetClient.userID.ToString()).Value;
-                                int killsRank = Array.FindIndex(sortedKills.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == targetClient.userID.ToString()) + 1;
-                                int deaths = Array.Find(Vars.playerDeaths.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == targetClient.userID.ToString()).Value;
-                                int deathsRank = Array.FindIndex(sortedDeaths.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == targetClient.userID.ToString()) + 1;
+                                KeyValuePair<ulong, int>[] sortedKills = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerKills).ToArray(), (KeyValuePair<ulong, int> kv) => kv.Value > 0);
+                                KeyValuePair<ulong, int>[] sortedDeaths = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerDeaths).ToArray(), (KeyValuePair<ulong, int> kv) => kv.Value > 0);
+                                int kills = Array.Find(Vars.playerKills.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == targetClient.userID).Value;
+                                int killsRank = Array.FindIndex(sortedKills.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == targetClient.userID) + 1;
+                                int deaths = Array.Find(Vars.playerDeaths.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == targetClient.userID).Value;
+                                int deathsRank = Array.FindIndex(sortedDeaths.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == targetClient.userID) + 1;
                                 decimal kdr = 0.00M;
                                 if (kills > 0 && deaths > 0)
                                     kdr = Math.Round((decimal)kills / deaths, 2);
-                                Dictionary<string, decimal> sortedKDRs = new Dictionary<string, decimal>();
+                                Dictionary<ulong, decimal> sortedKDRs = new Dictionary<ulong, decimal>();
                                 foreach (var data in sortedKills)
                                 {
-                                    string UID = data.Key;
+                                    ulong UID = data.Key;
                                     int killData = data.Value;
                                     try
                                     {
@@ -1015,16 +1017,18 @@ namespace RustEssentials.Util
                                 }
 
                                 sortedKDRs = Vars.sortDictionaryByValue(sortedKDRs);
-                                int kdrsRank = Array.FindIndex(sortedKDRs.ToArray(), (KeyValuePair<string, decimal> kv) => kv.Key == targetClient.userID.ToString()) + 1;
-                                KeyValuePair<string, Dictionary<string, string>>[] possibleFactions = Array.FindAll(Vars.factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(targetClient.userID.ToString()));
+                                int kdrsRank = Array.FindIndex(sortedKDRs.ToArray(), (KeyValuePair<ulong, decimal> kv) => kv.Key == targetClient.userID) + 1;
+                                Faction faction = Vars.factions.GetByMember(targetClient.userID);
 
                                 Broadcast.broadcastTo(senderClient.netPlayer, "Player " + targetClient.userName + "'s information:");
                                 if (isAlternative)
                                     Broadcast.broadcastTo(senderClient.netPlayer, "IP: " + targetClient.netPlayer.ipAddress);
-                                Broadcast.broadcastTo(senderClient.netPlayer, "Ping: " + targetClient.netPlayer.lastPing + " ms");
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Ping:");
+                                Broadcast.broadcastTo(senderClient.netPlayer, "- Recent: " + targetClient.netPlayer.lastPing + " ms");
+                                Broadcast.broadcastTo(senderClient.netPlayer, "- Average: " + targetClient.netPlayer.averagePing + " ms");
                                 Broadcast.broadcastTo(senderClient.netPlayer, "UID: " + targetClient.userID);
                                 if (isAlternative || (Vars.enableRank && !isAlternative))
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "Rank: " + Vars.findRank(targetClient.userID.ToString()));
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Rank: " + Vars.findRank(targetClient.userID));
                                 Character targetChar;
                                 if (Vars.getPlayerChar(targetClient, out targetChar))
                                     Broadcast.broadcastTo(senderClient.netPlayer, "Alive: " + targetChar.alive.ToString());
@@ -1036,7 +1040,7 @@ namespace RustEssentials.Util
                                 Broadcast.broadcastTo(senderClient.netPlayer, "Deaths Rank: " + deathsRank);
                                 Broadcast.broadcastTo(senderClient.netPlayer, "KDR: " + kdr);
                                 Broadcast.broadcastTo(senderClient.netPlayer, "KDR Rank: " + kdrsRank);
-                                Broadcast.broadcastTo(senderClient.netPlayer, "Faction: " + (possibleFactions.Count() > 0 ? possibleFactions[0].Key : "This player is not in a faction"));
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Faction: " + (faction != null ? faction.name : "This player is not in a faction"));
                             }
                         }
                         else
@@ -1050,30 +1054,30 @@ namespace RustEssentials.Util
                             {
                                 PlayerClient targetClient = possibleTargets[0];
 
-                                if (!Vars.playerDeaths.ContainsKey(targetClient.userID.ToString()))
-                                    Vars.playerDeaths.Add(targetClient.userID.ToString(), 0);
-                                if (!Vars.playerKills.ContainsKey(targetClient.userID.ToString()))
-                                    Vars.playerKills.Add(targetClient.userID.ToString(), 0);
+                                if (!Vars.playerDeaths.ContainsKey(targetClient.userID))
+                                    Vars.playerDeaths.Add(targetClient.userID, 0);
+                                if (!Vars.playerKills.ContainsKey(targetClient.userID))
+                                    Vars.playerKills.Add(targetClient.userID, 0);
 
-                                KeyValuePair<string, int>[] sortedKills = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerKills).ToArray(), (KeyValuePair<string, int> kv) => kv.Value > 0);
-                                KeyValuePair<string, int>[] sortedDeaths = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerDeaths).ToArray(), (KeyValuePair<string, int> kv) => kv.Value > 0);
-                                int kills = Array.Find(Vars.playerKills.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == targetClient.userID.ToString()).Value;
+                                KeyValuePair<ulong, int>[] sortedKills = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerKills).ToArray(), (KeyValuePair<ulong, int> kv) => kv.Value > 0);
+                                KeyValuePair<ulong, int>[] sortedDeaths = Array.FindAll(Vars.sortDictionaryByValue(Vars.playerDeaths).ToArray(), (KeyValuePair<ulong, int> kv) => kv.Value > 0);
+                                int kills = Array.Find(Vars.playerKills.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == targetClient.userID).Value;
                                 int killsRank = -1;
-                                if (Vars.playerKills.ContainsKey(targetClient.userID.ToString()))
-                                    killsRank = Array.FindIndex(sortedKills, (KeyValuePair<string, int> kv) => kv.Key == targetClient.userID.ToString()) + 1;
-                                int deaths = Array.Find(Vars.playerDeaths.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == targetClient.userID.ToString()).Value;
-                                int deathsRank = Array.FindIndex(sortedDeaths, (KeyValuePair<string, int> kv) => kv.Key == targetClient.userID.ToString()) + 1;
+                                if (Vars.playerKills.ContainsKey(targetClient.userID))
+                                    killsRank = Array.FindIndex(sortedKills, (KeyValuePair<ulong, int> kv) => kv.Key == targetClient.userID) + 1;
+                                int deaths = Array.Find(Vars.playerDeaths.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == targetClient.userID).Value;
+                                int deathsRank = Array.FindIndex(sortedDeaths, (KeyValuePair<ulong, int> kv) => kv.Key == targetClient.userID) + 1;
                                 decimal kdr = 0.00M;
                                 if (kills > 0 && deaths > 0)
                                     kdr = Math.Round((decimal)kills / deaths, 2);
-                                Dictionary<string, decimal> sortedKDRs = new Dictionary<string, decimal>();
+                                Dictionary<ulong, decimal> sortedKDRs = new Dictionary<ulong, decimal>();
                                 foreach (var data in sortedKills)
                                 {
-                                    string UID = data.Key;
+                                    ulong UID = data.Key;
                                     int killData = data.Value;
                                     try
                                     {
-                                        int indexOf = Array.FindIndex(sortedDeaths.ToArray(), (KeyValuePair<string, int> kv) => kv.Key == UID);
+                                        int indexOf = Array.FindIndex(sortedDeaths.ToArray(), (KeyValuePair<ulong, int> kv) => kv.Key == UID);
                                         int deathData = sortedDeaths[indexOf].Value;
                                         decimal KDR = 0.00M;
                                         if (kills > 0 && deaths > 0)
@@ -1087,16 +1091,18 @@ namespace RustEssentials.Util
                                 }
 
                                 sortedKDRs = Vars.sortDictionaryByValue(sortedKDRs);
-                                int kdrsRank = Array.FindIndex(sortedKDRs.ToArray(), (KeyValuePair<string, decimal> kv) => kv.Key == targetClient.userID.ToString()) + 1;
-                                KeyValuePair<string, Dictionary<string, string>>[] possibleFactions = Array.FindAll(Vars.factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(targetClient.userID.ToString()));
+                                int kdrsRank = Array.FindIndex(sortedKDRs.ToArray(), (KeyValuePair<ulong, decimal> kv) => kv.Key == targetClient.userID) + 1;
+                                Faction faction = Vars.factions.GetByMember(targetClient.userID);
 
                                 Broadcast.broadcastTo(senderClient.netPlayer, "Player " + targetClient.userName + "'s information:");
                                 if (isAlternative)
                                     Broadcast.broadcastTo(senderClient.netPlayer, "IP: " + targetClient.netPlayer.ipAddress);
-                                Broadcast.broadcastTo(senderClient.netPlayer, "Ping: " + targetClient.netPlayer.lastPing + " ms");
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Ping:");
+                                Broadcast.broadcastTo(senderClient.netPlayer, "- Recent: " + targetClient.netPlayer.lastPing + " ms");
+                                Broadcast.broadcastTo(senderClient.netPlayer, "- Average: " + targetClient.netPlayer.averagePing + " ms");
                                 Broadcast.broadcastTo(senderClient.netPlayer, "UID: " + targetClient.userID);
                                 if (isAlternative || (Vars.enableRank && !isAlternative))
-                                    Broadcast.broadcastTo(senderClient.netPlayer, "Rank: " + Vars.findRank(targetClient.userID.ToString()));
+                                    Broadcast.broadcastTo(senderClient.netPlayer, "Rank: " + Vars.findRank(targetClient.userID));
                                 Character targetChar;
                                 if (Vars.getPlayerChar(targetClient, out targetChar))
                                     Broadcast.broadcastTo(senderClient.netPlayer, "Alive: " + targetChar.alive);
@@ -1108,7 +1114,7 @@ namespace RustEssentials.Util
                                 Broadcast.broadcastTo(senderClient.netPlayer, "Deaths Rank: " + deathsRank);
                                 Broadcast.broadcastTo(senderClient.netPlayer, "KDR: " + kdr);
                                 Broadcast.broadcastTo(senderClient.netPlayer, "KDR Rank: " + kdrsRank);
-                                Broadcast.broadcastTo(senderClient.netPlayer, "Faction: " + (possibleFactions.Count() > 0 ? possibleFactions[0].Key : "This player is not in a faction"));
+                                Broadcast.broadcastTo(senderClient.netPlayer, "Faction: " + (faction != null ? faction.name : "This player is not in a faction"));
                             }
                         }
                     }
@@ -1206,16 +1212,16 @@ namespace RustEssentials.Util
                             }
                             break;
                         case "f":
-                            KeyValuePair<string, Dictionary<string, string>>[] possibleFactions = Array.FindAll(Vars.factions.ToArray(), (KeyValuePair<string, Dictionary<string, string>> kv) => kv.Value.ContainsKey(senderClient.userID.ToString()));
-                            if (possibleFactions.Count() > 0)
+                            Faction faction = Vars.factions.GetByMember(senderClient.userID);
+                            if (faction != null)
                             {
                                 try
                                 {
-                                    if (Vars.historyFaction.ContainsKey(possibleFactions[0].Key))
+                                    if (Vars.historyFaction.ContainsKey(faction.name))
                                     {
                                         curIndex = 0;
-                                        goalIndex = Vars.historyFaction[possibleFactions[0].Key].Count - lineAmount;
-                                        foreach (string s in Vars.historyFaction[possibleFactions[0].Key])
+                                        goalIndex = Vars.historyFaction[faction.name].Count - lineAmount;
+                                        foreach (string s in Vars.historyFaction[faction.name])
                                         {
                                             if (curIndex >= goalIndex)
                                             {
@@ -1261,8 +1267,9 @@ namespace RustEssentials.Util
                 Broadcast.broadcastTo(senderClient.netPlayer, "All frozen players:");
                 List<string> names = new List<string>();
                 List<string> names2 = new List<string>();
-                foreach (ulong UID in Vars.frozenPlayers.Keys)
+                foreach (var player in Vars.frozenPlayers)
                 {
+                    ulong UID = player.Key;
                     uLink.NetworkPlayer np = Vars.getNetPlayer(UID);
                     PlayerClient playerClient = Vars.getPlayerClient(np);
                     if (playerClient != null)
@@ -1389,7 +1396,7 @@ namespace RustEssentials.Util
 
         public static void displayWarps(PlayerClient senderClient)
         {
-            string rank = Vars.findRank(senderClient.userID.ToString());
+            string rank = Vars.findRank(senderClient.userID);
 
             Broadcast.broadcastTo(senderClient.netPlayer, "Available warps:");
             Vars.listWarps(rank, senderClient);
@@ -1397,7 +1404,7 @@ namespace RustEssentials.Util
 
         public static void displayKits(PlayerClient senderClient)
         {
-            string rank = Vars.findRank(senderClient.userID.ToString());
+            string rank = Vars.findRank(senderClient.userID);
 
             Broadcast.broadcastTo(senderClient.netPlayer, "Available kits:");
             Vars.listKits(rank, senderClient);
