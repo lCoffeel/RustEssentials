@@ -2888,23 +2888,11 @@ namespace RustEssentials.Util
 
         public static void sendFallImpact(Vector3 velocity, uLink.NetworkMessageInfo info, FallDamage FD)
         {
-            if (info.sender != FD.networkView.owner)
-            {
-                NetUser user = NetUser.Find(info.sender);
-                if (user != null)
-                {
-                    FeedbackLog.Start(FeedbackLog.TYPE.SimpleExploit);
-                    FeedbackLog.Writer.Write("fall");
-                    FeedbackLog.Writer.Write(user.userID);
-                    FeedbackLog.End(FeedbackLog.TYPE.SimpleExploit);
-                }
-            }
-            else
+            if (info.sender == FD.networkView.owner)
             {
                 float num;
                 if (FD.ValidateFallVelocity(velocity, out num))
                 {
-
                     PlayerClient playerClient = Vars.getPlayerClient(info.networkView.owner);
 
                     if (playerClient != null)
