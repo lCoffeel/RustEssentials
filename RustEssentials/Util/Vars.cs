@@ -51,7 +51,6 @@ namespace RustEssentials.Util
         public static string factionsFile = Path.Combine(essentialsDir, "factions.dat");
         public static string homesFile = Path.Combine(essentialsDir, "homes.dat");
         public static string bettyFile = Path.Combine(essentialsDir, "bouncing_betties.dat");
-        public static string alliesFile = Path.Combine(essentialsDir, "allies.dat");
         public static string cooldownsFile = Path.Combine(essentialsDir, "kit_cooldowns.dat");
         public static string warpCooldownsFile = Path.Combine(essentialsDir, "warp_cooldowns.dat");
         public static string requestCooldownsFile = Path.Combine(essentialsDir, "tpaPer_cooldowns.dat");
@@ -349,7 +348,6 @@ namespace RustEssentials.Util
             { factionsFile },
             { homesFile },
             { bettyFile },
-            { alliesFile },
             { cooldownsFile },
             { warpCooldownsFile },
             { requestCooldownsFile },

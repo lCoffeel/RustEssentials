@@ -217,7 +217,6 @@ namespace RustEssentials
                     Vars.removerDataFile = Path.Combine(Vars.essentialsDir, "remover_data.dat");
                     Vars.bettyFile = Path.Combine(Vars.essentialsDir, "bouncing_betties.dat");
                     Vars.factionsFile = Path.Combine(Vars.essentialsDir, "factions.dat");
-                    Vars.alliesFile = Path.Combine(Vars.essentialsDir, "allies.dat");
                     Vars.cooldownsFile = Path.Combine(Vars.essentialsDir, "kit_cooldowns.dat");
                     Vars.warpCooldownsFile = Path.Combine(Vars.essentialsDir, "warp_cooldowns.dat");
                     Vars.requestCooldownsFile = Path.Combine(Vars.essentialsDir, "tpaPer_cooldowns.dat");
@@ -253,7 +252,6 @@ namespace RustEssentials
                         { Vars.removerDataFile },
                         { Vars.factionsFile },
                         { Vars.homesFile },
-                        { Vars.alliesFile },
                         { Vars.cooldownsFile },
                         { Vars.warpCooldownsFile },
                         { Vars.requestCooldownsFile },

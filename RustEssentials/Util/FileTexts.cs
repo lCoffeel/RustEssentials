@@ -1306,6 +1306,8 @@ namespace RustEssentials.Util
             sb.AppendLine("/reload {config} (Reload config.ini)");
             sb.AppendLine("/reload {controller} (Reload controller.ini)");
             sb.AppendLine("/reload {decay} (Reload decay.ini)");
+            sb.AppendLine("/reload {factions} (Reload factions.dat)");
+            sb.AppendLine("/reload {homes} (Reload homes.dat)");
             sb.AppendLine("/reload {kits} (Reload kits.ini)");
             sb.AppendLine("/reload {loadout} (Reload default_loadout.ini)");
             sb.AppendLine("/reload {motd} (Reload motd.ini)");

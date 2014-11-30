@@ -1637,6 +1637,10 @@ namespace RustEssentials.Util
                             {
                                 damage.amount = 0f;
                             }
+                            else if (Vars.inWarZone.ContainsKey(victim))
+                            {
+                                damage.amount *= Vars.warDamage;
+                            }
                         }
 
                         if (!Vars.godList.Contains(victim.userID) && !Vars.frozenPlayers.ContainsKey(victim.userID) && !Vars.vanishedList.Contains(victim.userID) && damage.amount > 0)

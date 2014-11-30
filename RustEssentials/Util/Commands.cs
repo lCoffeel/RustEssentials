@@ -88,7 +88,7 @@ namespace RustEssentials.Util
                 case "/kickall":
                     Vars.kickAllServer();
                     break;
-                case "5":
+                case "/reload":
                     Vars.reloadFileServer(commandArgs);
                     break;
                 case "/daylength":
