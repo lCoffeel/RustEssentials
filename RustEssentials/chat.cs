@@ -7,7 +7,7 @@ using System;
 
 public class chat : ConsoleSystem
 {
-    [ConsoleSystem.Help("Enable or disable chat displaying", "")]
+    [ConsoleSystem.Help("Включить или выключить чат.", "")]
     [ConsoleSystem.Client]
     [ConsoleSystem.Admin]
     public static bool enabled = true;
